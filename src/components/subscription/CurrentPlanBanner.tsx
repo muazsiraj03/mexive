@@ -58,7 +58,7 @@ export function CurrentPlanBanner({
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-6 mb-8">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             {getStatusIcon()}
@@ -89,7 +89,7 @@ export function CurrentPlanBanner({
             variant="outline"
             onClick={onCancel}
             disabled={loading}
-            className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 w-fit"
+            className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
           >
             Cancel Subscription
           </Button>
