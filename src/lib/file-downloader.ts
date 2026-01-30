@@ -8,7 +8,7 @@ import JSZip from "jszip";
 import { ImageMetadata, processImageWithMetadata } from "./metadata-embedder";
 import { createXMPBlob, getXMPFilename, needsXMPSidecar } from "./xmp-generator";
 
-const DOWNLOAD_FUNCTION_URL = "https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/download-image";
+const DOWNLOAD_FUNCTION_URL = "https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/download-image";
 
 export interface DownloadOptions {
   imageUrl: string;
