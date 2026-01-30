@@ -62,7 +62,7 @@ export function AdminNotifications() {
       if (!session) return;
 
       const res = await fetch(
-        `https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/admin-api/notifications`,
+        `https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/admin-api/notifications`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
@@ -109,7 +109,7 @@ export function AdminNotifications() {
       if (!session) throw new Error("Not authenticated");
 
       const response = await fetch(
-        `https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/admin-api/notifications`,
+        `https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/admin-api/notifications`,
         {
           method: "POST",
           headers: {
@@ -164,7 +164,7 @@ export function AdminNotifications() {
       if (!session) return;
 
       const response = await fetch(
-        `https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/admin-api/notifications/${notificationId}`,
+        `https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/admin-api/notifications/${notificationId}`,
         {
           method: "DELETE",
           headers: {
