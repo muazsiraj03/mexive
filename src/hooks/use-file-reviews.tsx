@@ -5,7 +5,7 @@ import { processFileForAnalysis } from "@/lib/file-processor";
 import type { FileReview, FileReviewResult, PendingReview } from "@/lib/file-reviewer";
 import { getFileExtension, isUnsupportedForBrowser } from "@/lib/file-reviewer";
 
-const SUPABASE_URL = "https://cznvtcvzotilcxajcflw.supabase.co";
+const SUPABASE_URL = "https://qwnrymtaokajuqtgdaex.supabase.co";
 
 export function useFileReviews() {
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
@@ -235,14 +235,22 @@ export function useFileReviews() {
         return;
       }
 
-      // Check credits
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("credits, has_unlimited_credits")
-        .eq("id", user.id)
+      // Check credits from subscription
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("credits_remaining, plan")
+        .eq("user_id", user.id)
         .single();
 
-      if (!profile?.has_unlimited_credits && (profile?.credits || 0) < pendingFiles.length) {
+      // Check if plan is unlimited
+      const { data: planConfig } = await supabase
+        .from("pricing_config")
+        .select("is_unlimited")
+        .eq("plan_name", subscription?.plan || "free")
+        .single();
+
+      const hasUnlimited = planConfig?.is_unlimited || false;
+      if (!hasUnlimited && (subscription?.credits_remaining || 0) < pendingFiles.length) {
         toast.error(`Not enough credits. You need ${pendingFiles.length} credits.`);
         return;
       }

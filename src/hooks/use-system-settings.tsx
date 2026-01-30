@@ -117,7 +117,7 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase
         .from("system_settings")
-        .update({ value: value })
+        .update({ value: String(value) })
         .eq("key", key);
 
       if (error) {
