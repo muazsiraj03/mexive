@@ -55,7 +55,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className={collapsed ? "p-2" : "p-4"}>
-        <div className="flex items-center justify-center">
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"}`}>
           <img 
             src={logo} 
             alt={settings.appName} 
