@@ -1,4 +1,4 @@
-import { Check, Wand2, MessageSquareText, Eraser, FileCheck } from "lucide-react";
+import { Check, Wand2, MessageSquareText, FileCheck } from "lucide-react";
 
 const tools = [
   {
@@ -14,13 +14,6 @@ const tools = [
     icon: MessageSquareText,
     status: "3 variations generated",
     color: "text-secondary",
-  },
-  {
-    name: "Background Remover",
-    description: "Transparent PNG ready for download",
-    icon: Eraser,
-    status: "Processing complete",
-    color: "text-accent-foreground",
   },
   {
     name: "File Reviewer",

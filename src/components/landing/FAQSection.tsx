@@ -9,12 +9,12 @@ const faqs = [
   {
     question: "What AI tools does MetaGen offer?",
     answer:
-      "MetaGen provides four powerful AI tools: Metadata Generator for creating marketplace-ready titles, descriptions, and keywords; Image to Prompt for reverse-engineering image prompts; Background Remover for creating transparent backgrounds; and File Reviewer for checking images against marketplace requirements before submission.",
+      "MetaGen provides three powerful AI tools: Metadata Generator for creating marketplace-ready titles, descriptions, and keywords; Image to Prompt for reverse-engineering image prompts; and File Reviewer for checking images against marketplace requirements before submission.",
   },
   {
     question: "How many credits does each tool use?",
     answer:
-      "Each tool uses 1 credit per image processed. The Metadata Generator uses 1 credit per image for up to 3 marketplaces simultaneously. Image to Prompt, Background Remover, and File Reviewer each use 1 credit per image. Batch processing multiple images will use 1 credit per image in the batch.",
+      "Each tool uses 1 credit per image processed. The Metadata Generator uses 1 credit per image for up to 3 marketplaces simultaneously. Image to Prompt and File Reviewer each use 1 credit per image. Batch processing multiple images will use 1 credit per image in the batch.",
   },
   {
     question: "Is the metadata accepted by Adobe Stock / Freepik / Shutterstock?",
@@ -25,11 +25,6 @@ const faqs = [
     question: "How accurate is the Image to Prompt feature?",
     answer:
       "Our Image to Prompt tool uses advanced AI to analyze visual elements, style, composition, and mood. It generates detailed prompts that capture the essence of your images, making it perfect for recreating successful styles or understanding what makes images sell.",
-  },
-  {
-    question: "What file formats does the Background Remover support?",
-    answer:
-      "The Background Remover supports JPEG, PNG, and WebP formats. Output is always in PNG format to preserve transparency. The AI handles complex edges like hair, fur, and transparent objects with high precision.",
   },
   {
     question: "What does the File Reviewer check for?",

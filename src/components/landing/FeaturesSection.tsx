@@ -1,7 +1,6 @@
 import { 
   Wand2, 
   MessageSquareText, 
-  Eraser, 
   FileCheck, 
   Layers, 
   Files, 
@@ -19,11 +18,6 @@ const features = [
     icon: MessageSquareText,
     title: "Image to Prompt",
     description: "Extract detailed AI prompts from any image for Midjourney, DALL-E & Stable Diffusion.",
-  },
-  {
-    icon: Eraser,
-    title: "Background Remover",
-    description: "Remove backgrounds instantly with WebGPU-accelerated local processing.",
   },
   {
     icon: FileCheck,
