@@ -85,19 +85,11 @@ export function CreditTierSelector({
 
 // Fallback credit tier configurations (used if DB fetch fails)
 const FALLBACK_TIERS: Record<string, CreditTier[]> = {
-  pro: [
-    { credits: 100, price: 19 },
-    { credits: 200, price: 29 },
-    { credits: 400, price: 49 },
-    { credits: 800, price: 79 },
-    { credits: 1200, price: 99 },
+  starter: [
+    { credits: 2000, price: 4.99 },
   ],
-  enterprise: [
-    { credits: 500, price: 49 },
-    { credits: 1000, price: 89 },
-    { credits: 2000, price: 159 },
-    { credits: 3000, price: 219 },
-    { credits: 5000, price: 349 },
+  pro: [
+    { credits: 5000, price: 9.99 },
   ],
 };
 

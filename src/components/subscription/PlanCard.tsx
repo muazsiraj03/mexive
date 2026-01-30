@@ -27,8 +27,8 @@ export function PlanCard({
   const isUpgrade = getUpgradeStatus(currentPlan, plan.name);
   const isDowngrade = getDowngradeStatus(currentPlan, plan.name);
   
-  // Check if plan has tiers (pro and enterprise do, unlimited does not)
-  const hasTiers = plan.name === "pro" || plan.name === "enterprise";
+  // Check if plan has tiers (starter and pro do, unlimited does not)
+  const hasTiers = plan.name === "starter" || plan.name === "pro";
   const isUnlimited = plan.name === "unlimited";
   // Get default tier from database
   const defaultTier = useDefaultTier(plan.name);
@@ -110,10 +110,8 @@ export function PlanCard({
           {plan.displayName}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {plan.name === "free" ? "Get started for free" : 
-           plan.name === "pro" ? "For regular contributors" : 
-           plan.name === "unlimited" ? "No limits, ever" :
-           "For power users & teams"}
+          {plan.price === 0 ? "Get started for free" : 
+           `${plan.credits.toLocaleString()} credits${plan.period}`}
         </p>
       </div>
 
@@ -179,11 +177,11 @@ export function PlanCard({
 }
 
 function getUpgradeStatus(current: string, target: string): boolean {
-  const order = ["free", "pro", "enterprise", "unlimited"];
+  const order = ["free", "starter", "pro", "unlimited"];
   return order.indexOf(target) > order.indexOf(current);
 }
 
 function getDowngradeStatus(current: string, target: string): boolean {
-  const order = ["free", "pro", "enterprise", "unlimited"];
+  const order = ["free", "starter", "pro", "unlimited"];
   return order.indexOf(target) < order.indexOf(current);
 }
