@@ -97,10 +97,10 @@ export function PricingSection() {
 
         {/* Subscription Plans */}
         <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {landingPlans.map((plan) => (
+        {landingPlans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative bg-card rounded-2xl p-6 border transition-smooth-300 hover:-translate-y-1 ${
+              className={`relative bg-card rounded-2xl p-6 border transition-smooth-300 hover:-translate-y-1 flex flex-col h-full ${
                 plan.popular
                   ? "border-secondary/40 card-elevated-lg scale-[1.02] hover:border-secondary/60"
                   : "border-border/60 card-elevated hover:card-elevated-lg hover:border-secondary/20"
@@ -125,7 +125,7 @@ export function PricingSection() {
                 <p className="text-sm text-secondary font-medium mt-2">{plan.credits}</p>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 flex-grow">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-success flex-shrink-0" />
@@ -136,7 +136,7 @@ export function PricingSection() {
 
               <Button 
                 onClick={() => handlePlanClick(plan.planKey)}
-                className={`w-full rounded-full font-medium btn-hover-lift ${
+                className={`w-full rounded-full font-medium btn-hover-lift mt-auto ${
                   plan.popular 
                     ? "bg-foreground text-background hover:bg-foreground/85" 
                     : "bg-transparent border border-foreground/20 text-foreground hover:bg-muted hover:border-foreground/30 hover:text-foreground"
