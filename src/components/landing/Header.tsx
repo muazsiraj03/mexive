@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSystemSettings } from "@/hooks/use-system-settings";
 import { useThemeLogo } from "@/hooks/use-theme-logo";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Sheet,
   SheetContent,
@@ -22,6 +23,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { settings } = useSystemSettings();
   const { logo } = useThemeLogo();
+  const { user } = useAuth();
 
   const sizeClasses = {
     small: "h-7",
@@ -60,15 +62,22 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-transparent" asChild>
-            <Link to="/auth">Log in</Link>
-          </Button>
-          <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-5 font-medium btn-hover-lift" asChild>
-            <Link to="/auth">Get Started</Link>
-          </Button>
+          {user ? (
+            <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-5 font-medium btn-hover-lift" asChild>
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-transparent" asChild>
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-5 font-medium btn-hover-lift" asChild>
+                <Link to="/auth">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -95,12 +104,20 @@ export function Header() {
                   <span className="text-sm text-muted-foreground">Theme</span>
                   <ThemeToggle />
                 </div>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>Log in</Link>
-                </Button>
-                <Button className="bg-foreground text-background hover:bg-foreground/90 rounded-full font-medium" asChild>
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>Get Started</Link>
-                </Button>
+                {user ? (
+                  <Button className="bg-foreground text-background hover:bg-foreground/90 rounded-full font-medium" asChild>
+                    <Link to="/dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" className="justify-start" asChild>
+                      <Link to="/auth" onClick={() => setIsOpen(false)}>Log in</Link>
+                    </Button>
+                    <Button className="bg-foreground text-background hover:bg-foreground/90 rounded-full font-medium" asChild>
+                      <Link to="/auth" onClick={() => setIsOpen(false)}>Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </SheetContent>
