@@ -218,7 +218,14 @@ export function AnimatedToolDemo() {
     return () => clearInterval(timer);
   }, [isPlaying]);
 
-  const activeTool = tools[activeIndex];
+  // Safety check - ensure activeIndex is within bounds
+  const safeIndex = Math.min(activeIndex, tools.length - 1);
+  const activeTool = tools[safeIndex];
+
+  // Early return if no tools
+  if (!activeTool) return null;
+
+  const ActiveIcon = activeTool.icon;
 
   const renderDemo = () => {
     switch (activeTool.id) {
@@ -310,7 +317,7 @@ export function AnimatedToolDemo() {
             {/* Right: Live demo */}
             <div className="bg-muted/30 rounded-xl p-4 border border-border/50 min-h-[280px]">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/40">
-                <activeTool.icon className={cn("w-4 h-4", activeTool.color)} />
+                <ActiveIcon className={cn("w-4 h-4", activeTool.color)} />
                 <span className="text-sm font-medium">{activeTool.name}</span>
                 <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary animate-pulse">
                   Live
