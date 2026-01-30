@@ -92,11 +92,11 @@ Deno.serve(async (req) => {
     switch (true) {
       // GET /stats - Dashboard statistics
       case path === "/stats" && req.method === "GET": {
-        const [usersResult, subscriptionsResult, transactionsResult, recentUsersResult] = await Promise.all([
+        const [usersResult, subscriptionsResult, transactionsResult, recentProfilesResult] = await Promise.all([
           adminClient.from("profiles").select("id, created_at", { count: "exact" }),
-          adminClient.from("subscriptions").select("plan, status", { count: "exact" }),
+          adminClient.from("subscriptions").select("plan, status, user_id", { count: "exact" }),
           adminClient.from("transactions").select("amount, status, created_at").eq("status", "completed"),
-          adminClient.from("profiles").select("id, full_name, avatar_url, plan, created_at").order("created_at", { ascending: false }).limit(5),
+          adminClient.from("profiles").select("id, user_id, full_name, avatar_url, created_at").order("created_at", { ascending: false }).limit(5),
         ]);
 
         // Calculate stats
@@ -123,6 +123,21 @@ Deno.serve(async (req) => {
           u => new Date(u.created_at) >= thirtyDaysAgo
         ).length || 0;
 
+        // Build subscription map for recent users
+        const subscriptionMap = new Map<string, string>();
+        subscriptionsResult.data?.forEach(s => {
+          subscriptionMap.set(s.user_id, s.plan);
+        });
+
+        // Enrich recent users with plan data
+        const recentUsers = (recentProfilesResult.data || []).map(profile => ({
+          id: profile.id,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          plan: subscriptionMap.get(profile.user_id) || "free",
+          created_at: profile.created_at,
+        }));
+
         return new Response(
           JSON.stringify({
             totalUsers,
@@ -131,7 +146,7 @@ Deno.serve(async (req) => {
             mrr,
             newUsersLast30Days,
             subscriptionsByPlan,
-            recentUsers: recentUsersResult.data || [],
+            recentUsers,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -209,33 +224,43 @@ Deno.serve(async (req) => {
         const planFilter = url.searchParams.get("plan") || "";
         const offset = (page - 1) * limit;
 
-        // Fetch profiles with joined subscription data
-        let query = adminClient
+        // Fetch profiles separately (no FK relationship exists)
+        let profileQuery = adminClient
           .from("profiles")
-          .select(`
-            id, user_id, full_name, avatar_url, created_at, updated_at,
-            subscriptions!subscriptions_user_id_fkey(plan, credits_remaining, credits_total, status)
-          `, { count: "exact" });
+          .select("id, user_id, full_name, avatar_url, created_at, updated_at", { count: "exact" });
 
         if (search) {
-          query = query.ilike("full_name", `%${search}%`);
+          profileQuery = profileQuery.ilike("full_name", `%${search}%`);
         }
 
-        const { data, count, error } = await query
+        const { data: profiles, count, error: profileError } = await profileQuery
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1);
 
-        if (error) {
-          console.error("Users fetch error:", error);
+        if (profileError) {
+          console.error("Users fetch error:", profileError);
           return new Response(
             JSON.stringify({ error: "Failed to fetch users" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        // Flatten the subscription data into user objects
-        const users = (data || []).map((profile: any) => {
-          const sub = profile.subscriptions?.[0] || {};
+        // Fetch subscriptions for these users
+        const userIds = (profiles || []).map(p => p.user_id);
+        const { data: subscriptions } = await adminClient
+          .from("subscriptions")
+          .select("user_id, plan, credits_remaining, credits_total, status")
+          .in("user_id", userIds);
+
+        // Build subscription map
+        const subscriptionMap = new Map<string, any>();
+        subscriptions?.forEach(s => {
+          subscriptionMap.set(s.user_id, s);
+        });
+
+        // Combine profile and subscription data
+        let users = (profiles || []).map((profile: any) => {
+          const sub = subscriptionMap.get(profile.user_id) || {};
           return {
             id: profile.user_id || profile.id,
             full_name: profile.full_name,
@@ -243,11 +268,16 @@ Deno.serve(async (req) => {
             plan: sub.plan || "free",
             credits: sub.credits_remaining || 0,
             total_credits: sub.credits_total || 0,
-            has_unlimited_credits: false, // Determined by plan config
+            has_unlimited_credits: false,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
           };
-        }).filter((u: any) => !planFilter || u.plan === planFilter);
+        });
+
+        // Apply plan filter if specified
+        if (planFilter) {
+          users = users.filter(u => u.plan === planFilter);
+        }
 
         return new Response(
           JSON.stringify({
@@ -325,31 +355,45 @@ Deno.serve(async (req) => {
         const status = url.searchParams.get("status") || "";
         const offset = (page - 1) * limit;
 
-        // Use left join via profiles:user_id to ensure we get all subscriptions
-        // even if profile data is missing for some reason
-        let query = adminClient
+        // Fetch subscriptions first
+        let subsQuery = adminClient
           .from("subscriptions")
-          .select(`
-            id, plan, status, started_at, expires_at, stripe_customer_id, created_at,
-            requested_credits, requested_price_cents,
-            profiles:user_id(id, full_name, avatar_url)
-          `, { count: "exact" });
+          .select("id, user_id, plan, status, started_at, expires_at, stripe_customer_id, created_at", { count: "exact" });
 
         if (status) {
-          query = query.eq("status", status);
+          subsQuery = subsQuery.eq("status", status);
         }
 
-        const { data, count, error } = await query
+        const { data: subscriptionsData, count, error: subsError } = await subsQuery
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1);
 
-        if (error) {
-          console.error("Subscriptions fetch error:", error);
+        if (subsError) {
+          console.error("Subscriptions fetch error:", subsError);
           return new Response(
             JSON.stringify({ error: "Failed to fetch subscriptions" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
+
+        // Fetch profiles for these subscriptions
+        const userIds = (subscriptionsData || []).map(s => s.user_id);
+        const { data: profilesData } = await adminClient
+          .from("profiles")
+          .select("user_id, id, full_name, avatar_url")
+          .in("user_id", userIds);
+
+        // Build profile map
+        const profileMap = new Map<string, any>();
+        profilesData?.forEach(p => {
+          profileMap.set(p.user_id, p);
+        });
+
+        // Combine data
+        const subscriptions = (subscriptionsData || []).map(sub => ({
+          ...sub,
+          profiles: profileMap.get(sub.user_id) || { id: sub.user_id, full_name: null, avatar_url: null },
+        }));
 
         // Get subscription stats
         const { data: statsData } = await adminClient
@@ -370,7 +414,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({
-            subscriptions: data,
+            subscriptions,
             total: count,
             page,
             limit,
