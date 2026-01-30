@@ -68,7 +68,7 @@ export function SettingsPage() {
     const { error } = await supabase
       .from("profiles")
       .update({ full_name: name })
-      .eq("id", authUser.id);
+      .eq("user_id", authUser.id);
 
     if (error) {
       toast.error("Failed to update profile");
@@ -125,7 +125,7 @@ export function SettingsPage() {
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: avatarUrl })
-        .eq("id", authUser.id);
+        .eq("user_id", authUser.id);
 
       if (updateError) throw updateError;
 
