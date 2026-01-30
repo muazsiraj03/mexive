@@ -129,7 +129,7 @@ export function CreditPacksSection() {
                         {totalCredits}
                       </TableCell>
                       <TableCell className="text-right font-bold text-lg">
-                        ${(pack.priceCents / 100).toFixed(0)}
+                        ${(pack.priceCents / 100).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         ${pricePerCredit}
