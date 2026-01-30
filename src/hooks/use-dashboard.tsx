@@ -98,24 +98,37 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (!authUser) return;
 
+    // Fetch profile data
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", authUser.id)
+      .eq("user_id", authUser.id)
       .single();
 
-    if (profile) {
-      setUser({
-        id: profile.id,
-        name: profile.full_name || authUser.email || "",
-        email: authUser.email || "",
-        avatar: profile.avatar_url || undefined,
-        plan: (profile.plan as "free" | "pro" | "enterprise") || "free",
-        credits: profile.credits || 0,
-        totalCredits: profile.total_credits || 0,
-        hasUnlimitedCredits: profile.has_unlimited_credits || false,
-      });
-    }
+    // Fetch subscription data
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", authUser.id)
+      .single();
+
+    // Find plan config to check if unlimited
+    const { data: planConfig } = await supabase
+      .from("pricing_config")
+      .select("is_unlimited")
+      .eq("plan_name", subscription?.plan || "free")
+      .single();
+
+    setUser({
+      id: authUser.id,
+      name: profile?.full_name || authUser.email || "",
+      email: authUser.email || "",
+      avatar: profile?.avatar_url || undefined,
+      plan: (subscription?.plan as "free" | "pro" | "enterprise") || "free",
+      credits: subscription?.credits_remaining || 0,
+      totalCredits: subscription?.credits_total || 0,
+      hasUnlimitedCredits: planConfig?.is_unlimited || false,
+    });
   };
 
   const refreshGenerations = async () => {
@@ -254,9 +267,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     // Deduct credits (skip for admins and users with unlimited credits)
     if (!isAdmin && !user.hasUnlimitedCredits) {
       await supabase
-        .from("profiles")
-        .update({ credits: Math.max(0, user.credits - generation.marketplaces.length) })
-        .eq("id", authUser.id);
+        .from("subscriptions")
+        .update({ credits_remaining: Math.max(0, user.credits - generation.marketplaces.length) })
+        .eq("user_id", authUser.id);
     }
 
     // Refresh data
@@ -388,9 +401,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     // Deduct credits (skip for admins and users with unlimited credits)
     if (!isAdmin && !user.hasUnlimitedCredits) {
       await supabase
-        .from("profiles")
-        .update({ credits: Math.max(0, user.credits - marketplaces.length) })
-        .eq("id", authUser.id);
+        .from("subscriptions")
+        .update({ credits_remaining: Math.max(0, user.credits - marketplaces.length) })
+        .eq("user_id", authUser.id);
     }
 
     // Refresh data

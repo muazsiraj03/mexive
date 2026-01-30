@@ -191,7 +191,7 @@ export function AdminUsers() {
 
   const callAdminApi = useCallback(async (path: string, options: RequestInit = {}) => {
     if (!session?.access_token) throw new Error("No session");
-    const baseUrl = `https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/admin-api${path}`;
+    const baseUrl = `https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/admin-api${path}`;
     const res = await fetch(baseUrl, {
       ...options,
       headers: {

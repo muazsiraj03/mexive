@@ -209,15 +209,16 @@ Deno.serve(async (req) => {
         const planFilter = url.searchParams.get("plan") || "";
         const offset = (page - 1) * limit;
 
+        // Fetch profiles with joined subscription data
         let query = adminClient
           .from("profiles")
-          .select("id, full_name, avatar_url, plan, credits, total_credits, has_unlimited_credits, created_at, updated_at", { count: "exact" });
+          .select(`
+            id, user_id, full_name, avatar_url, created_at, updated_at,
+            subscriptions!subscriptions_user_id_fkey(plan, credits_remaining, credits_total, status)
+          `, { count: "exact" });
 
         if (search) {
           query = query.ilike("full_name", `%${search}%`);
-        }
-        if (planFilter) {
-          query = query.eq("plan", planFilter);
         }
 
         const { data, count, error } = await query
@@ -232,56 +233,87 @@ Deno.serve(async (req) => {
           );
         }
 
+        // Flatten the subscription data into user objects
+        const users = (data || []).map((profile: any) => {
+          const sub = profile.subscriptions?.[0] || {};
+          return {
+            id: profile.user_id || profile.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            plan: sub.plan || "free",
+            credits: sub.credits_remaining || 0,
+            total_credits: sub.credits_total || 0,
+            has_unlimited_credits: false, // Determined by plan config
+            created_at: profile.created_at,
+            updated_at: profile.updated_at,
+          };
+        }).filter((u: any) => !planFilter || u.plan === planFilter);
+
         return new Response(
           JSON.stringify({
-            users: data,
-            total: count,
+            users,
+            total: planFilter ? users.length : count,
             page,
             limit,
-            totalPages: Math.ceil((count || 0) / limit),
+            totalPages: Math.ceil((planFilter ? users.length : count || 0) / limit),
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       // PATCH /users/:id - Update user
-      case path.startsWith("/users/") && req.method === "PATCH": {
+      case path.startsWith("/users/") && !path.includes("/roles") && !path.includes("/role") && req.method === "PATCH": {
         const targetUserId = path.replace("/users/", "");
         const body = await req.json();
         
-        const allowedFields = ["plan", "credits", "full_name", "has_unlimited_credits"];
-        const updates: Record<string, unknown> = {};
-        
-        for (const field of allowedFields) {
+        // Handle profile updates
+        const profileFields = ["full_name", "avatar_url"];
+        const profileUpdates: Record<string, unknown> = {};
+        for (const field of profileFields) {
           if (body[field] !== undefined) {
-            updates[field] = body[field];
+            profileUpdates[field] = body[field];
           }
         }
 
-        if (Object.keys(updates).length === 0) {
+        // Handle subscription updates
+        const subFields = ["plan", "credits"];
+        const subUpdates: Record<string, unknown> = {};
+        if (body.plan !== undefined) subUpdates.plan = body.plan;
+        if (body.credits !== undefined) subUpdates.credits_remaining = body.credits;
+
+        if (Object.keys(profileUpdates).length === 0 && Object.keys(subUpdates).length === 0) {
           return new Response(
             JSON.stringify({ error: "No valid fields to update" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        const { data, error } = await adminClient
-          .from("profiles")
-          .update(updates)
-          .eq("id", targetUserId)
-          .select()
-          .single();
+        // Update profile if needed
+        if (Object.keys(profileUpdates).length > 0) {
+          const { error: profileError } = await adminClient
+            .from("profiles")
+            .update(profileUpdates)
+            .eq("user_id", targetUserId);
 
-        if (error) {
-          console.error("User update error:", error);
-          return new Response(
-            JSON.stringify({ error: "Failed to update user" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          if (profileError) {
+            console.error("Profile update error:", profileError);
+          }
+        }
+
+        // Update subscription if needed
+        if (Object.keys(subUpdates).length > 0) {
+          const { error: subError } = await adminClient
+            .from("subscriptions")
+            .update(subUpdates)
+            .eq("user_id", targetUserId);
+
+          if (subError) {
+            console.error("Subscription update error:", subError);
+          }
         }
 
         return new Response(
-          JSON.stringify({ user: data }),
+          JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
