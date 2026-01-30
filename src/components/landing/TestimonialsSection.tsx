@@ -36,8 +36,8 @@ const testimonials = [
     avatar: "",
     rating: 5,
     content:
-      "The Background Remover saves me so much time on product shots. The edge detection is incredibly precise, even with complex subjects like jewelry and glassware.",
-    tool: "Background Remover",
+      "The File Reviewer has been a game-changer for my workflow. I catch issues before submission and my acceptance rate has improved dramatically.",
+    tool: "File Reviewer",
   },
   {
     name: "Michael Park",

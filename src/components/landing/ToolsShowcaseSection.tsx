@@ -2,7 +2,6 @@ import { useState } from "react";
 import { 
   Wand2, 
   MessageSquareText, 
-  Eraser, 
   FileCheck,
   Check,
   Sparkles,
@@ -43,20 +42,6 @@ const tools = [
     mockup: PromptMockup,
   },
   {
-    id: "background",
-    name: "Background Remover",
-    icon: Eraser,
-    tagline: "Instant Background Removal",
-    description: "Remove backgrounds with WebGPU-accelerated local processing. No credits consumed, works entirely in your browser.",
-    features: [
-      "100% local processing",
-      "High-precision AI models",
-      "Transparent PNG export",
-      "Zero credit cost",
-    ],
-    mockup: BackgroundMockup,
-  },
-  {
     id: "reviewer",
     name: "File Reviewer",
     icon: FileCheck,
@@ -88,7 +73,7 @@ export function ToolsShowcaseSection() {
             Everything You Need in One Dashboard
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Four powerful AI tools designed specifically for stock contributors
+            Three powerful AI tools designed specifically for stock contributors
           </p>
         </div>
 
@@ -245,48 +230,6 @@ function PromptMockup() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function BackgroundMockup() {
-  return (
-    <div className="bg-card rounded-2xl border border-border/60 card-elevated-lg overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60 bg-muted/30">
-        <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
-        </div>
-      </div>
-      <div className="p-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-muted-foreground">Original</span>
-            <div className="aspect-square rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <div className="w-16 h-20 bg-foreground/20 rounded-lg" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-muted-foreground">Transparent</span>
-            <div className="aspect-square rounded-xl bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZTVlN2ViIi8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNlNWU3ZWIiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] flex items-center justify-center">
-              <div className="w-16 h-20 bg-foreground/40 rounded-lg" />
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-success/10 border border-success/20">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            <span className="text-sm font-medium text-success">Background removed</span>
-          </div>
-          <button className="p-2 rounded-lg bg-success/20 hover:bg-success/30 transition-smooth">
-            <Download className="w-4 h-4 text-success" />
-          </button>
-        </div>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          ✨ Zero credits • 100% local processing
-        </p>
       </div>
     </div>
   );

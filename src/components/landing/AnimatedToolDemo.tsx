@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { 
   Wand2, 
   MessageSquareText, 
-  Eraser, 
   FileCheck,
   Check,
   Sparkles,
@@ -26,13 +25,6 @@ const tools = [
     icon: MessageSquareText,
     color: "text-secondary",
     bgColor: "bg-secondary/10",
-  },
-  {
-    id: "background",
-    name: "Background Remover",
-    icon: Eraser,
-    color: "text-accent-foreground",
-    bgColor: "bg-accent/10",
   },
   {
     id: "reviewer",
@@ -146,67 +138,6 @@ function PromptDemo({ isActive }: { isActive: boolean }) {
   );
 }
 
-// Background Remover Demo
-function BackgroundDemo({ isActive }: { isActive: boolean }) {
-  const [progress, setProgress] = useState(0);
-  
-  useEffect(() => {
-    if (!isActive) {
-      setProgress(0);
-      return;
-    }
-    const timer = setInterval(() => {
-      setProgress((p) => Math.min(p + 2, 100));
-    }, 50);
-    return () => clearInterval(timer);
-  }, [isActive]);
-
-  return (
-    <div className="space-y-4">
-      <div className="relative aspect-video rounded-lg overflow-hidden border border-border/50">
-        {/* Checkered pattern for transparency */}
-        <div 
-          className="absolute inset-0 transition-all duration-500"
-          style={{
-            backgroundImage: `linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), 
-                             linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), 
-                             linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), 
-                             linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)`,
-            backgroundSize: "16px 16px",
-            backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-            opacity: progress / 100,
-          }}
-        />
-        
-        {/* Simulated subject */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div 
-            className="w-20 h-28 rounded-lg bg-gradient-to-b from-secondary/80 to-secondary/60 flex items-center justify-center transition-all duration-500"
-            style={{ 
-              boxShadow: progress > 50 ? "0 10px 40px -10px hsl(var(--secondary) / 0.5)" : "none",
-            }}
-          >
-            <ImageIcon className="w-8 h-8 text-secondary-foreground/60" />
-          </div>
-        </div>
-        
-        {/* Scanning line */}
-        {progress < 100 && (
-          <div 
-            className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"
-            style={{ top: `${progress}%` }}
-          />
-        )}
-      </div>
-      
-      <div className="flex items-center gap-3">
-        <Progress value={progress} className="flex-1 h-2" />
-        <span className="text-xs text-muted-foreground w-12">{progress}%</span>
-      </div>
-    </div>
-  );
-}
-
 // File Reviewer Demo
 function ReviewerDemo({ isActive }: { isActive: boolean }) {
   const [checks, setChecks] = useState<number[]>([]);
@@ -295,8 +226,6 @@ export function AnimatedToolDemo() {
         return <MetadataDemo isActive={true} />;
       case "prompt":
         return <PromptDemo isActive={true} />;
-      case "background":
-        return <BackgroundDemo isActive={true} />;
       case "reviewer":
         return <ReviewerDemo isActive={true} />;
       default:

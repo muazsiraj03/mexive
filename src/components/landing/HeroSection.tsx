@@ -22,9 +22,8 @@ export function HeroSection() {
             <span className="text-secondary">Stock Contributors</span>
           </h1>
 
-          {/* Subheadline */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-            Metadata generator, image-to-prompt, background remover & file reviewer — everything you need to upload faster.
+            Metadata generator, image-to-prompt & file reviewer — everything you need to upload faster.
           </p>
 
           {/* CTA Buttons */}
