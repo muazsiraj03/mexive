@@ -59,7 +59,7 @@ export function AdminSettings() {
     if (!session?.access_token) throw new Error("No session");
     
     const res = await fetch(
-      `https://cznvtcvzotilcxajcflw.supabase.co/functions/v1/admin-api${path}`,
+      `https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/admin-api${path}`,
       {
         ...options,
         headers: {
