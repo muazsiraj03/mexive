@@ -76,7 +76,7 @@ export function PlanCard({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-1",
+        "relative bg-card rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-1 flex flex-col h-full",
         plan.popular
           ? "border-secondary/40 shadow-lg scale-[1.02] hover:border-secondary/60"
           : isUnlimited 
@@ -150,7 +150,7 @@ export function PlanCard({
         </div>
       )}
 
-      <ul className="space-y-3 mb-8">
+      <ul className="space-y-3 mb-8 flex-grow">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-center gap-2 text-sm">
             <Check className="w-4 h-4 text-primary flex-shrink-0" />
@@ -164,7 +164,7 @@ export function PlanCard({
         disabled={isCurrent || isPending || loading || disabled || plan.name === "free"}
         variant={getButtonVariant()}
         className={cn(
-          "w-full rounded-full font-medium transition-all",
+          "w-full rounded-full font-medium transition-all mt-auto",
           plan.popular && !isCurrent && !isPending && "bg-foreground text-background hover:bg-foreground/85",
           isUnlimited && !isCurrent && !isPending && "bg-primary text-primary-foreground hover:bg-primary/90"
         )}
