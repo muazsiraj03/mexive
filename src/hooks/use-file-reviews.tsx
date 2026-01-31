@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { processFileForAnalysis } from "@/lib/file-processor";
 import type { FileReview, FileReviewResult, PendingReview } from "@/lib/file-reviewer";
 import { getFileExtension, isUnsupportedForBrowser } from "@/lib/file-reviewer";
+import { useDashboard } from "@/hooks/use-dashboard";
 
 const SUPABASE_URL = "https://qwnrymtaokajuqtgdaex.supabase.co";
 
 export function useFileReviews() {
+  const { refreshProfile } = useDashboard();
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [reviewHistory, setReviewHistory] = useState<FileReview[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -190,11 +192,8 @@ export function useFileReviews() {
         console.error("Error saving review:", dbError);
       }
 
-      // Deduct credit
-      const { error: creditError } = await supabase.rpc("deduct_credit" as any);
-      if (creditError) {
-        console.warn("Could not deduct credit:", creditError);
-      }
+      // Refresh profile to update credits in UI (credit was deducted by edge function)
+      await refreshProfile();
 
       // Update pending with result
       setPendingReviews((prev) =>
