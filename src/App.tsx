@@ -17,6 +17,14 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Refund from "./pages/Refund";
+import Cookies from "./pages/Cookies";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import Careers from "./pages/Careers";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +82,15 @@ const App = () => (
                     </MaintenanceGuard>
                   }
                 />
+                {/* Legal & Company Pages */}
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/refund" element={<Refund />} />
+                <Route path="/cookies" element={<Cookies />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/careers" element={<Careers />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
