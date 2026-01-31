@@ -108,7 +108,7 @@ export function ReferralPage() {
   if (!settings?.is_active) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
-        <Gift className="h-16 w-16 text-muted-foreground mb-4" />
+        <Gift className="h-16 w-16 text-primary mb-4" />
         <h2 className="text-2xl font-semibold mb-2">Referral Program Unavailable</h2>
         <p className="text-muted-foreground">
           The referral program is currently disabled. Check back later!
@@ -131,7 +131,7 @@ export function ReferralPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalReferrals}</div>
@@ -144,7 +144,7 @@ export function ReferralPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Credits Earned</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCreditsEarned}</div>
@@ -157,7 +157,7 @@ export function ReferralPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reward Per Referral</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
+            <Gift className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{settings?.referrer_reward_credits || 10}</div>
@@ -172,7 +172,7 @@ export function ReferralPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5" />
+            <Gift className="h-5 w-5 text-primary" />
             Your Referral Code
           </CardTitle>
           <CardDescription>
@@ -273,7 +273,7 @@ export function ReferralPage() {
         <CardContent>
           {referrals.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <Users className="h-12 w-12 mx-auto mb-3 text-primary opacity-50" />
               <p>No referrals yet</p>
               <p className="text-sm">Share your code to start earning!</p>
             </div>
