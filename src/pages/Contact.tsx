@@ -58,7 +58,7 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-24 pb-16">
-        <div className="container max-w-5xl">
+        <div className="container max-w-6xl">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
             <p className="text-xl text-muted-foreground">
@@ -66,42 +66,44 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center p-6 rounded-xl border border-border bg-card">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-6 h-6 text-primary" />
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Left Column - Contact Info */}
+            <div className="space-y-6">
+              <div className="p-6 rounded-xl border border-border bg-card">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Mail className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Email Us</h3>
+                <a
+                  href={`mailto:${settings.supportEmail}`}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {settings.supportEmail}
+                </a>
               </div>
-              <h3 className="font-semibold mb-2">Email Us</h3>
-              <a
-                href={`mailto:${settings.supportEmail}`}
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                {settings.supportEmail}
-              </a>
+
+              <div className="p-6 rounded-xl border border-border bg-card">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Live Chat</h3>
+                <p className="text-muted-foreground text-sm">
+                  Available in dashboard for logged-in users
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-border bg-card">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Clock className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Response Time</h3>
+                <p className="text-muted-foreground text-sm">
+                  Usually within 24 hours
+                </p>
+              </div>
             </div>
 
-            <div className="text-center p-6 rounded-xl border border-border bg-card">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Live Chat</h3>
-              <p className="text-muted-foreground text-sm">
-                Available in dashboard for logged-in users
-              </p>
-            </div>
-
-            <div className="text-center p-6 rounded-xl border border-border bg-card">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Response Time</h3>
-              <p className="text-muted-foreground text-sm">
-                Usually within 24 hours
-              </p>
-            </div>
-          </div>
-
-          <div className="max-w-xl mx-auto">
+            {/* Right Column - Contact Form */}
             <div className="bg-card border border-border rounded-2xl p-8">
               <h2 className="text-2xl font-semibold mb-6">Send a Message</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
