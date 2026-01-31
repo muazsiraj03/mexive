@@ -19,6 +19,7 @@ import {
   FileImage,
   Type,
   Mail,
+  Phone,
   Search,
   Share2,
   Save,
@@ -329,6 +330,7 @@ export function BrandingSettings() {
   const [browserTitle, setBrowserTitle] = useState(settings.browserTitle);
   const [footerText, setFooterText] = useState(settings.footerText);
   const [supportEmail, setSupportEmail] = useState(settings.supportEmail);
+  const [whatsappNumber, setWhatsappNumber] = useState(settings.whatsappNumber);
   const [metaDescription, setMetaDescription] = useState(settings.metaDescription);
   const [metaKeywords, setMetaKeywords] = useState(settings.metaKeywords);
   const [savingIdentity, setSavingIdentity] = useState(false);
@@ -340,6 +342,7 @@ export function BrandingSettings() {
     setBrowserTitle(settings.browserTitle);
     setFooterText(settings.footerText);
     setSupportEmail(settings.supportEmail);
+    setWhatsappNumber(settings.whatsappNumber);
     setMetaDescription(settings.metaDescription);
     setMetaKeywords(settings.metaKeywords);
   });
@@ -433,6 +436,7 @@ export function BrandingSettings() {
         updateSetting("browser_title", browserTitle),
         updateSetting("footer_text", footerText),
         updateSetting("support_email", supportEmail),
+        updateSetting("whatsapp_number", whatsappNumber),
       ]);
       toast({ title: "Brand identity saved" });
     } catch {
@@ -694,14 +698,29 @@ export function BrandingSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="footerText">Footer Text</Label>
+              <Label htmlFor="whatsappNumber" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                WhatsApp Number
+              </Label>
               <Input
-                id="footerText"
-                value={footerText}
-                onChange={(e) => setFooterText(e.target.value)}
-                placeholder="© 2025 MetaGen. All rights reserved."
+                id="whatsappNumber"
+                type="tel"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                placeholder="+880 1XXX-XXXXXX"
               />
+              <p className="text-xs text-muted-foreground">Shown on contact page</p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="footerText">Footer Text</Label>
+            <Input
+              id="footerText"
+              value={footerText}
+              onChange={(e) => setFooterText(e.target.value)}
+              placeholder="© 2025 MetaGen. All rights reserved."
+            />
           </div>
 
           <div className="flex justify-end">
