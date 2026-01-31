@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef } from "react";
-import { useTestimonials, Testimonial } from "@/hooks/use-testimonials";
+import { useTestimonials, useLandingStats, Testimonial } from "@/hooks/use-testimonials";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
@@ -86,12 +86,27 @@ function TestimonialSkeleton() {
   );
 }
 
+function StatsSkeleton() {
+  return (
+    <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 rounded-2xl bg-card border border-border/60">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="text-center">
+          <Skeleton className="h-10 w-20 mx-auto mb-2" />
+          <Skeleton className="h-4 w-24 mx-auto" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function TestimonialsSection() {
-  const { testimonials, isLoading } = useTestimonials();
+  const { testimonials, isLoading: isLoadingTestimonials } = useTestimonials();
+  const { stats, isLoading: isLoadingStats } = useLandingStats();
   const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }));
 
-  // Filter to only show active testimonials (already handled by RLS, but just in case)
+  // Filter to only show active testimonials
   const activeTestimonials = testimonials.filter((t) => t.is_active);
+  const activeStats = stats.filter((s) => s.is_active);
 
   return (
     <section className="section-padding bg-muted/30">
@@ -110,7 +125,7 @@ export function TestimonialsSection() {
         </div>
 
         <div className="px-12">
-          {isLoading ? (
+          {isLoadingTestimonials ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
                 <TestimonialSkeleton key={i} />
@@ -148,32 +163,20 @@ export function TestimonialsSection() {
         </div>
 
         {/* Stats bar */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 rounded-2xl bg-card border border-border/60 card-elevated">
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-secondary mb-1">
-              10K+
-            </p>
-            <p className="text-sm text-muted-foreground">Active Users</p>
+        {isLoadingStats ? (
+          <StatsSkeleton />
+        ) : activeStats.length > 0 ? (
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 p-8 rounded-2xl bg-card border border-border/60 card-elevated">
+            {activeStats.map((stat) => (
+              <div key={stat.id} className="text-center">
+                <p className="text-3xl md:text-4xl font-bold text-secondary mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
           </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-secondary mb-1">
-              2M+
-            </p>
-            <p className="text-sm text-muted-foreground">Images Processed</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-secondary mb-1">
-              95%
-            </p>
-            <p className="text-sm text-muted-foreground">Acceptance Rate</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold text-secondary mb-1">
-              4.9/5
-            </p>
-            <p className="text-sm text-muted-foreground">User Rating</p>
-          </div>
-        </div>
+        ) : null}
       </div>
     </section>
   );
