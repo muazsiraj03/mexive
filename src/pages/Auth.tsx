@@ -43,6 +43,9 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showEmailNotConfirmedHint, setShowEmailNotConfirmedHint] = useState(false);
   
+  // Get referral code from URL
+  const referralCode = searchParams.get("ref");
+  
   // Check if this is a password reset flow or confirmation flow
   const isResetMode = searchParams.get("mode") === "reset";
   const isConfirmMode = searchParams.get("mode") === "confirm";
@@ -96,7 +99,7 @@ export default function Auth() {
       if (accessToken && refreshToken && (isRecovery || isSignupCallback)) {
         setIsProcessingAuth(true);
         try {
-          const { error } = await supabase.auth.setSession({
+          const { error, data } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -111,6 +114,23 @@ export default function Auth() {
             }
           } else if (isSignupCallback) {
             toast.success("Email confirmed! Welcome aboard.");
+            
+            // Process pending referral if exists
+            const pendingReferralCode = localStorage.getItem("pending_referral_code");
+            if (pendingReferralCode && data?.user) {
+              try {
+                await supabase.functions.invoke("process-referral", {
+                  body: {
+                    referral_code: pendingReferralCode,
+                    referee_id: data.user.id,
+                  },
+                });
+                localStorage.removeItem("pending_referral_code");
+                toast.success("Referral bonus applied!");
+              } catch (refError) {
+                console.error("Failed to process referral:", refError);
+              }
+            }
           }
           
           const mode = isRecovery ? "?mode=reset" : "";
@@ -199,7 +219,13 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName || undefined);
+    
+    // Store referral code in localStorage before signup so we can process it after email confirmation
+    if (referralCode) {
+      localStorage.setItem("pending_referral_code", referralCode);
+    }
+    
+    const { error, data } = await signUp(signupEmail, signupPassword, signupName || undefined);
     setIsLoading(false);
 
     if (error) {
@@ -208,8 +234,26 @@ export default function Auth() {
       } else {
         setError(error.message);
       }
+      // Clean up referral code on error
+      localStorage.removeItem("pending_referral_code");
     } else {
       toast.success("Account created! Check your email to confirm your account.");
+      
+      // If user was created and we have a referral code, try to process it immediately
+      // (for cases where email confirmation is disabled)
+      if (data?.user && referralCode) {
+        try {
+          await supabase.functions.invoke("process-referral", {
+            body: {
+              referral_code: referralCode,
+              referee_id: data.user.id,
+            },
+          });
+          localStorage.removeItem("pending_referral_code");
+        } catch (refError) {
+          console.log("Referral will be processed after email confirmation");
+        }
+      }
     }
   };
 
@@ -361,6 +405,16 @@ export default function Auth() {
                     <p className="text-xs text-muted-foreground mt-1">
                       You'll be directed to complete your subscription after signing up
                     </p>
+                  </div>
+                )}
+                {referralCode && isSignUp && (
+                  <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Sparkles className="h-4 w-4 text-green-600" />
+                      <span className="text-green-700 dark:text-green-400 font-medium">
+                        Referral bonus! You'll get extra credits when you sign up.
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

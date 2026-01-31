@@ -689,6 +689,102 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_settings: {
+        Row: {
+          cap_period: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          max_referrals_per_user: number | null
+          referee_reward_credits: number
+          referrer_reward_credits: number
+          reward_trigger: string
+          updated_at: string
+        }
+        Insert: {
+          cap_period?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_referrals_per_user?: number | null
+          referee_reward_credits?: number
+          referrer_reward_credits?: number
+          reward_trigger?: string
+          updated_at?: string
+        }
+        Update: {
+          cap_period?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_referrals_per_user?: number | null
+          referee_reward_credits?: number
+          referrer_reward_credits?: number
+          reward_trigger?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referee_id: string
+          referee_reward_credits: number
+          referral_code: string
+          referrer_id: string
+          referrer_reward_credits: number
+          rewarded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referee_id: string
+          referee_reward_credits?: number
+          referral_code: string
+          referrer_id: string
+          referrer_reward_credits?: number
+          rewarded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referee_id?: string
+          referee_reward_credits?: number
+          referral_code?: string
+          referrer_id?: string
+          referrer_reward_credits?: number
+          rewarded_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           bonus_credits: number
@@ -954,12 +1050,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_referral_code: {
+        Args: { p_full_name: string; p_user_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_bonus_credits: {
+        Args: { p_credits: number; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

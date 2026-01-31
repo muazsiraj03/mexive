@@ -1,4 +1,4 @@
-import { Home, Wand2, Settings, Sparkles, LogOut, Shield, CreditCard, MessageSquareText, FileSearch } from "lucide-react";
+import { Home, Wand2, Settings, Sparkles, LogOut, Shield, CreditCard, MessageSquareText, FileSearch, Gift } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
@@ -28,6 +28,7 @@ import { toast } from "sonner";
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: Home },
   { title: "Subscription", url: "/dashboard/subscription", icon: CreditCard },
+  { title: "Referrals", url: "/dashboard/referrals", icon: Gift },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
