@@ -1004,7 +1004,7 @@ export function GeneratePage() {
               <AnimatedSection variant="fade-up" delay={300}>
                 <div className="rounded-xl border border-border/40 bg-muted/20 p-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="text-sm text-foreground font-medium">Credits Required</p>
                       <p className="text-sm text-muted-foreground">

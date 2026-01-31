@@ -69,7 +69,7 @@ function EmptyState({ search, message }: { search: string; message?: string }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-12 text-center card-elevated">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-        <Search className="h-8 w-8 text-muted-foreground" />
+        <Search className="h-8 w-8 text-primary" />
       </div>
       <h3 className="mt-4 text-lg font-semibold text-foreground">
         {message || "No generations found"}
@@ -459,7 +459,7 @@ export function HistoryTabContent() {
                         className="h-8 w-8 shrink-0"
                         onClick={cancelEditingName}
                       >
-                        <X className="h-4 w-4 text-muted-foreground" />
+                        <X className="h-4 w-4 text-primary" />
                       </Button>
                     </div>
                   ) : (
@@ -471,7 +471,7 @@ export function HistoryTabContent() {
                         className="h-8 w-8 shrink-0"
                         onClick={startEditingName}
                       >
-                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                        <Pencil className="h-4 w-4 text-primary" />
                       </Button>
                     </div>
                   )}

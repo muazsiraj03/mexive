@@ -78,7 +78,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Currently Online</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Connection Status</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -157,7 +157,7 @@ function LiveUsersTab() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <Users className="h-12 w-12 text-primary/50 mb-4" />
               <p className="text-lg font-medium text-muted-foreground">No users online</p>
               <p className="text-sm text-muted-foreground">
                 {isConnected 
@@ -384,7 +384,7 @@ export function AdminUsers() {
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                     <Input
                       placeholder={globalSearch ? `Global: "${globalSearch}"` : "Search by name..."}
                       value={localSearch}
@@ -409,7 +409,7 @@ export function AdminUsers() {
                 {/* Table */}
                 {loading ? (
                   <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : (
                   <>

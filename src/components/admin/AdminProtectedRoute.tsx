@@ -15,7 +15,7 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Verifying admin access...</p>
         </div>
       </div>

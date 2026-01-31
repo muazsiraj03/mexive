@@ -275,7 +275,7 @@ export function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                     <Input
                       id="email"
                       type="email"
@@ -433,7 +433,7 @@ export function SettingsPage() {
             <div className="mt-6 space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border/40 bg-muted/30 p-4">
                 <div className="flex items-center gap-3">
-                  <KeyRound className="h-5 w-5 text-muted-foreground" />
+                  <KeyRound className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium text-foreground">Change Password</p>
                     <p className="text-sm text-muted-foreground">

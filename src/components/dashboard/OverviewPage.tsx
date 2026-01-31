@@ -230,7 +230,7 @@ export function OverviewPage() {
                       <h3 className="font-semibold text-foreground">{tool.title}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{tool.description}</p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
+                    <ArrowRight className="h-5 w-5 text-primary opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
                   </div>
                 </Link>
               ))}

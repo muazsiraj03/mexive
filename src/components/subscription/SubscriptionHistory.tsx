@@ -66,7 +66,7 @@ export function SubscriptionHistory({ history, plans }: SubscriptionHistoryProps
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-            <History className="h-5 w-5 text-muted-foreground" />
+            <History className="h-5 w-5 text-primary" />
           </div>
           <div>
             <CardTitle className="text-lg">Subscription History</CardTitle>

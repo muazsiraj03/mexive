@@ -337,7 +337,7 @@ export function PresetManager({ currentPreferences, onLoadPreset }: PresetManage
           <ScrollArea className="h-[300px]">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : presets.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground text-sm">
