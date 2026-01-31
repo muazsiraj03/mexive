@@ -32,9 +32,7 @@ interface EmailPayload {
 interface BrandSettings {
   siteName: string;
   supportEmail: string;
-  tagline: string;
   primaryColor: string;
-  logoUrl: string;
   websiteUrl: string;
   whatsappNumber: string;
 }
@@ -54,15 +52,37 @@ async function getBrandSettings(supabase: any): Promise<BrandSettings> {
   return {
     siteName: settingsMap.app_name || "Mexive",
     supportEmail: settingsMap.support_email || "support@mexive.com",
-    tagline: "AI-Powered Metadata for Stock Contributors",
     primaryColor: "#6366f1",
-    logoUrl: "https://mexive.lovable.app/og-image.png",
     websiteUrl: "https://mexive.lovable.app",
     whatsappNumber: settingsMap.whatsapp_number || "",
   };
 }
 
-// Generate the branded email wrapper
+// Icon SVGs for email (embedded as data URIs for email compatibility)
+function getIconCircle(icon: string, brand: BrandSettings): string {
+  const iconMap: Record<string, string> = {
+    welcome: "🎉",
+    upgrade: "📈",
+    credits: "💳",
+    gift: "🎁",
+    clock: "⏰",
+    mail: "✉️",
+    check: "✓",
+    info: "ℹ️",
+  };
+  
+  return `
+    <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto 24px auto;">
+      <tr>
+        <td style="width: 64px; height: 64px; background-color: ${brand.primaryColor}15; border-radius: 50%; text-align: center; vertical-align: middle;">
+          <span style="font-size: 28px; line-height: 64px;">${iconMap[icon] || "📧"}</span>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Generate the branded email wrapper - clean minimalist design
 function getEmailWrapper(content: string, brand: BrandSettings) {
   return `
     <!DOCTYPE html>
@@ -72,21 +92,28 @@ function getEmailWrapper(content: string, brand: BrandSettings) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${brand.siteName}</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+    <body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa;">
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
               
-              <!-- Header with Logo -->
+              <!-- Logo Header -->
               <tr>
-                <td align="center" style="padding-bottom: 30px;">
+                <td align="center" style="padding-bottom: 32px;">
                   <table role="presentation" cellspacing="0" cellpadding="0">
                     <tr>
-                      <td style="background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); padding: 16px 32px; border-radius: 12px;">
-                        <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
-                          ${brand.siteName}
-                        </h1>
+                      <td style="padding: 12px 24px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="width: 32px; height: 32px; background-color: ${brand.primaryColor}; border-radius: 8px; text-align: center; vertical-align: middle;">
+                              <span style="color: #ffffff; font-size: 16px; font-weight: 700; line-height: 32px;">M</span>
+                            </td>
+                            <td style="padding-left: 10px;">
+                              <span style="font-size: 20px; font-weight: 700; color: #1f2937; letter-spacing: -0.5px;">${brand.siteName}</span>
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>
@@ -96,9 +123,9 @@ function getEmailWrapper(content: string, brand: BrandSettings) {
               <!-- Main Content Card -->
               <tr>
                 <td>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
                     <tr>
-                      <td style="padding: 40px;">
+                      <td style="padding: 48px 40px;">
                         ${content}
                       </td>
                     </tr>
@@ -106,79 +133,46 @@ function getEmailWrapper(content: string, brand: BrandSettings) {
                 </td>
               </tr>
               
-              <!-- Branded Footer Signature -->
+              <!-- Footer -->
               <tr>
                 <td style="padding-top: 32px;">
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                    <!-- Divider -->
+                    <!-- Support Link -->
                     <tr>
-                      <td style="padding-bottom: 24px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                          <tr>
-                            <td style="height: 1px; background: linear-gradient(90deg, transparent, #e5e7eb, transparent);"></td>
-                          </tr>
-                        </table>
+                      <td align="center" style="padding-bottom: 16px;">
+                        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                          If you have additional questions, please refer to the 
+                          <a href="mailto:${brand.supportEmail}" style="color: ${brand.primaryColor}; text-decoration: none; font-weight: 500;">Support Service</a>.
+                        </p>
                       </td>
                     </tr>
                     
-                    <!-- Company Info -->
+                    <!-- Disclaimer -->
+                    <tr>
+                      <td align="center" style="padding: 20px 0; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px; line-height: 1.6;">
+                          Please do not reply to this email. This mailbox is not monitored, and we are not able to respond.
+                          <br>For assistance, please visit our Support Service or write to this address: 
+                          <a href="mailto:${brand.supportEmail}" style="color: ${brand.primaryColor}; text-decoration: none;">${brand.supportEmail}</a>
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Unsubscribe & Settings -->
+                    <tr>
+                      <td align="center" style="padding-bottom: 16px;">
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          To unsubscribe from receiving emails from ${brand.siteName} or to modify
+                          <br>your notification settings, visit the Notifications page.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Copyright -->
                     <tr>
                       <td align="center">
-                        <table role="presentation" cellspacing="0" cellpadding="0">
-                          <tr>
-                            <td align="center" style="padding-bottom: 16px;">
-                              <span style="display: inline-block; background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); padding: 8px 20px; border-radius: 8px;">
-                                <span style="color: #ffffff; font-size: 18px; font-weight: 600;">${brand.siteName}</span>
-                              </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td align="center" style="padding-bottom: 16px;">
-                              <p style="margin: 0; color: #6b7280; font-size: 14px; font-style: italic;">
-                                ${brand.tagline}
-                              </p>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td align="center" style="padding-bottom: 20px;">
-                              <table role="presentation" cellspacing="0" cellpadding="0">
-                                <tr>
-                                  <!-- Website -->
-                                  <td style="padding: 0 12px;">
-                                    <a href="${brand.websiteUrl}" style="color: ${brand.primaryColor}; text-decoration: none; font-size: 13px;">
-                                      🌐 Website
-                                    </a>
-                                  </td>
-                                  <!-- Email -->
-                                  <td style="padding: 0 12px;">
-                                    <a href="mailto:${brand.supportEmail}" style="color: ${brand.primaryColor}; text-decoration: none; font-size: 13px;">
-                                      ✉️ ${brand.supportEmail}
-                                    </a>
-                                  </td>
-                                  ${brand.whatsappNumber ? `
-                                  <!-- WhatsApp -->
-                                  <td style="padding: 0 12px;">
-                                    <a href="https://wa.me/${brand.whatsappNumber.replace(/[^0-9]/g, '')}" style="color: ${brand.primaryColor}; text-decoration: none; font-size: 13px;">
-                                      💬 WhatsApp
-                                    </a>
-                                  </td>
-                                  ` : ''}
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                    
-                    <!-- Legal Footer -->
-                    <tr>
-                      <td align="center" style="padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                        <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                          © ${new Date().getFullYear()} ${brand.siteName}. All rights reserved.
-                        </p>
-                        <p style="margin: 0; color: #9ca3af; font-size: 11px;">
-                          This email was sent to you because you have an account with ${brand.siteName}.
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          Copyright © ${new Date().getFullYear()} ${brand.siteName}. All rights reserved.
                         </p>
                       </td>
                     </tr>
@@ -198,117 +192,107 @@ function getEmailWrapper(content: string, brand: BrandSettings) {
 // Get email content based on type
 function getEmailContent(payload: EmailPayload, brand: BrandSettings) {
   const { type, userName, planName, credits, adminNotes, expiresIn } = payload;
-  const greeting = userName ? `Hi ${userName},` : "Hi there,";
   const dashboardUrl = payload.dashboardUrl || "https://mexive.lovable.app/dashboard";
   
-  const buttonStyle = `display: inline-block; background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); color: #ffffff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);`;
-  const infoBoxStyle = `background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid ${brand.primaryColor};`;
-  const highlightStyle = `display: inline-block; background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); color: #ffffff; padding: 4px 12px; border-radius: 6px; font-weight: 600;`;
+  const buttonStyle = `display: inline-block; background-color: ${brand.primaryColor}; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;`;
+  const linkStyle = `color: ${brand.primaryColor}; text-decoration: none; font-weight: 500;`;
+  const textStyle = `color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;`;
+  const signatureStyle = `color: #374151; font-size: 15px; margin-top: 32px;`;
 
   switch (type) {
     case "welcome":
       return {
-        subject: `Welcome to ${brand.siteName}! 🎉`,
+        subject: `Welcome to ${brand.siteName}!`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">🎉</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Welcome to ${brand.siteName}!</h1>
-            <p style="margin: 0; color: #6b7280; font-size: 16px;">Your account is ready to go</p>
-          </div>
+          ${getIconCircle("welcome", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Welcome to ${brand.siteName}!
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            Thank you for joining ${brand.siteName}! We're thrilled to have you on board. Here's what you can do:
+          <p style="${textStyle}">
+            Your email address has been used for account registration at our website 
+            <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a>.
           </p>
           
-          <div style="${infoBoxStyle}">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-              <tr>
-                <td style="padding: 8px 0;">
-                  <span style="font-size: 20px; margin-right: 12px;">🖼️</span>
-                  <strong style="color: #1f2937;">Generate Metadata</strong>
-                  <span style="color: #6b7280;"> — AI-powered titles, descriptions & keywords</span>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;">
-                  <span style="font-size: 20px; margin-right: 12px;">✨</span>
-                  <strong style="color: #1f2937;">Image to Prompt</strong>
-                  <span style="color: #6b7280;"> — Convert images into detailed AI prompts</span>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;">
-                  <span style="font-size: 20px; margin-right: 12px;">📋</span>
-                  <strong style="color: #1f2937;">File Reviewer</strong>
-                  <span style="color: #6b7280;"> — Check files for marketplace compliance</span>
-                </td>
-              </tr>
-            </table>
-          </div>
+          <p style="${textStyle}">
+            Thank you for choosing ${brand.siteName} as your creative partner! You now have access to powerful AI tools 
+            to generate metadata, convert images to prompts, and review files for marketplace compliance.
+          </p>
           
           ${credits ? `
-          <div style="text-align: center; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 20px; margin: 24px 0;">
-            <p style="margin: 0 0 4px 0; color: #059669; font-size: 14px; font-weight: 500;">🎁 Welcome Bonus</p>
-            <p style="margin: 0; color: #047857; font-size: 32px; font-weight: 700;">${credits} Free Credits</p>
-          </div>
+          <p style="${textStyle}">
+            As a welcome gift, we've added <strong>${credits} free credits</strong> to your account to get you started.
+          </p>
           ` : ''}
           
-          <div style="text-align: center; margin-top: 32px;">
+          <p style="${textStyle}">
+            If that was indeed your intention and you wish to start creating, please click on the button below.
+          </p>
+          
+          <div style="text-align: center; margin: 32px 0;">
             <a href="${dashboardUrl}" style="${buttonStyle}">
-              Get Started →
+              Get Started
             </a>
           </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 32px;">
+            Can't see the button? Use the link: <a href="${dashboardUrl}" style="${linkStyle}">[link here]</a>
+          </p>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
     case "upgrade_approved":
       return {
-        subject: `Your ${planName} Plan is Now Active! 🚀`,
+        subject: `Your ${planName} Plan is Now Active!`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">🚀</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Upgrade Approved!</h1>
-            <p style="margin: 0; color: #6b7280; font-size: 16px;">Your new plan is now active</p>
-          </div>
+          ${getIconCircle("upgrade", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Upgrade Approved!
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            Great news! Your upgrade to the <strong>${planName}</strong> plan has been approved and is now active.
+          <p style="${textStyle}">
+            Great news! Your upgrade request for the <strong>${planName}</strong> plan has been approved and is now active 
+            on your account at <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a>.
           </p>
           
-          <div style="${infoBoxStyle}">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-              <tr>
-                <td style="padding: 8px 0;">
-                  <span style="color: #6b7280;">Plan:</span>
-                  <span style="${highlightStyle} margin-left: 8px;">${planName}</span>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;">
-                  <span style="color: #6b7280;">Credits:</span>
-                  <strong style="color: #1f2937; margin-left: 8px;">${credits ? credits : 'Unlimited'}</strong>
-                </td>
-              </tr>
-            </table>
-          </div>
-          
-          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-            Your new credits are ready to use. Start creating amazing metadata for your content!
+          <p style="${textStyle}">
+            Your account has been credited with <strong>${credits ? credits : 'unlimited'} credits</strong>. 
+            You can now enjoy all the premium features included in your plan.
           </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <p style="${textStyle}">
+            To start using your new plan, please click on the button below.
+          </p>
+          
+          <div style="text-align: center; margin: 32px 0;">
             <a href="${dashboardUrl}" style="${buttonStyle}">
-              Start Using Your Credits →
+              Go to Dashboard
             </a>
           </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 32px;">
+            Can't see the button? Use the link: <a href="${dashboardUrl}" style="${linkStyle}">[link here]</a>
+          </p>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
@@ -316,70 +300,87 @@ function getEmailContent(payload: EmailPayload, brand: BrandSettings) {
       return {
         subject: `Update on Your Upgrade Request`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">📋</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Upgrade Request Update</h1>
-          </div>
+          ${getIconCircle("info", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Upgrade Request Update
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            We've reviewed your upgrade request for the <strong>${planName}</strong> plan. Unfortunately, we were unable to approve your request at this time.
+          <p style="${textStyle}">
+            We've reviewed your upgrade request for the <strong>${planName}</strong> plan on your account 
+            at <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a>.
+          </p>
+          
+          <p style="${textStyle}">
+            Unfortunately, we were unable to approve your request at this time.
           </p>
           
           ${adminNotes ? `
-          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0 0 8px 0; color: #b45309; font-weight: 600;">📝 Reason:</p>
-            <p style="margin: 0; color: #92400e; line-height: 1.6;">${adminNotes}</p>
+          <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+              <strong>Reason:</strong> ${adminNotes}
+            </p>
           </div>
           ` : ''}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-            If you believe this was a mistake or need assistance, please don't hesitate to contact our support team.
+          <p style="${textStyle}">
+            If you believe this was a mistake or need assistance, please contact our support team.
           </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <div style="text-align: center; margin: 32px 0;">
             <a href="mailto:${brand.supportEmail}" style="${buttonStyle}">
               Contact Support
             </a>
           </div>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
     case "credit_pack_approved":
       return {
-        subject: `Your Credits Have Been Added! 💳`,
+        subject: `Your Credits Have Been Added!`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">💳</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Credits Added!</h1>
-            <p style="margin: 0; color: #6b7280; font-size: 16px;">Your purchase has been approved</p>
-          </div>
+          ${getIconCircle("credits", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Credits Added Successfully!
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            Your credit pack purchase has been approved and your account has been credited!
+          <p style="${textStyle}">
+            Your credit pack purchase has been approved. We've added <strong>${credits} credits</strong> to your account 
+            at <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a>.
           </p>
           
-          <div style="text-align: center; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 16px; padding: 32px; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; color: #3b82f6; font-size: 14px; font-weight: 500;">Credits Added</p>
-            <p style="margin: 0; color: #1d4ed8; font-size: 48px; font-weight: 700;">${credits}</p>
-          </div>
-          
-          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-            Your new credits are now available in your account. Happy creating!
+          <p style="${textStyle}">
+            Your new credits are now available and ready to use. Happy creating!
           </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <div style="text-align: center; margin: 32px 0;">
             <a href="${dashboardUrl}" style="${buttonStyle}">
-              Use Your Credits →
+              Use Your Credits
             </a>
           </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 32px;">
+            Can't see the button? Use the link: <a href="${dashboardUrl}" style="${linkStyle}">[link here]</a>
+          </p>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
@@ -387,102 +388,129 @@ function getEmailContent(payload: EmailPayload, brand: BrandSettings) {
       return {
         subject: `Update on Your Credit Pack Purchase`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">📋</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Credit Pack Update</h1>
-          </div>
+          ${getIconCircle("info", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Credit Pack Update
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+          <p style="${textStyle}">
             We've reviewed your credit pack purchase request. Unfortunately, we were unable to approve your purchase at this time.
           </p>
           
           ${adminNotes ? `
-          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0 0 8px 0; color: #b45309; font-weight: 600;">📝 Reason:</p>
-            <p style="margin: 0; color: #92400e; line-height: 1.6;">${adminNotes}</p>
+          <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+              <strong>Reason:</strong> ${adminNotes}
+            </p>
           </div>
           ` : ''}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+          <p style="${textStyle}">
             If you have questions or believe this was an error, please contact our support team.
           </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <div style="text-align: center; margin: 32px 0;">
             <a href="mailto:${brand.supportEmail}" style="${buttonStyle}">
               Contact Support
             </a>
           </div>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
     case "referral_reward":
       return {
-        subject: `You Earned ${credits} Bonus Credits! 🎁`,
+        subject: `You Earned ${credits} Bonus Credits!`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">🎁</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Referral Reward!</h1>
-            <p style="margin: 0; color: #6b7280; font-size: 16px;">Someone used your referral code</p>
-          </div>
+          ${getIconCircle("gift", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Referral Reward Earned!
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            Great news! Someone you referred has signed up and you've earned bonus credits as a thank you!
+          <p style="${textStyle}">
+            Great news! Someone you referred has signed up on 
+            <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a> 
+            and you've earned bonus credits as a thank you!
           </p>
           
-          <div style="text-align: center; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; padding: 32px; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; color: #059669; font-size: 14px; font-weight: 500;">Bonus Credits Earned</p>
-            <p style="margin: 0; color: #047857; font-size: 48px; font-weight: 700;">+${credits}</p>
+          <div style="text-align: center; background-color: #ecfdf5; border-radius: 12px; padding: 24px; margin: 24px 0;">
+            <p style="margin: 0 0 4px 0; color: #059669; font-size: 14px;">Bonus Credits Earned</p>
+            <p style="margin: 0; color: #047857; font-size: 36px; font-weight: 700;">+${credits}</p>
           </div>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+          <p style="${textStyle}">
             Keep sharing your referral link to earn more rewards!
           </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <div style="text-align: center; margin: 32px 0;">
             <a href="${dashboardUrl}/referrals" style="${buttonStyle}">
-              View Your Referrals →
+              View Referrals
             </a>
           </div>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
     case "subscription_expiring":
       return {
-        subject: `Your Subscription Expires in ${expiresIn} Days ⏰`,
+        subject: `Your Subscription Expires in ${expiresIn} Days`,
         content: `
-          <div style="text-align: center; margin-bottom: 32px;">
-            <span style="font-size: 64px;">⏰</span>
-            <h1 style="margin: 16px 0 8px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Subscription Expiring Soon</h1>
-            <p style="margin: 0; color: #6b7280; font-size: 16px;">Don't lose your benefits</p>
-          </div>
+          ${getIconCircle("clock", brand)}
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            ${greeting}
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Subscription Expiring Soon
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear ${userName || "Valued User"},</strong>
           </p>
           
-          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-            Your <strong>${planName}</strong> subscription will expire in <strong>${expiresIn} days</strong>.
+          <p style="${textStyle}">
+            Your <strong>${planName}</strong> subscription on 
+            <a href="${brand.websiteUrl}" style="${linkStyle}">${brand.websiteUrl}</a> 
+            will expire in <strong>${expiresIn} days</strong>.
           </p>
           
-          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid #ef4444;">
-            <p style="margin: 0; color: #b91c1c; line-height: 1.6;">
-              ⚠️ To continue enjoying unlimited access to all features, please renew your subscription before it expires.
-            </p>
-          </div>
+          <p style="${textStyle}">
+            To continue enjoying unlimited access to all features, please renew your subscription before it expires.
+          </p>
           
-          <div style="text-align: center; margin-top: 32px;">
+          <p style="${textStyle}">
+            Please note that after expiration, you will lose access to premium features until you renew.
+          </p>
+          
+          <div style="text-align: center; margin: 32px 0;">
             <a href="${dashboardUrl}/subscription" style="${buttonStyle}">
-              Renew Subscription →
+              Renew Subscription
             </a>
           </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 32px;">
+            Can't see the button? Use the link: <a href="${dashboardUrl}/subscription" style="${linkStyle}">[link here]</a>
+          </p>
+          
+          <p style="${signatureStyle}">
+            Yours sincerely,<br>
+            <strong>${brand.siteName} Team</strong>
+          </p>
         `,
       };
 
