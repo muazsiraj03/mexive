@@ -764,6 +764,66 @@ export type Database = {
         }
         Relationships: []
       }
+      upgrade_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string | null
+          payment_proof_url: string | null
+          plan_name: string
+          requested_credits: number | null
+          requested_price_cents: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sender_account: string | null
+          sender_name: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_proof_url?: string | null
+          plan_name: string
+          requested_credits?: number | null
+          requested_price_cents?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_account?: string | null
+          sender_name?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_proof_url?: string | null
+          plan_name?: string
+          requested_credits?: number | null
+          requested_price_cents?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_account?: string | null
+          sender_name?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notification_reads: {
         Row: {
           created_at: string

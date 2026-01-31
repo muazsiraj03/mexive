@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BrandingSettings } from "./BrandingSettings";
+import { BankDetailsSettings } from "./BankDetailsSettings";
 
 interface AdminUser {
   id: string;
@@ -211,7 +212,7 @@ export function AdminSettings() {
       <main className="flex-1 p-4 md:p-6">
         <div className="max-w-5xl mx-auto">
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
               <TabsTrigger value="general" className="gap-2">
                 <Settings className="h-4 w-4 hidden sm:block" />
                 General
@@ -219,6 +220,10 @@ export function AdminSettings() {
               <TabsTrigger value="branding" className="gap-2">
                 <Palette className="h-4 w-4 hidden sm:block" />
                 Branding
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="gap-2">
+                <Zap className="h-4 w-4 hidden sm:block" />
+                Payments
               </TabsTrigger>
               <TabsTrigger value="admins" className="gap-2">
                 <Shield className="h-4 w-4 hidden sm:block" />
@@ -306,6 +311,11 @@ export function AdminSettings() {
             {/* Branding Tab */}
             <TabsContent value="branding" className="space-y-6">
               <BrandingSettings />
+            </TabsContent>
+
+            {/* Payments Tab */}
+            <TabsContent value="payments" className="space-y-6">
+              <BankDetailsSettings />
             </TabsContent>
 
             {/* Admins Tab */}
