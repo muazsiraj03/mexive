@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BrandingSettings } from "./BrandingSettings";
 import { BankDetailsSettings } from "./BankDetailsSettings";
+import { BkashDetailsSettings } from "./BkashDetailsSettings";
 
 interface AdminUser {
   id: string;
@@ -361,6 +362,7 @@ export function AdminSettings() {
             {/* Payments Tab */}
             <TabsContent value="payments" className="space-y-6">
               <BankDetailsSettings />
+              <BkashDetailsSettings />
             </TabsContent>
 
             {/* Admins Tab */}

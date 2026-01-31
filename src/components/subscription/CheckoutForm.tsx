@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBankSettings } from "@/hooks/use-bank-settings";
+import { useBkashSettings } from "@/hooks/use-bkash-settings";
 import { useUpgradeRequests } from "@/hooks/use-upgrade-requests";
 import { usePromoCodes } from "@/hooks/use-promo-codes";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,7 +27,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Tag,
-  X
+  X,
+  Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,10 +52,12 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const { user } = useAuth();
   const { settings: bankSettings, loading: bankLoading } = useBankSettings();
+  const { settings: bkashSettings, loading: bkashLoading } = useBkashSettings();
   const { createRequest, actionLoading } = useUpgradeRequests();
   const { validatePromoCode, incrementPromoCodeUse } = usePromoCodes();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [step, setStep] = useState<"checkout" | "success">("checkout");
+  const [paymentMethod, setPaymentMethod] = useState<"bank" | "bkash">("bank");
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -121,6 +126,8 @@ export function CheckoutForm({
       return;
     }
 
+    const paymentMethodLabel = paymentMethod === "bkash" ? "bKash" : "Bank Transfer";
+
     const result = await createRequest({
       planName: plan.name,
       requestedCredits: plan.selectedCredits,
@@ -128,7 +135,7 @@ export function CheckoutForm({
       transactionId: transactionId.trim() || undefined,
       senderName: fullName.trim(),
       senderAccount: phone.trim() || undefined,
-      notes: `Email: ${user?.email || "N/A"}${appliedPromo ? ` | Promo: ${appliedPromo.code} (-$${discountAmount.toFixed(2)})` : ""}`,
+      notes: `Email: ${user?.email || "N/A"} | Payment: ${paymentMethodLabel}${appliedPromo ? ` | Promo: ${appliedPromo.code} (-$${discountAmount.toFixed(2)})` : ""}`,
     });
 
     if (result.success) {
@@ -150,6 +157,7 @@ export function CheckoutForm({
     setTransactionId("");
     setPromoCode("");
     setAppliedPromo(null);
+    setPaymentMethod("bank");
     onOpenChange(false);
   };
 
@@ -168,6 +176,9 @@ export function CheckoutForm({
       )}
     </Button>
   );
+
+  const hasBankDetails = bankSettings.bankName || bankSettings.accountNumber;
+  const hasBkashDetails = bkashSettings.personalNumber || bkashSettings.merchantNumber || bkashSettings.agentNumber;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -289,7 +300,7 @@ export function CheckoutForm({
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+1 234 567 8900"
+                      placeholder="+880 1XXX-XXXXXX"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                     />
@@ -309,80 +320,161 @@ export function CheckoutForm({
 
               <Separator />
 
-              {/* Payment Method - Bank Transfer */}
+              {/* Payment Method */}
               <div className="px-6 py-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-3">Payment Method</h3>
-                <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <span className="font-medium">Bank Transfer</span>
-                  </div>
+                
+                <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "bank" | "bkash")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="bank" className="gap-2" disabled={!hasBankDetails}>
+                      <Building2 className="h-4 w-4" />
+                      Bank Transfer
+                    </TabsTrigger>
+                    <TabsTrigger value="bkash" className="gap-2" disabled={!hasBkashDetails}>
+                      <Smartphone className="h-4 w-4" />
+                      bKash
+                    </TabsTrigger>
+                  </TabsList>
 
-                  {bankLoading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground">Bank Name</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">{bankSettings.bankName || "—"}</span>
-                          {bankSettings.bankName && <CopyButton value={bankSettings.bankName} fieldKey="bank" />}
-                        </div>
+                  {/* Bank Transfer Tab */}
+                  <TabsContent value="bank" className="mt-0">
+                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Bank Transfer</span>
                       </div>
-                      <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground">Account Name</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">{bankSettings.accountName || "—"}</span>
-                          {bankSettings.accountName && <CopyButton value={bankSettings.accountName} fieldKey="name" />}
+
+                      {bankLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                        <span className="text-muted-foreground">Account Number</span>
-                        <div className="flex items-center gap-1">
-                          <code className="font-mono font-medium bg-muted px-2 py-0.5 rounded">
-                            {bankSettings.accountNumber || "—"}
-                          </code>
-                          {bankSettings.accountNumber && <CopyButton value={bankSettings.accountNumber} fieldKey="number" />}
-                        </div>
-                      </div>
-                      {bankSettings.branch && (
-                        <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                          <span className="text-muted-foreground">Branch</span>
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">{bankSettings.branch}</span>
-                            <CopyButton value={bankSettings.branch} fieldKey="branch" />
-                          </div>
+                      ) : (
+                        <div className="space-y-2 text-sm">
+                          {bankSettings.bankName && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Bank Name</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{bankSettings.bankName}</span>
+                                <CopyButton value={bankSettings.bankName} fieldKey="bank" />
+                              </div>
+                            </div>
+                          )}
+                          {bankSettings.accountName && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Account Name</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{bankSettings.accountName}</span>
+                                <CopyButton value={bankSettings.accountName} fieldKey="name" />
+                              </div>
+                            </div>
+                          )}
+                          {bankSettings.accountNumber && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Account Number</span>
+                              <div className="flex items-center gap-1">
+                                <code className="font-mono font-medium bg-muted px-2 py-0.5 rounded">
+                                  {bankSettings.accountNumber}
+                                </code>
+                                <CopyButton value={bankSettings.accountNumber} fieldKey="number" />
+                              </div>
+                            </div>
+                          )}
+                          {bankSettings.branch && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Branch</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{bankSettings.branch}</span>
+                                <CopyButton value={bankSettings.branch} fieldKey="branch" />
+                              </div>
+                            </div>
+                          )}
+                          {bankSettings.swiftCode && (
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-muted-foreground">SWIFT/BIC</span>
+                              <div className="flex items-center gap-1">
+                                <code className="font-mono font-medium">{bankSettings.swiftCode}</code>
+                                <CopyButton value={bankSettings.swiftCode} fieldKey="swift" />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
-                      {bankSettings.swiftCode && (
-                        <div className="flex items-center justify-between py-1.5">
-                          <span className="text-muted-foreground">SWIFT/BIC</span>
-                          <div className="flex items-center gap-1">
-                            <code className="font-mono font-medium">{bankSettings.swiftCode}</code>
-                            <CopyButton value={bankSettings.swiftCode} fieldKey="swift" />
-                          </div>
-                        </div>
+
+                      {bankSettings.paymentInstructions && (
+                        <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                          {bankSettings.paymentInstructions}
+                        </p>
                       )}
                     </div>
-                  )}
+                  </TabsContent>
 
-                  {bankSettings.paymentInstructions && (
-                    <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
-                      {bankSettings.paymentInstructions}
-                    </p>
-                  )}
-                </div>
+                  {/* bKash Tab */}
+                  <TabsContent value="bkash" className="mt-0">
+                    <div className="rounded-xl border-2 border-[#E2136E]/20 bg-[#E2136E]/5 p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Smartphone className="h-5 w-5 text-[#E2136E]" />
+                        <span className="font-medium">bKash Payment</span>
+                      </div>
 
-                {/* Optional: Transaction ID if already paid */}
+                      {bkashLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-[#E2136E]" />
+                        </div>
+                      ) : (
+                        <div className="space-y-2 text-sm">
+                          {bkashSettings.personalNumber && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Personal (Send Money)</span>
+                              <div className="flex items-center gap-1">
+                                <code className="font-mono font-medium bg-muted px-2 py-0.5 rounded">
+                                  {bkashSettings.personalNumber}
+                                </code>
+                                <CopyButton value={bkashSettings.personalNumber} fieldKey="bkash-personal" />
+                              </div>
+                            </div>
+                          )}
+                          {bkashSettings.merchantNumber && (
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                              <span className="text-muted-foreground">Merchant (Payment)</span>
+                              <div className="flex items-center gap-1">
+                                <code className="font-mono font-medium bg-muted px-2 py-0.5 rounded">
+                                  {bkashSettings.merchantNumber}
+                                </code>
+                                <CopyButton value={bkashSettings.merchantNumber} fieldKey="bkash-merchant" />
+                              </div>
+                            </div>
+                          )}
+                          {bkashSettings.agentNumber && (
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-muted-foreground">Agent (Cash Out)</span>
+                              <div className="flex items-center gap-1">
+                                <code className="font-mono font-medium bg-muted px-2 py-0.5 rounded">
+                                  {bkashSettings.agentNumber}
+                                </code>
+                                <CopyButton value={bkashSettings.agentNumber} fieldKey="bkash-agent" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {bkashSettings.paymentInstructions && (
+                        <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                          {bkashSettings.paymentInstructions}
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                {/* Transaction ID */}
                 <div className="mt-4 space-y-2">
                   <Label htmlFor="transactionId" className="text-muted-foreground">
                     Transaction/Reference ID (if already paid)
                   </Label>
                   <Input
                     id="transactionId"
-                    placeholder="Enter if you've completed the transfer"
+                    placeholder={paymentMethod === "bkash" ? "Enter bKash TrxID" : "Enter bank reference"}
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                   />
@@ -423,19 +515,19 @@ export function CheckoutForm({
             </div>
             <h2 className="text-xl font-semibold mb-2">Order Placed Successfully!</h2>
             <p className="text-muted-foreground mb-6">
-              Your upgrade request has been submitted. Please complete the bank transfer of <strong>${finalPrice.toFixed(2)}</strong> to activate your subscription.
+              Your upgrade request has been submitted. Please complete the {paymentMethod === "bkash" ? "bKash" : "bank"} transfer of <strong>${finalPrice.toFixed(2)}</strong> to activate your subscription.
             </p>
             
             <div className="rounded-lg bg-muted/50 p-4 text-left text-sm mb-6">
               <p className="font-medium mb-2">Next Steps:</p>
               <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>Transfer ${finalPrice.toFixed(2)} to the bank account shown above</li>
+                <li>Transfer ${finalPrice.toFixed(2)} via {paymentMethod === "bkash" ? "bKash" : "bank transfer"}</li>
                 <li>Use your email as payment reference</li>
                 <li>We'll verify and activate your subscription within 24 hours</li>
               </ol>
             </div>
 
-            <Button onClick={handleClose} className="rounded-full">
+            <Button onClick={handleClose} className="w-full rounded-full">
               Done
             </Button>
           </div>
