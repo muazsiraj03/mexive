@@ -52,6 +52,22 @@ export function CreditTierSelector({
     };
 
     fetchTiers();
+
+    // Subscribe to real-time updates for credit tiers
+    const channel = supabase
+      .channel(`credit_tiers_${planName}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "credit_tiers" },
+        () => {
+          fetchTiers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [planName]);
 
   if (loading || tiers.length === 0) {
@@ -75,7 +91,7 @@ export function CreditTierSelector({
       <SelectContent>
         {tiers.map((tier) => (
           <SelectItem key={tier.credits} value={String(tier.credits)}>
-            {tier.credits} credits / month
+            {tier.credits.toLocaleString()} credits / month
           </SelectItem>
         ))}
       </SelectContent>
@@ -120,6 +136,24 @@ export function useDefaultTier(planName: string): CreditTier | null {
     if (planName && planName !== 'free') {
       fetchDefault();
     }
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`default_tier_${planName}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "credit_tiers" },
+        () => {
+          if (planName && planName !== 'free') {
+            fetchDefault();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [planName]);
 
   return tier;
