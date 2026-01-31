@@ -417,6 +417,7 @@ export type Database = {
           daily_credit_reset: boolean
           display_name: string
           features: string[]
+          first_signup_credits: number
           id: string
           is_active: boolean
           is_popular: boolean
@@ -434,6 +435,7 @@ export type Database = {
           daily_credit_reset?: boolean
           display_name: string
           features?: string[]
+          first_signup_credits?: number
           id?: string
           is_active?: boolean
           is_popular?: boolean
@@ -451,6 +453,7 @@ export type Database = {
           daily_credit_reset?: boolean
           display_name?: string
           features?: string[]
+          first_signup_credits?: number
           id?: string
           is_active?: boolean
           is_popular?: boolean

@@ -64,6 +64,7 @@ interface PricingPlan {
   display_name: string;
   price_cents: number;
   credits: number;
+  first_signup_credits: number;
   period: string;
   features: string[];
   is_popular: boolean;
@@ -112,6 +113,7 @@ export function AdminPlans() {
     display_name: "",
     price_cents: 0,
     credits: 0,
+    first_signup_credits: 0,
     period: "/month",
     features: [""],
     is_popular: false,
@@ -174,6 +176,7 @@ export function AdminPlans() {
         display_name: plan.display_name,
         price_cents: plan.price_cents,
         credits: plan.credits,
+        first_signup_credits: plan.first_signup_credits || 0,
         period: plan.period || "/month",
         features: plan.features.length > 0 ? plan.features : [""],
         is_popular: plan.is_popular,
@@ -191,6 +194,7 @@ export function AdminPlans() {
         display_name: "",
         price_cents: 1900,
         credits: 100,
+        first_signup_credits: 10,
         period: "/month",
         features: ["Feature 1"],
         is_popular: false,
@@ -217,6 +221,7 @@ export function AdminPlans() {
         display_name: planForm.display_name,
         price_cents: planForm.price_cents,
         credits: planForm.credits,
+        first_signup_credits: planForm.first_signup_credits,
         period: planForm.period,
         features: planForm.features.filter((f) => f.trim() !== ""),
         is_popular: planForm.is_popular,
@@ -749,7 +754,7 @@ export function AdminPlans() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Price ($)</Label>
                   <Input
@@ -763,22 +768,43 @@ export function AdminPlans() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Credits</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={planForm.credits || ""}
-                    onChange={(e) => setPlanForm({ ...planForm, credits: parseInt(e.target.value) || 0 })}
-                    disabled={planForm.is_unlimited}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Period</Label>
                   <Input
                     value={planForm.period}
                     onChange={(e) => setPlanForm({ ...planForm, period: e.target.value })}
                     placeholder="/month"
                   />
+                </div>
+              </div>
+              
+              {/* Credits Section */}
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                <Label className="text-base font-semibold">Credit Settings</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">First Signup Credits</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={planForm.first_signup_credits || ""}
+                      onChange={(e) => setPlanForm({ ...planForm, first_signup_credits: parseInt(e.target.value) || 0 })}
+                      disabled={planForm.is_unlimited}
+                      placeholder="One-time credits on signup"
+                    />
+                    <p className="text-xs text-muted-foreground">One-time credits given when user first signs up</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Daily Renewable Credits</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={planForm.credits || ""}
+                      onChange={(e) => setPlanForm({ ...planForm, credits: parseInt(e.target.value) || 0 })}
+                      disabled={planForm.is_unlimited}
+                      placeholder="Credits reset daily"
+                    />
+                    <p className="text-xs text-muted-foreground">Credits restored daily (if daily reset enabled)</p>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
