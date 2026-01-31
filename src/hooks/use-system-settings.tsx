@@ -24,6 +24,7 @@ export interface SystemSettings {
   browserTitle: string;
   footerText: string;
   supportEmail: string;
+  whatsappNumber: string;
   // SEO
   metaDescription: string;
   metaKeywords: string;
@@ -46,6 +47,7 @@ const defaultSettings: SystemSettings = {
   browserTitle: "MetaGen - AI Metadata Generator",
   footerText: "© 2025 MetaGen. All rights reserved.",
   supportEmail: "support@metagen.com",
+  whatsappNumber: "",
   metaDescription: "Generate optimized metadata for your stock images and videos with AI",
   metaKeywords: "metadata generator, stock photography, AI, keywords, SEO",
   ogImageUrl: "",
@@ -107,6 +109,7 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
           browserTitle: settingsMap.browser_title || defaultSettings.browserTitle,
           footerText: settingsMap.footer_text || defaultSettings.footerText,
           supportEmail: settingsMap.support_email || defaultSettings.supportEmail,
+          whatsappNumber: settingsMap.whatsapp_number || defaultSettings.whatsappNumber,
           metaDescription: settingsMap.meta_description || defaultSettings.metaDescription,
           metaKeywords: settingsMap.meta_keywords || defaultSettings.metaKeywords,
           ogImageUrl: settingsMap.og_image_url || "",

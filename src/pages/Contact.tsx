@@ -82,20 +82,22 @@ const Contact = () => {
                 </a>
               </div>
 
-              <div className="p-6 rounded-xl border border-border bg-card">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-6 h-6 text-primary" />
+              {settings.whatsappNumber && (
+                <div className="p-6 rounded-xl border border-border bg-card">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <MessageSquare className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">WhatsApp</h3>
+                  <a
+                    href={`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  >
+                    {settings.whatsappNumber}
+                  </a>
                 </div>
-                <h3 className="font-semibold mb-2">WhatsApp</h3>
-                <a
-                  href="https://wa.me/8801XXXXXXXXX"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
-                >
-                  +880 1XXX-XXXXXX
-                </a>
-              </div>
+              )}
 
               <div className="p-6 rounded-xl border border-border bg-card">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
