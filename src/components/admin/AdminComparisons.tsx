@@ -8,14 +8,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useComparisons, Comparison } from "@/hooks/use-comparisons";
 
+const TOOLS = [
+  { id: "metadata-generator", label: "Metadata Generator" },
+  { id: "image-to-prompt", label: "Image to Prompt" },
+  { id: "file-reviewer", label: "File Reviewer" },
+];
+
 export function AdminComparisons() {
   const { comparisons, isLoading, createComparison, updateComparison, deleteComparison } = useComparisons();
+  const [activeTab, setActiveTab] = useState("metadata-generator");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingComparison, setEditingComparison] = useState<Comparison | null>(null);
   const [formData, setFormData] = useState({
+    tool: "metadata-generator",
     aspect: "",
     manual_value: "",
     ai_value: "",
@@ -23,8 +32,11 @@ export function AdminComparisons() {
     is_active: true,
   });
 
+  const filteredComparisons = comparisons.filter((c) => c.tool === activeTab);
+
   const resetForm = () => {
     setFormData({
+      tool: activeTab,
       aspect: "",
       manual_value: "",
       ai_value: "",
@@ -38,7 +50,8 @@ export function AdminComparisons() {
     resetForm();
     setFormData((prev) => ({
       ...prev,
-      sort_order: comparisons.length,
+      tool: activeTab,
+      sort_order: filteredComparisons.length,
     }));
     setIsDialogOpen(true);
   };
@@ -46,6 +59,7 @@ export function AdminComparisons() {
   const openEditDialog = (comparison: Comparison) => {
     setEditingComparison(comparison);
     setFormData({
+      tool: comparison.tool,
       aspect: comparison.aspect,
       manual_value: comparison.manual_value,
       ai_value: comparison.ai_value,
@@ -93,7 +107,7 @@ export function AdminComparisons() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Comparison Section</h1>
-          <p className="text-muted-foreground">Manage the Manual vs AI comparison table on the landing page</p>
+          <p className="text-muted-foreground">Manage the Manual vs AI comparison table for each tool</p>
         </div>
         <Button onClick={openCreateDialog}>
           <Plus className="w-4 h-4 mr-2" />
@@ -101,82 +115,96 @@ export function AdminComparisons() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Comparison Items</CardTitle>
-          <CardDescription>
-            These items appear in the comparison table showing manual workflow vs AI-powered approach
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {comparisons.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No comparison items yet. Add your first one!
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead>Aspect</TableHead>
-                  <TableHead>Manual Workflow</TableHead>
-                  <TableHead>AI-Powered</TableHead>
-                  <TableHead className="w-20">Order</TableHead>
-                  <TableHead className="w-20">Active</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {comparisons.map((comparison) => (
-                  <TableRow key={comparison.id} className={!comparison.is_active ? "opacity-50" : ""}>
-                    <TableCell>
-                      <GripVertical className="w-4 h-4 text-muted-foreground" />
-                    </TableCell>
-                    <TableCell className="font-medium">{comparison.aspect}</TableCell>
-                    <TableCell className="text-muted-foreground">{comparison.manual_value}</TableCell>
-                    <TableCell className="text-foreground">{comparison.ai_value}</TableCell>
-                    <TableCell>{comparison.sort_order}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={comparison.is_active}
-                        onCheckedChange={() => toggleActive(comparison)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(comparison)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Comparison</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{comparison.aspect}"? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(comparison.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          {TOOLS.map((tool) => (
+            <TabsTrigger key={tool.id} value={tool.id}>
+              {tool.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {TOOLS.map((tool) => (
+          <TabsContent key={tool.id} value={tool.id}>
+            <Card>
+              <CardHeader>
+                <CardTitle>{tool.label} Comparisons</CardTitle>
+                <CardDescription>
+                  Comparison items for the {tool.label} tool
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredComparisons.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No comparison items for {tool.label} yet. Add your first one!
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead>Aspect</TableHead>
+                        <TableHead>Manual Workflow</TableHead>
+                        <TableHead>AI-Powered</TableHead>
+                        <TableHead className="w-20">Order</TableHead>
+                        <TableHead className="w-20">Active</TableHead>
+                        <TableHead className="w-24">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredComparisons.map((comparison) => (
+                        <TableRow key={comparison.id} className={!comparison.is_active ? "opacity-50" : ""}>
+                          <TableCell>
+                            <GripVertical className="w-4 h-4 text-muted-foreground" />
+                          </TableCell>
+                          <TableCell className="font-medium">{comparison.aspect}</TableCell>
+                          <TableCell className="text-muted-foreground">{comparison.manual_value}</TableCell>
+                          <TableCell className="text-foreground">{comparison.ai_value}</TableCell>
+                          <TableCell>{comparison.sort_order}</TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={comparison.is_active}
+                              onCheckedChange={() => toggleActive(comparison)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => openEditDialog(comparison)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Comparison</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{comparison.aspect}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(comparison.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg">

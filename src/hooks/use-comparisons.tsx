@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Comparison {
   id: string;
+  tool: string;
   aspect: string;
   manual_value: string;
   ai_value: string;
@@ -84,15 +85,19 @@ export function useComparisons() {
     },
   });
 
-  const activeComparisons = comparisons.filter((c) => c.is_active);
+  const getComparisonsByTool = (tool: string) => {
+    return comparisons
+      .filter((c) => c.tool === tool && c.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  };
 
   return {
     comparisons,
-    activeComparisons,
     isLoading,
     error,
     createComparison,
     updateComparison,
     deleteComparison,
+    getComparisonsByTool,
   };
 }
