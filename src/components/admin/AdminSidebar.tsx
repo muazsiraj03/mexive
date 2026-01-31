@@ -17,6 +17,7 @@ import {
   Gift,
   Star,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -109,6 +110,11 @@ const navItems = [
     title: "FAQs",
     href: "/admin/faqs",
     icon: HelpCircle,
+  },
+  {
+    title: "Features",
+    href: "/admin/features",
+    icon: Sparkles,
   },
   {
     title: "Settings",
