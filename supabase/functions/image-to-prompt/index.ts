@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +11,7 @@ type PromptStyle = "midjourney" | "dalle" | "stable-diffusion" | "general";
 type DetailLevel = "basic" | "detailed" | "expert";
 
 interface TrainingContext {
-  trainingStrength?: number; // 0-1 range
+  trainingStrength?: number;
   preferences?: {
     tone?: string;
     length?: string;
@@ -29,6 +30,109 @@ interface RequestBody {
   style: PromptStyle;
   detailLevel: DetailLevel;
   trainingContext?: TrainingContext | null;
+}
+
+interface UserCredits {
+  hasCredits: boolean;
+  isUnlimited: boolean;
+  isAdmin: boolean;
+  userId: string;
+  currentCredits: number;
+}
+
+/**
+ * Verify user has credits and return user info
+ */
+async function verifyUserCredits(authHeader: string | null): Promise<UserCredits> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  if (!authHeader) {
+    throw new Error("Authorization header required");
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: authHeader } }
+  });
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("Authentication required");
+  }
+  
+  // Check if user is admin
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  
+  const isAdmin = !!roleData;
+  
+  // Get user subscription
+  const { data: subscription, error: subError } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining, plan")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  
+  if (subError) {
+    console.error("Error fetching subscription:", subError);
+    throw new Error("Could not verify subscription");
+  }
+  
+  // Check for unlimited plan
+  const { data: planConfig } = await supabase
+    .from("pricing_config")
+    .select("is_unlimited")
+    .eq("plan_name", subscription?.plan || "free")
+    .maybeSingle();
+  
+  const isUnlimited = planConfig?.is_unlimited || false;
+  const currentCredits = subscription?.credits_remaining || 0;
+  const hasCredits = isAdmin || isUnlimited || currentCredits >= 1;
+  
+  return {
+    hasCredits,
+    isUnlimited,
+    isAdmin,
+    userId: user.id,
+    currentCredits
+  };
+}
+
+/**
+ * Deduct 1 credit from user's subscription
+ */
+async function deductCredit(userId: string): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  // Get current credits and decrement
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .single();
+  
+  if (sub) {
+    await supabase
+      .from("subscriptions")
+      .update({ 
+        credits_remaining: Math.max(0, sub.credits_remaining - 1),
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", userId)
+      .eq("status", "active");
+    
+    console.log(`Deducted 1 credit from user ${userId}. Remaining: ${sub.credits_remaining - 1}`);
+  }
 }
 
 function getSystemPrompt(
@@ -69,14 +173,12 @@ function getSystemPrompt(
     expert: "Generate an extensive prompt of 300+ words. Include technical details about lighting, camera angles, color grading, artistic influences, and detailed composition analysis.",
   };
 
-  // Build training-aware instructions
   let trainingInstructions = "";
   
   if (training) {
     const parts: string[] = [];
     const strength = training.trainingStrength ?? 0.75;
     
-    // Add strength context
     if (strength < 0.25) {
       parts.push("TRAINING INFLUENCE: Minimal. Focus on creative analysis with light consideration of user preferences.");
     } else if (strength < 0.5) {
@@ -87,7 +189,6 @@ function getSystemPrompt(
       parts.push("TRAINING INFLUENCE: Maximum. Strictly adhere to user preferences and examples.");
     }
     
-    // User preferences
     if (training.preferences) {
       const prefs = training.preferences;
       
@@ -119,7 +220,6 @@ function getSystemPrompt(
       }
     }
     
-    // Positive examples
     if (training.positiveExamples && training.positiveExamples.length > 0) {
       parts.push("\n--- GOOD EXAMPLES (emulate this style) ---");
       training.positiveExamples.forEach((ex, i) => {
@@ -127,7 +227,6 @@ function getSystemPrompt(
       });
     }
     
-    // Negative examples
     if (training.negativeExamples && training.negativeExamples.length > 0) {
       parts.push("\n--- BAD EXAMPLES (avoid this style) ---");
       training.negativeExamples.forEach((ex, i) => {
@@ -135,7 +234,6 @@ function getSystemPrompt(
       });
     }
     
-    // Feedback patterns
     if (training.likedPrompts && training.likedPrompts.length > 0) {
       parts.push(`\nThe user previously liked prompts similar to: ${training.likedPrompts.slice(0, 2).map(p => `"${p.slice(0, 100)}..."`).join(", ")}`);
     }
@@ -201,7 +299,6 @@ async function callAIWithRetry(
         const errorText = await response.text();
         console.error(`AI gateway error (attempt ${attempt + 1}):`, response.status, errorText);
 
-        // Try to extract a useful provider message
         let providerMessage = "";
         try {
           const parsed = JSON.parse(errorText);
@@ -210,7 +307,6 @@ async function callAIWithRetry(
           providerMessage = errorText;
         }
 
-        // Non-retryable: unsupported image types (e.g., AVIF URLs)
         if (providerMessage.includes("Unsupported image format")) {
           throw new Error("UNSUPPORTED_IMAGE_FORMAT");
         }
@@ -224,7 +320,6 @@ async function callAIWithRetry(
           }
         }
 
-        // Non-retryable generic
         throw new Error(`AI_GATEWAY_${response.status}`);
       }
 
@@ -258,6 +353,27 @@ serve(async (req) => {
   }
 
   try {
+    // Verify user has credits
+    const authHeader = req.headers.get("Authorization");
+    let userCredits: UserCredits;
+    
+    try {
+      userCredits = await verifyUserCredits(authHeader);
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: authError instanceof Error ? authError.message : "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!userCredits.hasCredits) {
+      return new Response(
+        JSON.stringify({ error: "Insufficient credits. Please purchase more credits to continue." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY not configured");
@@ -288,6 +404,7 @@ serve(async (req) => {
     );
 
     console.log(`Generating prompt for image, style: ${style}, detail: ${detailLevel}, trained: ${!!hasTraining}`);
+    console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     const systemPrompt = getSystemPrompt(style, detailLevel, trainingContext);
 
@@ -354,7 +471,6 @@ serve(async (req) => {
 
     console.log("AI response received");
 
-    // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== "generate_prompt") {
       console.error("Unexpected AI response format:", JSON.stringify(data));
@@ -362,6 +478,15 @@ serve(async (req) => {
         JSON.stringify({ error: "Failed to generate prompt" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Deduct credit after successful generation (skip for admin/unlimited)
+    if (!userCredits.isAdmin && !userCredits.isUnlimited) {
+      try {
+        await deductCredit(userCredits.userId);
+      } catch (creditError) {
+        console.error("Failed to deduct credit:", creditError);
+      }
     }
 
     const result = JSON.parse(toolCall.function.arguments);
@@ -405,7 +530,6 @@ serve(async (req) => {
       if (error.message.startsWith("AI_GATEWAY_")) {
         const status = Number(error.message.replace("AI_GATEWAY_", ""));
         const safeStatus = Number.isFinite(status) ? status : 500;
-        // Keep message generic to avoid leaking provider internals
         return new Response(
           JSON.stringify({ error: "AI gateway error. Please try again." }),
           {

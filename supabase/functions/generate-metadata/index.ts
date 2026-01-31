@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,109 @@ const MARKETPLACE_GUIDELINES: Record<string, { titleStyle: string; keywordFocus:
   }
 };
 
+interface UserCredits {
+  hasCredits: boolean;
+  isUnlimited: boolean;
+  isAdmin: boolean;
+  userId: string;
+  currentCredits: number;
+}
+
+/**
+ * Verify user has credits and return user info
+ */
+async function verifyUserCredits(authHeader: string | null): Promise<UserCredits> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  if (!authHeader) {
+    throw new Error("Authorization header required");
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: authHeader } }
+  });
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("Authentication required");
+  }
+  
+  // Check if user is admin
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  
+  const isAdmin = !!roleData;
+  
+  // Get user subscription
+  const { data: subscription, error: subError } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining, plan")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  
+  if (subError) {
+    console.error("Error fetching subscription:", subError);
+    throw new Error("Could not verify subscription");
+  }
+  
+  // Check for unlimited plan
+  const { data: planConfig } = await supabase
+    .from("pricing_config")
+    .select("is_unlimited")
+    .eq("plan_name", subscription?.plan || "free")
+    .maybeSingle();
+  
+  const isUnlimited = planConfig?.is_unlimited || false;
+  const currentCredits = subscription?.credits_remaining || 0;
+  const hasCredits = isAdmin || isUnlimited || currentCredits >= 1;
+  
+  return {
+    hasCredits,
+    isUnlimited,
+    isAdmin,
+    userId: user.id,
+    currentCredits
+  };
+}
+
+/**
+ * Deduct 1 credit from user's subscription
+ */
+async function deductCredit(userId: string): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  // Get current credits and decrement
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .single();
+  
+  if (sub) {
+    await supabase
+      .from("subscriptions")
+      .update({ 
+        credits_remaining: Math.max(0, sub.credits_remaining - 1),
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", userId)
+      .eq("status", "active");
+    
+    console.log(`Deducted 1 credit from user ${userId}. Remaining: ${sub.credits_remaining - 1}`);
+  }
+}
+
 /**
  * Helper to delay execution (for retry logic)
  */
@@ -43,7 +147,7 @@ async function callAIWithRetry(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
       console.log(`Retry attempt ${attempt}/${maxRetries}...`);
-      await delay(1000 * attempt); // Exponential backoff: 1s, 2s
+      await delay(1000 * attempt);
     }
     
     try {
@@ -56,7 +160,6 @@ async function callAIWithRetry(
         body: JSON.stringify(body),
       });
 
-      // Handle HTTP-level errors
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`AI gateway HTTP error (attempt ${attempt}):`, response.status, errorText);
@@ -69,7 +172,6 @@ async function callAIWithRetry(
           return { success: false, error: "AI credits exhausted. Please add funds to continue.", status: 402 };
         }
 
-        // For 5xx errors, retry
         if (response.status >= 500 && attempt < maxRetries) {
           lastError = `Server error ${response.status}`;
           continue;
@@ -80,13 +182,11 @@ async function callAIWithRetry(
 
       const data = await response.json();
 
-      // Check if the response body contains a provider error (e.g., timeout from upstream)
       if (data.error) {
         const errorCode = data.error.code;
         const errorMessage = data.error.message || "Provider error";
         console.error(`AI provider error (attempt ${attempt}):`, JSON.stringify(data.error));
 
-        // 524 = timeout, 503 = service unavailable - these are retryable
         if ((errorCode === 524 || errorCode === 503 || errorCode >= 500) && attempt < maxRetries) {
           lastError = `Provider error ${errorCode}: ${errorMessage}`;
           continue;
@@ -101,7 +201,6 @@ async function callAIWithRetry(
         };
       }
 
-      // Validate expected structure
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (!toolCall || toolCall.function.name !== "generate_metadata") {
         console.error(`Unexpected AI response format (attempt ${attempt}):`, JSON.stringify(data).slice(0, 500));
@@ -135,9 +234,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify user has credits
+    const authHeader = req.headers.get("Authorization");
+    let userCredits: UserCredits;
+    
+    try {
+      userCredits = await verifyUserCredits(authHeader);
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: authError instanceof Error ? authError.message : "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!userCredits.hasCredits) {
+      return new Response(
+        JSON.stringify({ error: "Insufficient credits. Please purchase more credits to continue." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { imageUrl, marketplaces, keywordCount = 30, titleMaxChars = 200, descriptionMaxChars = 500 } = await req.json();
 
-    // Validate parameters
     const validKeywordCount = Math.max(1, Math.min(50, Number(keywordCount) || 30));
     const validTitleMaxChars = Math.max(10, Math.min(200, Number(titleMaxChars) || 200));
     const validDescriptionMaxChars = Math.max(50, Math.min(500, Number(descriptionMaxChars) || 500));
@@ -158,7 +277,6 @@ serve(async (req) => {
       );
     }
 
-    // Build marketplace-specific instructions
     const marketplaceInstructions = marketplaces
       .map((mp: string) => {
         const guidelines = MARKETPLACE_GUIDELINES[mp] || { 
@@ -209,7 +327,6 @@ For each marketplace, you MUST generate:
 
 Follow the platform-specific guidelines for each marketplace.`;
 
-    // Define the tool for structured output
     const tools = [
       {
         type: "function",
@@ -257,7 +374,7 @@ Follow the platform-specific guidelines for each marketplace.`;
     console.log("Calling Lovable AI for image analysis...");
     console.log("Image URL:", imageUrl);
     console.log("Marketplaces:", marketplaces);
-    console.log("Settings - Keywords:", validKeywordCount, "Title max:", validTitleMaxChars, "Description max:", validDescriptionMaxChars);
+    console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     const requestBody = {
       model: "google/gemini-2.5-flash",
@@ -284,6 +401,16 @@ Follow the platform-specific guidelines for each marketplace.`;
       );
     }
 
+    // Deduct credit after successful generation (skip for admin/unlimited)
+    if (!userCredits.isAdmin && !userCredits.isUnlimited) {
+      try {
+        await deductCredit(userCredits.userId);
+      } catch (creditError) {
+        console.error("Failed to deduct credit:", creditError);
+        // Don't fail the request if credit deduction fails - just log it
+      }
+    }
+
     const data = result.data as { choices: Array<{ message: { tool_calls: Array<{ function: { arguments: string } }> } }> };
     const toolCall = data.choices[0].message.tool_calls[0];
 
@@ -291,7 +418,6 @@ Follow the platform-specific guidelines for each marketplace.`;
 
     const metadata = JSON.parse(toolCall.function.arguments);
     console.log("Generated metadata for", metadata.results?.length, "marketplaces");
-    console.log("First result description:", metadata.results?.[0]?.description ? "Present" : "Missing");
 
     return new Response(
       JSON.stringify(metadata),
