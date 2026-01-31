@@ -1,7 +1,15 @@
+import { useState } from "react";
 import { Check, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useComparisons } from "@/hooks/use-comparisons";
+
+const TOOLS = [
+  { id: "metadata-generator", label: "Metadata Generator" },
+  { id: "image-to-prompt", label: "Image to Prompt" },
+  { id: "file-reviewer", label: "File Reviewer" },
+];
 
 function ComparisonSkeleton() {
   return (
@@ -25,25 +33,42 @@ function ComparisonSkeleton() {
 }
 
 export function ComparisonSection() {
-  const { activeComparisons, isLoading } = useComparisons();
+  const { comparisons, isLoading, getComparisonsByTool } = useComparisons();
+  const [activeTab, setActiveTab] = useState("metadata-generator");
+
+  const currentComparisons = getComparisonsByTool(activeTab);
 
   return (
     <section className="section-padding bg-muted/30">
       <div className="container">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Manual vs AI-Powered
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             See how much time and effort you can save with automated metadata generation
           </p>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-lg">
+              {TOOLS.map((tool) => (
+                <TabsTrigger
+                  key={tool.id}
+                  value={tool.id}
+                  className="px-4 py-2 text-sm font-medium rounded-md data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground transition-all"
+                >
+                  {tool.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         {isLoading ? (
           <ComparisonSkeleton />
-        ) : activeComparisons.length === 0 ? (
+        ) : currentComparisons.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            No comparison data available.
+            No comparison data available for this tool.
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
@@ -54,10 +79,10 @@ export function ComparisonSection() {
                 <div className="p-5 font-medium text-center text-destructive">Manual Workflow</div>
                 <div className="p-5 font-medium text-center text-secondary">AI Stock Metadata</div>
               </div>
-              {activeComparisons.map((row, index) => (
+              {currentComparisons.map((row, index) => (
                 <div
                   key={row.id}
-                  className={`grid grid-cols-3 transition-smooth hover:bg-muted/20 ${index !== activeComparisons.length - 1 ? "border-b border-border/40" : ""}`}
+                  className={`grid grid-cols-3 transition-smooth hover:bg-muted/20 ${index !== currentComparisons.length - 1 ? "border-b border-border/40" : ""}`}
                 >
                   <div className="p-5 font-medium text-foreground">{row.aspect}</div>
                   <div className="p-5 text-center text-muted-foreground flex items-center justify-center gap-2">
@@ -74,7 +99,7 @@ export function ComparisonSection() {
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
-              {activeComparisons.map((row) => (
+              {currentComparisons.map((row) => (
                 <div key={row.id} className="bg-card rounded-2xl border border-border/60 p-5 card-elevated">
                   <h4 className="font-medium text-foreground mb-3">{row.aspect}</h4>
                   <div className="space-y-2">
