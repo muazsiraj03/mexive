@@ -114,14 +114,27 @@ export function AdminFeatures() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex-1 p-4 md:p-6">
+        <AdminHeader
+          title="Features"
+          description="Manage tool-specific features shown on the landing page"
+        />
+        <div className="animate-pulse space-y-4 max-w-6xl">
+          <div className="h-10 bg-muted rounded w-32" />
+          <div className="h-64 bg-muted rounded" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 p-4 md:p-6">
+      <AdminHeader
+        title="Features"
+        description="Manage tool-specific features shown on the landing page"
+      />
+
+      <div className="max-w-6xl space-y-6">
       <AdminHeader
         title="Features"
         description="Manage tool-specific features shown on the landing page"
@@ -315,6 +328,7 @@ export function AdminFeatures() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
