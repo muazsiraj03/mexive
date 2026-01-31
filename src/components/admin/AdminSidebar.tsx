@@ -30,7 +30,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 
 const navItems = [
   {
@@ -52,6 +54,7 @@ const navItems = [
     title: "Upgrade Requests",
     href: "/admin/upgrade-requests",
     icon: ClipboardCheck,
+    showPendingBadge: "upgrade_request" as const,
   },
   {
     title: "Plans",
@@ -67,6 +70,7 @@ const navItems = [
     title: "Pack Purchases",
     href: "/admin/credit-pack-purchases",
     icon: ShoppingCart,
+    showPendingBadge: "credit_pack_purchase" as const,
   },
   {
     title: "Promo Codes",
@@ -87,6 +91,7 @@ const navItems = [
     title: "Notifications",
     href: "/admin/notifications",
     icon: Bell,
+    showTotalPending: true,
   },
   {
     title: "File Reviewer",
@@ -104,6 +109,19 @@ export function AdminSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { pendingItems, pendingCount } = useAdminNotifications();
+
+  // Count pending items by type
+  const pendingByType = {
+    upgrade_request: pendingItems.filter((i) => i.type === "upgrade_request").length,
+    credit_pack_purchase: pendingItems.filter((i) => i.type === "credit_pack_purchase").length,
+  };
+
+  const getBadgeCount = (item: typeof navItems[0]) => {
+    if (item.showTotalPending) return pendingCount;
+    if (item.showPendingBadge) return pendingByType[item.showPendingBadge];
+    return 0;
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -130,6 +148,8 @@ export function AdminSidebar() {
                 const isActive = item.href === "/admin"
                   ? location.pathname === "/admin"
                   : location.pathname.startsWith(item.href);
+                
+                const badgeCount = getBadgeCount(item);
                   
                 const linkContent = (
                   <NavLink
@@ -140,8 +160,22 @@ export function AdminSidebar() {
                       isCollapsed && "justify-center px-2"
                     )}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {!isCollapsed && <span className="truncate">{item.title}</span>}
+                    <div className="relative">
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {isCollapsed && badgeCount > 0 && (
+                        <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-secondary text-[9px] font-medium text-secondary-foreground">
+                          {badgeCount > 9 ? "9+" : badgeCount}
+                        </span>
+                      )}
+                    </div>
+                    {!isCollapsed && (
+                      <span className="truncate flex-1">{item.title}</span>
+                    )}
+                    {!isCollapsed && badgeCount > 0 && (
+                      <Badge variant="secondary" className="h-5 min-w-5 px-1.5 justify-center text-xs">
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </Badge>
+                    )}
                   </NavLink>
                 );
 
@@ -154,7 +188,14 @@ export function AdminSidebar() {
                             {linkContent}
                           </TooltipTrigger>
                           <TooltipContent side="right" className="bg-popover text-popover-foreground border">
-                            {item.title}
+                            <div className="flex items-center gap-2">
+                              {item.title}
+                              {badgeCount > 0 && (
+                                <Badge variant="secondary" className="h-5 px-1.5">
+                                  {badgeCount}
+                                </Badge>
+                              )}
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
