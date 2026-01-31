@@ -43,119 +43,71 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 
-const navItems = [
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  showPendingBadge?: "upgrade_request" | "credit_pack_purchase";
+  showTotalPending?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    title: "Overview",
-    href: "/admin",
-    icon: LayoutDashboard,
+    label: "Overview",
+    items: [
+      { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { title: "Revenue", href: "/admin/revenue", icon: TrendingUp },
+      { title: "Notifications", href: "/admin/notifications", icon: Bell, showTotalPending: true },
+    ],
   },
   {
-    title: "Users",
-    href: "/admin/users",
-    icon: Users,
+    label: "Users & Access",
+    items: [
+      { title: "Users", href: "/admin/users", icon: Users },
+      { title: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
+      { title: "Referrals", href: "/admin/referrals", icon: Gift },
+    ],
   },
   {
-    title: "Subscriptions",
-    href: "/admin/subscriptions",
-    icon: CreditCard,
+    label: "Billing",
+    items: [
+      { title: "Plans", href: "/admin/plans", icon: DollarSign },
+      { title: "Upgrade Requests", href: "/admin/upgrade-requests", icon: ClipboardCheck, showPendingBadge: "upgrade_request" },
+      { title: "Credit Packs", href: "/admin/credit-packs", icon: Package },
+      { title: "Pack Purchases", href: "/admin/credit-pack-purchases", icon: ShoppingCart, showPendingBadge: "credit_pack_purchase" },
+      { title: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
+    ],
   },
   {
-    title: "Upgrade Requests",
-    href: "/admin/upgrade-requests",
-    icon: ClipboardCheck,
-    showPendingBadge: "upgrade_request" as const,
+    label: "Content",
+    items: [
+      { title: "Blog Posts", href: "/admin/blog-posts", icon: FileText },
+      { title: "Testimonials", href: "/admin/testimonials", icon: Star },
+      { title: "FAQs", href: "/admin/faqs", icon: HelpCircle },
+      { title: "Contact Submissions", href: "/admin/contact-submissions", icon: MessageSquare },
+    ],
   },
   {
-    title: "Plans",
-    href: "/admin/plans",
-    icon: DollarSign,
+    label: "Landing Page",
+    items: [
+      { title: "Features", href: "/admin/features", icon: Sparkles },
+      { title: "How It Works", href: "/admin/how-it-works", icon: Layers },
+      { title: "Benefits", href: "/admin/benefits", icon: Award },
+      { title: "Comparisons", href: "/admin/comparisons", icon: GitCompare },
+    ],
   },
   {
-    title: "Credit Packs",
-    href: "/admin/credit-packs",
-    icon: Package,
-  },
-  {
-    title: "Pack Purchases",
-    href: "/admin/credit-pack-purchases",
-    icon: ShoppingCart,
-    showPendingBadge: "credit_pack_purchase" as const,
-  },
-  {
-    title: "Promo Codes",
-    href: "/admin/promo-codes",
-    icon: Tag,
-  },
-  {
-    title: "Referrals",
-    href: "/admin/referrals",
-    icon: Gift,
-  },
-  {
-    title: "Revenue",
-    href: "/admin/revenue",
-    icon: TrendingUp,
-  },
-  {
-    title: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-    showTotalPending: true,
-  },
-  {
-    title: "File Reviewer",
-    href: "/admin/file-reviewer",
-    icon: FileSearch,
-  },
-  {
-    title: "Testimonials",
-    href: "/admin/testimonials",
-    icon: Star,
-  },
-  {
-    title: "FAQs",
-    href: "/admin/faqs",
-    icon: HelpCircle,
-  },
-  {
-    title: "Features",
-    href: "/admin/features",
-    icon: Sparkles,
-  },
-  {
-    title: "How It Works",
-    href: "/admin/how-it-works",
-    icon: Layers,
-  },
-  {
-    title: "Benefits",
-    href: "/admin/benefits",
-    icon: Award,
-  },
-  {
-    title: "Comparisons",
-    href: "/admin/comparisons",
-    icon: GitCompare,
-  },
-  {
-    title: "Blog Posts",
-    href: "/admin/blog-posts",
-    icon: FileText,
-  },
-  {
-    title: "Contact Submissions",
-    href: "/admin/contact-submissions",
-    icon: MessageSquare,
-  },
-  {
-    title: "Social Links",
-    href: "/admin/social-links",
-    icon: Share2,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
+    label: "System",
+    items: [
+      { title: "File Reviewer", href: "/admin/file-reviewer", icon: FileSearch },
+      { title: "Social Links", href: "/admin/social-links", icon: Share2 },
+      { title: "Settings", href: "/admin/settings", icon: Settings },
+    ],
   },
 ];
 
@@ -165,16 +117,77 @@ export function AdminSidebar() {
   const isCollapsed = state === "collapsed";
   const { pendingItems, pendingCount } = useAdminNotifications();
 
-  // Count pending items by type
   const pendingByType = {
     upgrade_request: pendingItems.filter((i) => i.type === "upgrade_request").length,
     credit_pack_purchase: pendingItems.filter((i) => i.type === "credit_pack_purchase").length,
   };
 
-  const getBadgeCount = (item: typeof navItems[0]) => {
+  const getBadgeCount = (item: NavItem) => {
     if (item.showTotalPending) return pendingCount;
     if (item.showPendingBadge) return pendingByType[item.showPendingBadge];
     return 0;
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const isActive = item.href === "/admin"
+      ? location.pathname === "/admin"
+      : location.pathname.startsWith(item.href);
+
+    const badgeCount = getBadgeCount(item);
+
+    const linkContent = (
+      <NavLink
+        to={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full",
+          "hover:bg-secondary/10 hover:text-foreground",
+          isCollapsed && "justify-center px-2"
+        )}
+      >
+        <div className="relative">
+          <item.icon className="h-4 w-4 shrink-0" />
+          {isCollapsed && badgeCount > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-secondary text-[9px] font-medium text-secondary-foreground">
+              {badgeCount > 9 ? "9+" : badgeCount}
+            </span>
+          )}
+        </div>
+        {!isCollapsed && (
+          <span className="truncate flex-1">{item.title}</span>
+        )}
+        {!isCollapsed && badgeCount > 0 && (
+          <Badge variant="secondary" className="h-5 min-w-5 px-1.5 justify-center text-xs">
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </Badge>
+        )}
+      </NavLink>
+    );
+
+    return (
+      <SidebarMenuItem key={item.href}>
+        <SidebarMenuButton asChild isActive={isActive}>
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {linkContent}
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-popover text-popover-foreground border">
+                <div className="flex items-center gap-2">
+                  {item.title}
+                  {badgeCount > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5">
+                      {badgeCount}
+                    </Badge>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            linkContent
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
   };
 
   return (
@@ -192,76 +205,22 @@ export function AdminSidebar() {
           )}
         </div>
       </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel>Management</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = item.href === "/admin"
-                  ? location.pathname === "/admin"
-                  : location.pathname.startsWith(item.href);
-                
-                const badgeCount = getBadgeCount(item);
-                  
-                const linkContent = (
-                  <NavLink
-                    to={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full",
-                      "hover:bg-secondary/10 hover:text-foreground",
-                      isCollapsed && "justify-center px-2"
-                    )}
-                  >
-                    <div className="relative">
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {isCollapsed && badgeCount > 0 && (
-                        <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-secondary text-[9px] font-medium text-secondary-foreground">
-                          {badgeCount > 9 ? "9+" : badgeCount}
-                        </span>
-                      )}
-                    </div>
-                    {!isCollapsed && (
-                      <span className="truncate flex-1">{item.title}</span>
-                    )}
-                    {!isCollapsed && badgeCount > 0 && (
-                      <Badge variant="secondary" className="h-5 min-w-5 px-1.5 justify-center text-xs">
-                        {badgeCount > 99 ? "99+" : badgeCount}
-                      </Badge>
-                    )}
-                  </NavLink>
-                );
 
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      {isCollapsed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            {linkContent}
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="bg-popover text-popover-foreground border">
-                            <div className="flex items-center gap-2">
-                              {item.title}
-                              {badgeCount > 0 && (
-                                <Badge variant="secondary" className="h-5 px-1.5">
-                                  {badgeCount}
-                                </Badge>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        linkContent
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map(renderNavItem)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-4">
