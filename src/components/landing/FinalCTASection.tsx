@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function FinalCTASection() {
   return (
@@ -24,16 +25,19 @@ export function FinalCTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="bg-background text-foreground hover:bg-background/90 rounded-full px-8 font-medium h-12 text-base btn-hover-lift">
-              Try Free Now
-              <ArrowRight className="w-4 h-4 ml-2" />
+            <Button size="lg" className="bg-background text-foreground hover:bg-background/90 rounded-full px-8 font-medium h-12 text-base btn-hover-lift" asChild>
+              <Link to="/auth">
+                Try Free Now
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </Button>
             <Button
               variant="ghost"
               size="lg"
               className="text-primary-foreground hover:bg-primary-foreground/10 rounded-full px-8 font-medium h-12 text-base"
+              asChild
             >
-              View Demo
+              <a href="#how-it-works">See How It Works</a>
             </Button>
           </div>
         </div>

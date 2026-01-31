@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useComparisons } from "@/hooks/use-comparisons";
+import { Link } from "react-router-dom";
 
 const TOOLS = [
   { id: "metadata-generator", label: "Metadata Generator" },
@@ -119,10 +120,10 @@ export function ComparisonSection() {
             {/* CTA */}
             <div className="text-center mt-10">
               <Button size="lg" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-8 font-medium h-12 text-base btn-hover-lift" asChild>
-                <a href="#pricing">
+                <Link to="/auth">
                   Start Saving Time
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
