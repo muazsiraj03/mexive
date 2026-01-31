@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -21,45 +23,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
+const TOOLS = [
+  { id: "all", label: "General" },
+  { id: "metadata-generator", label: "Metadata Generator" },
+  { id: "image-to-prompt", label: "Image to Prompt" },
+  { id: "file-reviewer", label: "File Reviewer" },
+];
+
 const AVAILABLE_ICONS = [
-  "Wand2",
-  "MessageSquareText",
-  "FileCheck",
-  "Layers",
-  "Files",
-  "Download",
-  "Coins",
-  "Zap",
-  "Shield",
-  "Clock",
-  "Sparkles",
-  "Image",
-  "Upload",
-  "Settings",
-  "BarChart",
-  "Globe",
-  "Lock",
-  "Star",
-  "Heart",
-  "Check",
+  "Wand2", "MessageSquareText", "FileCheck", "Layers", "Files", "Download",
+  "Coins", "Zap", "Shield", "Clock", "Sparkles", "Image", "Upload", "Settings",
+  "BarChart", "Globe", "Lock", "Star", "Heart", "Check", "Tags", "Palette",
+  "AlertCircle", "CheckCircle", "Target", "Cpu", "FileText", "Search",
 ];
 
 export function AdminFeatures() {
   const { features, isLoading, createFeature, updateFeature, deleteFeature } = useFeatures();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [formData, setFormData] = useState({
+    tool: "all",
     icon: "Wand2",
     title: "",
     description: "",
@@ -68,11 +55,13 @@ export function AdminFeatures() {
   });
 
   const resetForm = () => {
+    const toolFeatures = features.filter((f) => f.tool === activeTab);
     setFormData({
+      tool: activeTab,
       icon: "Wand2",
       title: "",
       description: "",
-      sort_order: features.length,
+      sort_order: toolFeatures.length,
       is_active: true,
     });
     setEditingFeature(null);
@@ -80,13 +69,13 @@ export function AdminFeatures() {
 
   const openCreateDialog = () => {
     resetForm();
-    setFormData((prev) => ({ ...prev, sort_order: features.length }));
     setDialogOpen(true);
   };
 
   const openEditDialog = (feature: Feature) => {
     setEditingFeature(feature);
     setFormData({
+      tool: feature.tool,
       icon: feature.icon,
       title: feature.title,
       description: feature.description,
@@ -119,84 +108,107 @@ export function AdminFeatures() {
   };
 
   const renderIcon = (iconName: string) => {
-    const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName];
+    const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+    const IconComponent = icons[iconName];
     return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <AdminHeader
         title="Features"
-        description="Manage landing page features section"
+        description="Manage tool-specific features shown on the landing page"
       />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>All Features</CardTitle>
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Feature
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : features.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No features yet. Add your first feature.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Order</TableHead>
-                  <TableHead className="w-16">Icon</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead className="hidden md:table-cell">Description</TableHead>
-                  <TableHead className="w-20">Active</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {features.map((feature) => (
-                  <TableRow key={feature.id}>
-                    <TableCell>{feature.sort_order}</TableCell>
-                    <TableCell>{renderIcon(feature.icon)}</TableCell>
-                    <TableCell className="font-medium">{feature.title}</TableCell>
-                    <TableCell className="hidden md:table-cell max-w-xs truncate">
-                      {feature.description}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={feature.is_active}
-                        onCheckedChange={() => handleToggleActive(feature)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(feature)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(feature.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex justify-end">
+        <Button onClick={openCreateDialog}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Feature
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          {TOOLS.map((tool) => (
+            <TabsTrigger key={tool.id} value={tool.id}>
+              {tool.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {TOOLS.map((tool) => {
+          const toolFeatures = features
+            .filter((f) => f.tool === tool.id)
+            .sort((a, b) => a.sort_order - b.sort_order);
+
+          return (
+            <TabsContent key={tool.id} value={tool.id} className="space-y-4">
+              {toolFeatures.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No features for {tool.label} yet. Add your first feature.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {toolFeatures.map((feature) => (
+                    <Card key={feature.id} className={!feature.is_active ? "opacity-60" : ""}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/20">
+                              {renderIcon(feature.icon)}
+                            </div>
+                            <div>
+                              <CardTitle className="text-base flex items-center gap-2">
+                                {feature.title}
+                                <Badge variant="outline" className="text-xs">
+                                  #{feature.sort_order}
+                                </Badge>
+                              </CardTitle>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={feature.is_active}
+                              onCheckedChange={() => handleToggleActive(feature)}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(feature)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(feature.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          );
+        })}
+      </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -206,6 +218,25 @@ export function AdminFeatures() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Tool</Label>
+              <Select
+                value={formData.tool}
+                onValueChange={(value) => setFormData({ ...formData, tool: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TOOLS.map((tool) => (
+                    <SelectItem key={tool.id} value={tool.id}>
+                      {tool.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="icon">Icon</Label>
               <Select
@@ -220,7 +251,7 @@ export function AdminFeatures() {
                     </div>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-60">
                   {AVAILABLE_ICONS.map((icon) => (
                     <SelectItem key={icon} value={icon}>
                       <div className="flex items-center gap-2">
@@ -232,6 +263,7 @@ export function AdminFeatures() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
@@ -241,6 +273,7 @@ export function AdminFeatures() {
                 placeholder="Feature title"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -251,6 +284,7 @@ export function AdminFeatures() {
                 rows={3}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="sort_order">Sort Order</Label>
               <Input
@@ -262,6 +296,7 @@ export function AdminFeatures() {
                 }
               />
             </div>
+
             <div className="flex items-center gap-2">
               <Switch
                 id="is_active"
