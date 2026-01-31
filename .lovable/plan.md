@@ -1,203 +1,155 @@
 
-# File Reviewer Tool for Marketplaces
+# Referral System Implementation Plan
 
 ## Overview
-
-Build an AI-powered **File Reviewer** tool that analyzes files (images, vectors, videos) before submission to stock marketplaces (Adobe Stock, Freepik, Shutterstock). The tool identifies potential rejection reasons based on marketplace-specific quality standards, helping users fix issues before submitting.
-
----
-
-## What This Tool Does
-
-Users upload files, and the AI analyzes each one for:
-- **Visual quality issues** (blur, noise, low resolution, poor lighting)
-- **Technical problems** (broken shapes, messy paths, missing fonts for vectors)
-- **Content issues** (watermarks, half-cut subjects, unrealistic elements)
-- **Marketplace compliance** (stock usability, commercial friendliness)
-
-The tool provides:
-- Pass/Fail verdict per file
-- List of detected issues with severity
-- Improvement suggestions
-- Marketplace-specific recommendations
+Build a complete referral system where users can share unique referral codes/links, and both the referrer and new user (referee) receive bonus credits when the referee signs up and/or makes a purchase.
 
 ---
 
-## Architecture
+## How It Works
 
-```
-text
-+-------------------+       +----------------------+       +------------------+
-|   Upload Files    | ----> | Process & Upload to  | ----> | AI Edge Function |
-|   (Batch/Single)  |       | Supabase Storage     |       | (review-file)    |
-+-------------------+       +----------------------+       +------------------+
-                                                                    |
-                                                                    v
-+-------------------+       +----------------------+       +------------------+
-|   Review History  | <---- |  Save to Database    | <---- | Analysis Results |
-|   (Searchable)    |       |  (file_reviews)      |       | (Issues + Score) |
-+-------------------+       +----------------------+       +------------------+
-```
+### User Flow
+1. **Get Referral Code**: Users access their unique referral code and shareable link from the dashboard
+2. **Share**: Users share their referral link via social media, email, or direct copy
+3. **New User Signs Up**: When someone clicks the link and creates an account, the referral is tracked
+4. **Rewards Distributed**: Both parties receive their rewards based on configured triggers
+
+### Reward Structure (Configurable via Admin)
+- **Referrer Reward**: Bonus credits added when their referral is successful
+- **Referee Reward**: Extra credits on top of normal signup credits
+- **Trigger**: Rewards given on signup (immediate) or on first purchase (qualified)
 
 ---
 
-## Implementation Plan
+## Implementation Scope
 
-### Phase 1: Edge Function for AI Review
+### 1. Database Tables
 
-**New Edge Function: `supabase/functions/review-file/index.ts`**
+**New Table: `referrals`**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| referrer_id | uuid | User who referred |
+| referee_id | uuid | New user who signed up |
+| referral_code | text | Code used for signup |
+| status | text | pending, completed, expired |
+| referrer_reward_credits | int | Credits earned by referrer |
+| referee_reward_credits | int | Credits earned by referee |
+| rewarded_at | timestamp | When rewards were distributed |
+| created_at | timestamp | When referral was created |
 
-The AI will analyze files using Gemini's vision capabilities with a specialized prompt that checks for:
+**New Table: `referral_codes`**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| user_id | uuid | Owner of the code |
+| code | text | Unique referral code (e.g., "JOHN123") |
+| is_active | boolean | Whether code can be used |
+| created_at | timestamp | Creation timestamp |
 
-| File Type | Checks Performed |
-|-----------|-----------------|
-| JPG/PNG/WEBP | Visual quality, resolution, noise, blur, subject clarity, watermarks, over-editing, stock usability |
-| SVG | Shape integrity, path cleanliness, stroke consistency, text outlining, zoom quality, design clarity |
-| EPS | File structure, clipping issues, anchor points, stroke expansion, raster elements, hidden objects |
-| AI | File integrity, linked images, hidden layers, artboard quality, text outlining, vector quality |
-| Video | Video quality, stability, blur/noise, lighting, subject clarity, motion realism, watermarks |
+**New Table: `referral_settings`** (Admin-configurable)
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| referrer_reward_credits | int | Credits given to referrer (default: 10) |
+| referee_reward_credits | int | Extra credits for new user (default: 5) |
+| reward_trigger | text | "signup" or "first_purchase" |
+| max_referrals_per_user | int | Monthly/lifetime cap (null = unlimited) |
+| cap_period | text | "monthly", "lifetime", or null |
+| is_active | boolean | Enable/disable referral program |
 
-**Rejection Reasons Catalog**: The system prompt will contain all ~50 rejection reasons you provided in Bengali/English, organized by file type.
+### 2. User Dashboard Features
 
----
+**New Section in Settings Page or Dedicated Tab:**
+- Display user's unique referral code
+- Copy button for referral code
+- Shareable referral link (e.g., `mexive.lovable.app/auth?ref=CODE`)
+- Social share buttons (Twitter, Facebook, WhatsApp, Email)
+- Stats: Total referrals, Pending rewards, Earned credits
 
-### Phase 2: Database Schema
+**Referral History Panel:**
+- List of people referred (anonymized emails)
+- Status of each referral (pending/completed)
+- Credits earned from each
 
-**New table: `file_reviews`**
-```
-Columns:
-- id (UUID, primary key)
-- user_id (UUID, references profiles)
-- file_name (TEXT)
-- file_type (TEXT) - jpg, png, svg, eps, ai, mp4, etc.
-- image_url (TEXT) - uploaded file URL for reference
-- overall_score (INTEGER) - 0-100 quality score
-- verdict (TEXT) - 'pass', 'warning', 'fail'
-- issues (JSONB) - array of detected issues
-- suggestions (JSONB) - improvement recommendations
-- marketplace_notes (JSONB) - per-marketplace specific notes
-- created_at (TIMESTAMPTZ)
-```
+### 3. Admin Panel Features
 
-**Issue structure**:
-```
-{
-  "code": "BLUR_DETECTED",
-  "severity": "high",
-  "category": "image_quality",
-  "message": "Image appears blurry or out of focus",
-  "message_bn": "ছবি blur বা out of focus"
-}
-```
+**New Admin Page: `/admin/referrals`**
+- Overview statistics (total referrals, conversion rate, credits distributed)
+- Configure reward amounts (referrer/referee credits)
+- Set reward trigger (signup vs first purchase)
+- Enable/disable referral program
+- Set referral limits per user
+- View all referrals with filters
 
----
+**Add to Admin Sidebar:**
+- New "Referrals" menu item with Gift icon
 
-### Phase 3: Frontend Components
+### 4. Auth Flow Changes
 
-**New Page: `FileReviewerPage.tsx`**
+**Signup Process:**
+- Detect `?ref=CODE` parameter in URL
+- Store referral code in session/localStorage
+- After successful signup, create referral record
+- If trigger is "signup": Distribute rewards immediately
+- If trigger is "first_purchase": Mark as pending
 
-Located at `/dashboard/file-reviewer` with:
+### 5. Edge Function
 
-1. **Upload Section**
-   - Reuse existing `ImageUploader` component
-   - Support all file types: JPG, PNG, WEBP, SVG, EPS, AI, MP4, MOV, WEBM
-   - Batch upload support
+**New Function: `process-referral`**
+- Validate referral code
+- Check if referrer hasn't exceeded limits
+- Create referral record
+- Distribute credits if trigger conditions met
+- Send notifications to both users
 
-2. **Review Results Panel**
-   - Per-file review cards showing:
-     - Thumbnail/preview
-     - Verdict badge (Pass/Warning/Fail with color coding)
-     - Quality score (0-100)
-     - Expandable issues list with severity indicators
-     - Improvement suggestions
-   - Marketplace-specific tabs (Adobe, Freepik, Shutterstock)
+### 6. Automatic Code Generation
 
-3. **Batch Review Queue**
-   - Progress indicator for batch processing
-   - Summary statistics (X passed, Y warnings, Z failed)
-
-4. **Review History**
-   - Searchable history of past reviews
-   - Filter by verdict, file type, date
-
----
-
-### Phase 4: Sidebar Navigation
-
-Add "File Reviewer" to the Tools section in `DashboardSidebar.tsx`:
-```
-Tools:
-- Metadata Generator
-- Image to Prompt
-- BG Remover
-- File Reviewer (new)
-```
+- Generate unique code on user signup (e.g., first 4 letters of name + random 4 digits)
+- Allow users to customize their code (if unique)
 
 ---
 
 ## Technical Details
 
-### Edge Function Request/Response
-
-**Request:**
+### Referral Link Format
 ```
-{
-  "imageUrl": "https://...",
-  "fileType": "jpg",
-  "fileName": "photo-123.jpg",
-  "marketplaces": ["Adobe Stock", "Freepik", "Shutterstock"]
-}
+https://mexive.lovable.app/auth?ref=JOHN1234
 ```
 
-**Response:**
-```
-{
-  "overallScore": 75,
-  "verdict": "warning",
-  "issues": [
-    {
-      "code": "LOW_RESOLUTION",
-      "severity": "medium",
-      "category": "technical",
-      "message": "Resolution is below 4MP",
-      "message_bn": "resolution কম (4MP এর নিচে)"
-    }
-  ],
-  "suggestions": [
-    "Consider upscaling the image to at least 4000x3000 pixels",
-    "Use noise reduction while maintaining detail"
-  ],
-  "marketplaceNotes": {
-    "Adobe Stock": "May be rejected due to resolution requirements",
-    "Freepik": "Acceptable for web-only category",
-    "Shutterstock": "Requires minimum 4MP for acceptance"
-  }
-}
+### Credit Distribution Logic
+```text
+When reward trigger is "signup":
+  1. New user signs up with referral code
+  2. Validate code exists and is active
+  3. Check referrer hasn't hit cap
+  4. Add referee_reward_credits to new user's bonus_credits
+  5. Add referrer_reward_credits to referrer's bonus_credits
+  6. Mark referral as "completed"
+  7. Notify both users
+
+When reward trigger is "first_purchase":
+  1. New user signs up with referral code
+  2. Create referral with status "pending"
+  3. When user makes first purchase (subscription or credit pack)
+  4. Check for pending referral
+  5. Distribute rewards to both
+  6. Mark as "completed"
 ```
 
-### File Type Processing
-
-- **Raster images (JPG/PNG/WEBP)**: Process directly via AI vision
-- **SVG**: Convert to PNG for AI analysis (reuse existing `convertSvgToPng`)
-- **Video**: Extract frame for analysis (reuse existing `extractVideoFrame`)
-- **EPS/AI**: Show message that these require preview export; cannot analyze directly in browser
-
-### Credit System
-
-Each file review consumes 1 credit (same as other tools).
+### Database Trigger
+- Auto-generate referral code when new user is created in `handle_new_user()` function
 
 ---
 
-## Files to Create
+## New Files to Create
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/review-file/index.ts` | Edge function for AI file analysis |
-| `src/components/dashboard/FileReviewerPage.tsx` | Main page component |
-| `src/components/dashboard/ReviewResultCard.tsx` | Individual file review result display |
-| `src/components/dashboard/ReviewHistoryDrawer.tsx` | Past reviews history panel |
-| `src/lib/file-reviewer.ts` | Helper functions and types |
-| `src/hooks/use-file-reviews.tsx` | Hook for managing review state and history |
+| `src/hooks/use-referrals.tsx` | Hook for referral data and actions |
+| `src/components/dashboard/ReferralPage.tsx` | User referral dashboard |
+| `src/components/admin/AdminReferrals.tsx` | Admin referral management |
+| `supabase/functions/process-referral/index.ts` | Edge function for processing |
 
 ---
 
@@ -205,29 +157,71 @@ Each file review consumes 1 credit (same as other tools).
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/DashboardSidebar.tsx` | Add File Reviewer to Tools section |
-| `src/pages/Dashboard.tsx` | Add route for `/file-reviewer` |
-| `supabase/config.toml` | Add `review-file` function configuration |
+| `src/pages/Auth.tsx` | Handle `?ref=` parameter, store and process referral |
+| `src/pages/Dashboard.tsx` | Add referral route |
+| `src/pages/Admin.tsx` | Add referral admin route |
+| `src/components/dashboard/DashboardSidebar.tsx` | Add referral menu item |
+| `src/components/admin/AdminSidebar.tsx` | Add referral menu item |
+| `supabase/functions/manage-subscription/index.ts` | Trigger referral reward on first purchase |
+| `supabase/functions/purchase-credits/index.ts` | Trigger referral reward on first purchase |
+| Database trigger `handle_new_user()` | Auto-generate referral code |
 
 ---
 
-## Database Migration
+## UI Components
 
+### User Referral Card
+```text
++------------------------------------------+
+|  Your Referral Code                      |
+|  +------------------+  [Copy] [Share]    |
+|  |   JOHN1234       |                    |
+|  +------------------+                    |
+|                                          |
+|  Share your link:                        |
+|  mexive.lovable.app/auth?ref=JOHN1234    |
+|                                          |
+|  [Twitter] [Facebook] [WhatsApp] [Email] |
+|                                          |
+|  Stats:                                  |
+|  - 5 People Referred                     |
+|  - 50 Credits Earned                     |
++------------------------------------------+
 ```
-SQL migration to create:
-- file_reviews table
-- RLS policies for user data isolation
-- Index on user_id and created_at for efficient queries
+
+### Admin Settings
+```text
++------------------------------------------+
+|  Referral Program Settings               |
+|                                          |
+|  [x] Enable Referral Program             |
+|                                          |
+|  Referrer Reward:  [10] credits          |
+|  Referee Reward:   [5]  credits          |
+|                                          |
+|  Reward Trigger:   [On Signup v]         |
+|                                          |
+|  Limit per User:   [Unlimited v]         |
++------------------------------------------+
 ```
 
 ---
 
-## Summary
+## Security Considerations
 
-This plan creates a comprehensive File Reviewer tool that:
-1. Analyzes all supported file types for marketplace rejection reasons
-2. Provides bilingual feedback (English + Bengali)
-3. Gives marketplace-specific recommendations
-4. Maintains review history for reference
-5. Follows existing patterns from Image to Prompt and Metadata Generator
-6. Uses the existing Lovable AI Gateway for analysis
+- Prevent self-referral (same email domain checks, IP tracking)
+- Rate limit referral code validation
+- Validate referral code exists before processing
+- RLS policies to protect referral data
+- Only show anonymized referee emails to referrers
+
+---
+
+## Notifications
+
+**To Referrer:**
+- "Someone signed up with your code! +10 credits"
+- "Your referral made their first purchase! +10 credits" (if first_purchase trigger)
+
+**To Referee:**
+- "Welcome! You received 5 bonus credits from your referral"
