@@ -143,7 +143,7 @@ export function AdminBlogEditor() {
           title={isEditing ? "Edit Blog Post" : "New Blog Post"}
           description={isEditing ? "Update your blog article" : "Create a new blog article"}
         />
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 space-y-6 p-4 md:p-6">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
@@ -159,7 +159,7 @@ export function AdminBlogEditor() {
         description={isEditing ? "Update your blog article" : "Create a new blog article"}
       />
       
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-6xl space-y-6">
           {/* Action Bar */}
           <div className="flex items-center justify-between">

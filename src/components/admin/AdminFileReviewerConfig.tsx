@@ -73,9 +73,11 @@ export function AdminFileReviewerConfig() {
           title="File Reviewer Config" 
           description="Configure AI file analysis rules and scoring" 
         />
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <main className="flex-1 space-y-6 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
       </>
     );
   }
@@ -87,11 +89,13 @@ export function AdminFileReviewerConfig() {
           title="File Reviewer Config" 
           description="Configure AI file analysis rules and scoring" 
         />
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Settings2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">No configuration found</p>
-          <p className="text-sm text-muted-foreground">The file reviewer configuration is not set up.</p>
-        </div>
+        <main className="flex-1 space-y-6 p-4 md:p-6">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Settings2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">No configuration found</p>
+            <p className="text-sm text-muted-foreground">The file reviewer configuration is not set up.</p>
+          </div>
+        </main>
       </>
     );
   }

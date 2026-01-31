@@ -49,7 +49,7 @@ export function AdminBlogPosts() {
     return (
       <>
         <AdminHeader title="Blog Posts" description="Manage your blog articles and content" />
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 space-y-6 p-4 md:p-6">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -62,7 +62,7 @@ export function AdminBlogPosts() {
     <>
       <AdminHeader title="Blog Posts" description="Manage your blog articles and content" />
       
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-6xl space-y-6">
           <div className="flex justify-end">
             <Button onClick={() => navigate("/admin/blog-posts/new")}>

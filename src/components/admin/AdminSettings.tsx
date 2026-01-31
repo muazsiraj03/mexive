@@ -210,7 +210,7 @@ export function AdminSettings() {
         description="Configure platform settings and manage administrators" 
       />
       
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-5xl mx-auto">
           <Tabs defaultValue="general" className="space-y-6">
             <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">

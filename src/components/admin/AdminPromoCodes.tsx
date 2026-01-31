@@ -231,7 +231,7 @@ export function AdminPromoCodes() {
     return (
       <>
         <AdminHeader title="Promo Codes" description="Manage discount codes for checkout" />
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 space-y-6 p-4 md:p-6">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>

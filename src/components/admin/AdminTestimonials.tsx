@@ -190,9 +190,11 @@ export function AdminTestimonials() {
           title="Testimonials & Stats"
           description="Manage customer reviews and landing page statistics"
         />
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <main className="flex-1 space-y-6 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
       </>
     );
   }
@@ -204,7 +206,7 @@ export function AdminTestimonials() {
         description="Manage customer reviews and landing page statistics"
       />
 
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-5xl mx-auto space-y-6">
           <Tabs defaultValue="testimonials" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
