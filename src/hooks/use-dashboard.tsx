@@ -9,6 +9,8 @@ export interface User {
   avatar?: string;
   plan: "free" | "pro" | "enterprise";
   credits: number;
+  planCredits: number;
+  bonusCredits: number;
   totalCredits: number;
   hasUnlimitedCredits: boolean;
 }
@@ -60,6 +62,8 @@ const defaultUser: User = {
   email: "",
   plan: "free",
   credits: 0,
+  planCredits: 0,
+  bonusCredits: 0,
   totalCredits: 0,
   hasUnlimitedCredits: false,
 };
@@ -112,12 +116,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       .eq("user_id", authUser.id)
       .single();
 
-    // Find plan config to check if unlimited
+    // Find plan config to check if unlimited and get default credits
     const { data: planConfig } = await supabase
       .from("pricing_config")
-      .select("is_unlimited")
+      .select("is_unlimited, credits")
       .eq("plan_name", subscription?.plan || "free")
       .single();
+
+    // Calculate credits breakdown
+    const planCredits = subscription?.credits_total || planConfig?.credits || 0;
+    const bonusCredits = subscription?.bonus_credits || 0;
+    const totalCredits = planCredits + bonusCredits;
 
     setUser({
       id: authUser.id,
@@ -126,7 +135,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       avatar: profile?.avatar_url || undefined,
       plan: (subscription?.plan as "free" | "pro" | "enterprise") || "free",
       credits: subscription?.credits_remaining || 0,
-      totalCredits: subscription?.credits_total || 0,
+      planCredits,
+      bonusCredits,
+      totalCredits,
       hasUnlimitedCredits: planConfig?.is_unlimited || false,
     });
   };
