@@ -186,6 +186,34 @@ Deno.serve(async (req) => {
         },
       ]);
 
+      // Get referrer profile and send email notification
+      const { data: referrerProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", referrer_id)
+        .single();
+
+      // Get referrer's email from auth
+      const { data: referrerAuth } = await supabase.auth.admin.getUserById(referrer_id);
+
+      if (referrerAuth?.user?.email) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-user-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "referral_reward",
+              userEmail: referrerAuth.user.email,
+              userName: referrerProfile?.full_name || "there",
+              credits: settings.referrer_reward_credits,
+            }),
+          });
+          console.log("Referral reward email sent to referrer");
+        } catch (emailError) {
+          console.error("Failed to send referral reward email:", emailError);
+        }
+      }
+
       console.log("Referral processed and rewards distributed");
     } else {
       console.log("Referral created with pending status (first_purchase trigger)");

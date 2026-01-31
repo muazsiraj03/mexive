@@ -84,10 +84,86 @@ Deno.serve(async (req) => {
 
     console.log(`Daily credit reset complete. Total users updated: ${totalUpdated}`);
 
+    // Check for subscriptions expiring in 7 days and send notifications
+    console.log("Checking for expiring subscriptions...");
+    
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const sevenDaysStart = new Date(sevenDaysFromNow);
+    sevenDaysStart.setHours(0, 0, 0, 0);
+    const sevenDaysEnd = new Date(sevenDaysFromNow);
+    sevenDaysEnd.setHours(23, 59, 59, 999);
+
+    const { data: expiringSubs, error: expiringError } = await supabase
+      .from("subscriptions")
+      .select("id, user_id, plan, expires_at")
+      .eq("status", "active")
+      .neq("plan", "free")
+      .gte("expires_at", sevenDaysStart.toISOString())
+      .lte("expires_at", sevenDaysEnd.toISOString());
+
+    if (expiringError) {
+      console.error("Error fetching expiring subscriptions:", expiringError);
+    } else if (expiringSubs && expiringSubs.length > 0) {
+      console.log(`Found ${expiringSubs.length} subscriptions expiring in 7 days`);
+
+      // Get plan display names
+      const { data: planConfigs } = await supabase
+        .from("pricing_config")
+        .select("plan_name, display_name");
+
+      const planDisplayNames: Record<string, string> = {};
+      planConfigs?.forEach(p => {
+        planDisplayNames[p.plan_name] = p.display_name;
+      });
+
+      for (const sub of expiringSubs) {
+        // Get user profile and email
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", sub.user_id)
+          .single();
+
+        const { data: authUser } = await supabase.auth.admin.getUserById(sub.user_id);
+
+        if (authUser?.user?.email) {
+          // Send in-app notification
+          await supabase.from("notifications").insert({
+            user_id: sub.user_id,
+            title: "Subscription Expiring Soon ⏰",
+            message: `Your ${planDisplayNames[sub.plan] || sub.plan} subscription expires in 7 days. Renew now to keep your benefits!`,
+            type: "warning",
+            action_url: "/dashboard/subscription",
+          });
+
+          // Send email notification
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-user-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "subscription_expiring",
+                userEmail: authUser.user.email,
+                userName: profile?.full_name || "there",
+                planName: planDisplayNames[sub.plan] || sub.plan,
+                expiresIn: 7,
+              }),
+            });
+            console.log(`Expiry notification sent to user ${sub.user_id}`);
+          } catch (emailError) {
+            console.error(`Failed to send expiry email to user ${sub.user_id}:`, emailError);
+          }
+        }
+      }
+    } else {
+      console.log("No subscriptions expiring in 7 days");
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Reset credits for ${totalUpdated} users`,
+        message: `Reset credits for ${totalUpdated} users. Checked expiring subscriptions.`,
         timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
