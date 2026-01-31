@@ -15,6 +15,7 @@ import {
   Tag,
   ShoppingCart,
   Gift,
+  Star,
 } from "lucide-react";
 import {
   Sidebar,
@@ -97,6 +98,11 @@ const navItems = [
     title: "File Reviewer",
     href: "/admin/file-reviewer",
     icon: FileSearch,
+  },
+  {
+    title: "Testimonials",
+    href: "/admin/testimonials",
+    icon: Star,
   },
   {
     title: "Settings",

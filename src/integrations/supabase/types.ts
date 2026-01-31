@@ -863,6 +863,48 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          rating: number
+          role: string
+          sort_order: number
+          tool: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          rating?: number
+          role: string
+          sort_order?: number
+          tool: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          rating?: number
+          role?: string
+          sort_order?: number
+          tool?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       training_presets: {
         Row: {
           category: string
