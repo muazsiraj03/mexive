@@ -50,6 +50,39 @@ export type Database = {
         }
         Relationships: []
       }
+      comparisons: {
+        Row: {
+          ai_value: string
+          aspect: string
+          created_at: string
+          id: string
+          is_active: boolean
+          manual_value: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          ai_value: string
+          aspect: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          manual_value: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          ai_value?: string
+          aspect?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          manual_value?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_pack_purchases: {
         Row: {
           admin_notes: string | null
