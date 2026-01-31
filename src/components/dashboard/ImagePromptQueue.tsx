@@ -74,14 +74,19 @@ export function ImagePromptQueue({
       return;
     }
 
-    // Download each prompt as a separate file
-    completedItems.forEach((item) => {
-      if (item.result) {
-        handleDownloadPrompt(item.result, item.file.name);
-      }
-    });
-    
-    toast.success(`Downloaded ${completedItems.length} prompts!`);
+    // Combine all prompts into a single text file
+    const allPromptsContent = completedItems
+      .map((item) => {
+        let content = `=== ${item.file.name} ===\n\n${item.result?.prompt}`;
+        if (item.result?.negativePrompt) {
+          content += `\n\n--- Negative Prompt ---\n${item.result.negativePrompt}`;
+        }
+        return content;
+      })
+      .join("\n\n" + "=".repeat(50) + "\n\n");
+
+    downloadPromptAsText(allPromptsContent, `batch-prompts-${Date.now()}.txt`);
+    toast.success(`Downloaded ${completedItems.length} prompts in one file!`);
   };
 
   const handleCopyAll = async () => {
