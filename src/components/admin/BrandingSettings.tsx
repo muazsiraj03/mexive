@@ -334,6 +334,7 @@ export function BrandingSettings() {
   const [whatsappNumber, setWhatsappNumber] = useState(settings.whatsappNumber);
   const [responseTime, setResponseTime] = useState(settings.responseTime);
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(settings.adminNotificationEmail);
+  const [websiteUrl, setWebsiteUrl] = useState(settings.websiteUrl);
   const [metaDescription, setMetaDescription] = useState(settings.metaDescription);
   const [metaKeywords, setMetaKeywords] = useState(settings.metaKeywords);
   const [savingIdentity, setSavingIdentity] = useState(false);
@@ -348,6 +349,7 @@ export function BrandingSettings() {
     setWhatsappNumber(settings.whatsappNumber);
     setResponseTime(settings.responseTime);
     setAdminNotificationEmail(settings.adminNotificationEmail);
+    setWebsiteUrl(settings.websiteUrl);
     setMetaDescription(settings.metaDescription);
     setMetaKeywords(settings.metaKeywords);
   });
@@ -444,6 +446,7 @@ export function BrandingSettings() {
         updateSetting("whatsapp_number", whatsappNumber),
         updateSetting("response_time", responseTime),
         updateSetting("admin_notification_email", adminNotificationEmail),
+        updateSetting("website_url", websiteUrl),
       ]);
       toast({ title: "Brand identity saved" });
     } catch {
@@ -745,21 +748,39 @@ export function BrandingSettings() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="adminNotificationEmail" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Admin Notification Email
-            </Label>
-            <Input
-              id="adminNotificationEmail"
-              type="email"
-              value={adminNotificationEmail}
-              onChange={(e) => setAdminNotificationEmail(e.target.value)}
-              placeholder="admin@example.com"
-            />
-            <p className="text-xs text-muted-foreground">
-              Receive email notifications for new signups, upgrade requests, and credit pack purchases
-            </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="adminNotificationEmail" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Admin Notification Email
+              </Label>
+              <Input
+                id="adminNotificationEmail"
+                type="email"
+                value={adminNotificationEmail}
+                onChange={(e) => setAdminNotificationEmail(e.target.value)}
+                placeholder="admin@example.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                Receive email notifications for new signups, upgrade requests, etc.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="websiteUrl" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Website URL
+              </Label>
+              <Input
+                id="websiteUrl"
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://yourdomain.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used in email templates for all links (e.g., Vercel domain)
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end">
