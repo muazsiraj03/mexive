@@ -103,7 +103,7 @@ export function AdminPromoCodes() {
     }
   };
 
-  const PromoForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
+  const renderPromoForm = (onSubmit: () => void, submitLabel: string) => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -300,7 +300,7 @@ export function AdminPromoCodes() {
                     <DialogTitle>Create Promo Code</DialogTitle>
                     <DialogDescription>Add a new discount code for checkout</DialogDescription>
                   </DialogHeader>
-                  <PromoForm onSubmit={handleCreate} submitLabel="Create" />
+                  {renderPromoForm(handleCreate, "Create")}
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -388,7 +388,7 @@ export function AdminPromoCodes() {
                                   <DialogTitle>Edit Promo Code</DialogTitle>
                                   <DialogDescription>Update the discount code settings</DialogDescription>
                                 </DialogHeader>
-                                <PromoForm onSubmit={handleUpdate} submitLabel="Save Changes" />
+                                {renderPromoForm(handleUpdate, "Save Changes")}
                               </DialogContent>
                             </Dialog>
 
