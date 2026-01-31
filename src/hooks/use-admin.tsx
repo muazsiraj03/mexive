@@ -24,6 +24,8 @@ interface User {
   avatar_url: string | null;
   plan: string;
   credits: number;
+  plan_credits: number;
+  bonus_credits: number;
   total_credits: number;
   has_unlimited_credits: boolean;
   created_at: string;

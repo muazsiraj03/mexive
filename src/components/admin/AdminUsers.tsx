@@ -498,7 +498,21 @@ export function AdminUsers() {
                                         Unlimited
                                       </Badge>
                                     ) : (
-                                      `${user.credits} / ${user.total_credits}`
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">{user.credits}</span>
+                                          <span className="text-muted-foreground">/</span>
+                                          <span className="text-muted-foreground">{user.total_credits}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                          <span>Plan: {user.plan_credits}</span>
+                                          {user.bonus_credits > 0 && (
+                                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-green-500/10 text-green-600 border-green-500/30">
+                                              +{user.bonus_credits} pack
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
                                     )}
                                   </TableCell>
                                   <TableCell>

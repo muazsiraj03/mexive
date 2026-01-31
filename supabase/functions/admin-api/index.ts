@@ -281,18 +281,19 @@ Deno.serve(async (req) => {
           const isUnlimited = unlimitedPlans.has(plan);
           const planDefaultCredits = planCreditsMap.get(plan) || 2;
           // Use plan's default credits as total if not set or if zero
-          const baseCredits = sub.credits_total > 0 ? sub.credits_total : planDefaultCredits;
+          const planCredits = sub.credits_total > 0 ? sub.credits_total : planDefaultCredits;
           const bonusCredits = sub.bonus_credits || 0;
-          // Total credits = base plan credits + bonus credits
-          const totalCredits = baseCredits + bonusCredits;
+          // Total credits = plan credits + bonus credits from packs
+          const totalCredits = planCredits + bonusCredits;
           return {
             id: profile.user_id || profile.id,
             full_name: profile.full_name,
             avatar_url: profile.avatar_url,
             plan: plan,
             credits: sub.credits_remaining || 0,
-            total_credits: totalCredits,
+            plan_credits: planCredits,
             bonus_credits: bonusCredits,
+            total_credits: totalCredits,
             has_unlimited_credits: isUnlimited,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
