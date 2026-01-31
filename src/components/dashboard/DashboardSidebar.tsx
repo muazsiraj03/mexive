@@ -158,23 +158,9 @@ export function DashboardSidebar() {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground">Credits</p>
-                {isAdmin ? (
-                  <p className="font-semibold text-foreground">∞ Unlimited</p>
-                ) : (
-                  <>
-                    <p className="font-semibold text-foreground">
-                      {user.credits} / {user.totalCredits}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-                      <span>Plan: {user.planCredits}</span>
-                      {user.bonusCredits > 0 && (
-                        <span className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">
-                          +{user.bonusCredits} pack
-                        </span>
-                      )}
-                    </div>
-                  </>
-                )}
+                <p className="font-semibold text-foreground">
+                  {isAdmin ? "∞ Unlimited" : `${user.credits} / ${user.totalCredits}`}
+                </p>
               </div>
             </div>
           </div>
