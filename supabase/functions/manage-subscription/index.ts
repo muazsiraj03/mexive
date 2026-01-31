@@ -82,8 +82,24 @@ Deno.serve(async (req) => {
           );
         }
 
-        const validPlans = ["free", "pro", "enterprise", "unlimited"];
-        if (!plan || !validPlans.includes(plan)) {
+        // Validate plan against database
+        if (!plan) {
+          return new Response(
+            JSON.stringify({ error: "Plan is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Check if plan exists in pricing_config
+        const { data: planData, error: planError } = await supabaseAdmin
+          .from("pricing_config")
+          .select("plan_name")
+          .eq("plan_name", plan)
+          .eq("is_active", true)
+          .single();
+
+        if (planError || !planData) {
+          console.error(`Invalid plan requested: ${plan}`);
           return new Response(
             JSON.stringify({ error: "Invalid plan" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
