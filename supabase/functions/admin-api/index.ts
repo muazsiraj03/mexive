@@ -254,15 +254,19 @@ Deno.serve(async (req) => {
           .select("user_id, plan, credits_remaining, credits_total, bonus_credits, status")
           .in("user_id", userIds);
 
-        // Fetch pricing config to check which plans are unlimited
+        // Fetch pricing config to check which plans are unlimited and get default credits
         const { data: pricingConfig } = await adminClient
           .from("pricing_config")
-          .select("plan_name, is_unlimited");
+          .select("plan_name, is_unlimited, credits");
 
-        // Build unlimited plans set
+        // Build unlimited plans set and plan credits map
         const unlimitedPlans = new Set(
           (pricingConfig || []).filter(p => p.is_unlimited).map(p => p.plan_name)
         );
+        const planCreditsMap = new Map<string, number>();
+        (pricingConfig || []).forEach(p => {
+          planCreditsMap.set(p.plan_name, p.credits);
+        });
 
         // Build subscription map
         const subscriptionMap = new Map<string, any>();
@@ -273,14 +277,18 @@ Deno.serve(async (req) => {
         // Combine profile and subscription data
         let users = (profiles || []).map((profile: any) => {
           const sub = subscriptionMap.get(profile.user_id) || {};
-          const isUnlimited = unlimitedPlans.has(sub.plan);
+          const plan = sub.plan || "free";
+          const isUnlimited = unlimitedPlans.has(plan);
+          const planDefaultCredits = planCreditsMap.get(plan) || 2;
+          // Use plan's default credits as total if not set or if zero
+          const totalCredits = sub.credits_total > 0 ? sub.credits_total : planDefaultCredits;
           return {
             id: profile.user_id || profile.id,
             full_name: profile.full_name,
             avatar_url: profile.avatar_url,
-            plan: sub.plan || "free",
+            plan: plan,
             credits: sub.credits_remaining || 0,
-            total_credits: sub.credits_total || 0,
+            total_credits: totalCredits,
             bonus_credits: sub.bonus_credits || 0,
             has_unlimited_credits: isUnlimited,
             created_at: profile.created_at,
