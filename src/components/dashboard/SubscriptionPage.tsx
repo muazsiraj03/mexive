@@ -119,7 +119,7 @@ export function SubscriptionPage() {
         {/* Breadcrumb */}
         <DashboardBreadcrumb />
 
-        <div>
+        <div className="max-w-7xl">
           {/* Selected Plan Banner - shown when coming from pricing page */}
           {showSelectedPlanBanner && preselectedPlanInfo && (
             <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-secondary/20 to-secondary/5 border border-secondary/30 flex items-center justify-between">
