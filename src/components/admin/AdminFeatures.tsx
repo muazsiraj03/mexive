@@ -135,14 +135,9 @@ export function AdminFeatures() {
       />
 
       <div className="max-w-6xl space-y-6">
-      <AdminHeader
-        title="Features"
-        description="Manage tool-specific features shown on the landing page"
-      />
-
-      <div className="flex justify-end">
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
+        <div className="flex justify-end">
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
           Add Feature
         </Button>
       </div>
