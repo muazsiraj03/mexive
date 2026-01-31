@@ -18,6 +18,7 @@ import {
   Star,
   HelpCircle,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import {
   Sidebar,
@@ -115,6 +116,11 @@ const navItems = [
     title: "Features",
     href: "/admin/features",
     icon: Sparkles,
+  },
+  {
+    title: "How It Works",
+    href: "/admin/how-it-works",
+    icon: Layers,
   },
   {
     title: "Settings",
