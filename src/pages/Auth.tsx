@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, AlertCircle, Check } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, Check, Image, Zap, Wand2, FileCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { usePricing } from "@/hooks/use-pricing";
@@ -37,6 +37,7 @@ export default function Auth() {
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authErrorType, setAuthErrorType] = useState<"reset" | "confirmation" | null>(null);
+  const [isSignUp, setIsSignUp] = useState(false);
   
   // Check if this is a password reset flow or confirmation flow
   const isResetMode = searchParams.get("mode") === "reset";
@@ -59,7 +60,6 @@ export default function Auth() {
   // Handle auth tokens from URL hash (password reset or email confirmation)
   useEffect(() => {
     const handleAuthCallback = async () => {
-      // Check for tokens in URL hash (Supabase sends them as hash fragments)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
@@ -67,11 +67,9 @@ export default function Auth() {
       const errorCode = hashParams.get("error_code");
       const errorDescription = hashParams.get("error_description");
       
-      // Determine the type of callback
       const isRecovery = type === "recovery";
-      const isSignup = type === "signup" || type === "email";
+      const isSignupCallback = type === "signup" || type === "email";
       
-      // Handle error from Supabase (e.g., expired link)
       if (errorCode || errorDescription) {
         const decodedError = errorDescription 
           ? decodeURIComponent(errorDescription.replace(/\+/g, " "))
@@ -89,8 +87,7 @@ export default function Auth() {
         return;
       }
       
-      // If we have tokens, set the session
-      if (accessToken && refreshToken && (isRecovery || isSignup)) {
+      if (accessToken && refreshToken && (isRecovery || isSignupCallback)) {
         setIsProcessingAuth(true);
         try {
           const { error } = await supabase.auth.setSession({
@@ -106,12 +103,10 @@ export default function Auth() {
               setAuthError(error.message);
               setAuthErrorType("confirmation");
             }
-          } else if (isSignup) {
-            // Email confirmed successfully
+          } else if (isSignupCallback) {
             toast.success("Email confirmed! Welcome to StockMeta AI.");
           }
           
-          // Clean up URL hash after processing
           const mode = isRecovery ? "?mode=reset" : "";
           window.history.replaceState(null, "", window.location.pathname + mode);
         } catch (err) {
@@ -128,7 +123,6 @@ export default function Auth() {
       }
     };
 
-    // Run on mount and when mode changes
     if (window.location.hash || isResetMode || isConfirmMode) {
       handleAuthCallback();
     }
@@ -137,7 +131,6 @@ export default function Auth() {
   // Redirect if already authenticated (but not in reset mode)
   useEffect(() => {
     if (user && !isResetMode) {
-      // If user just signed up with a selected plan, go to subscription page
       if (selectedPlanKey && selectedPlanKey !== "free") {
         navigate("/dashboard/subscription", { 
           replace: true,
@@ -154,7 +147,6 @@ export default function Auth() {
     e.preventDefault();
     setError(null);
     
-    // Validate inputs
     const emailResult = emailSchema.safeParse(loginEmail);
     if (!emailResult.success) {
       setError(emailResult.error.errors[0].message);
@@ -184,7 +176,6 @@ export default function Auth() {
     e.preventDefault();
     setError(null);
     
-    // Validate inputs
     const emailResult = emailSchema.safeParse(signupEmail);
     if (!emailResult.success) {
       setError(emailResult.error.errors[0].message);
@@ -214,262 +205,403 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  // Render special states (processing, errors, reset mode, forgot password, resend confirmation)
+  const renderSpecialContent = () => {
+    if (isProcessingAuth) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Processing...</p>
+        </div>
+      );
+    }
+    
+    if (authError) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {authError}
+          </div>
+          {authErrorType === "reset" ? (
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                setAuthError(null);
+                setAuthErrorType(null);
+                setShowForgotPassword(true);
+                navigate("/auth", { replace: true });
+              }}
+            >
+              Request New Reset Link
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                setAuthError(null);
+                setAuthErrorType(null);
+                setShowResendConfirmation(true);
+                navigate("/auth", { replace: true });
+              }}
+            >
+              Resend Confirmation Email
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            className="w-full"
+            onClick={() => {
+              setAuthError(null);
+              setAuthErrorType(null);
+              navigate("/auth", { replace: true });
+            }}
+          >
+            Back to Login
+          </Button>
+        </div>
+      );
+    }
+    
+    if (isResetMode && user) {
+      return <ResetPasswordForm />;
+    }
+    
+    if (isResetMode && !user) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            The password reset link is invalid or has expired. Please request a new one.
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => {
+              setShowForgotPassword(true);
+              navigate("/auth", { replace: true });
+            }}
+          >
+            Request New Reset Link
+          </Button>
+        </div>
+      );
+    }
+    
+    if (showForgotPassword) {
+      return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
+    }
+    
+    if (showResendConfirmation) {
+      return <ResendConfirmationForm onBack={() => setShowResendConfirmation(false)} />;
+    }
+    
+    return null;
+  };
+
+  const specialContent = renderSpecialContent();
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center space-y-2">
-          <a href="/" className="flex items-center gap-2 group">
+    <div className="flex min-h-screen">
+      {/* Left Side - Form */}
+      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-12 xl:px-20 bg-background">
+        <div className="w-full max-w-md mx-auto">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-2 group mb-12">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-secondary/80 shadow-sm group-hover:shadow-md transition-all duration-200">
               <Sparkles className="w-5 h-5 text-secondary-foreground" />
             </div>
             <span className="font-semibold text-xl text-foreground">StockMeta AI</span>
           </a>
-          <p className="text-muted-foreground text-center">
-            AI-powered metadata for stock photos
-          </p>
-          {selectedPlan && selectedPlanKey !== "free" && (
-            <div className="mt-4 p-3 rounded-lg bg-secondary/10 border border-secondary/20">
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-secondary" />
-                <span className="text-muted-foreground">Selected plan:</span>
-                <Badge variant="secondary" className="font-medium">
-                  {selectedPlan.displayName} - ${selectedPlan.price}{selectedPlan.period}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground text-center mt-1">
-                You'll be directed to complete your subscription after signing up
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Auth Card */}
-        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-lg">
-          {/* Processing Auth Callback */}
-          {isProcessingAuth ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Processing...</p>
-            </div>
-          ) : authError ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                {authError}
+          {/* Special content or main auth forms */}
+          {specialContent ? (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  {authError ? "Something went wrong" : isResetMode ? "Reset Password" : showForgotPassword ? "Forgot Password" : "Confirm Email"}
+                </h1>
               </div>
-              {authErrorType === "reset" ? (
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    setAuthError(null);
-                    setAuthErrorType(null);
-                    setShowForgotPassword(true);
-                    navigate("/auth", { replace: true });
-                  }}
-                >
-                  Request New Reset Link
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    setAuthError(null);
-                    setAuthErrorType(null);
-                    setShowResendConfirmation(true);
-                    navigate("/auth", { replace: true });
-                  }}
-                >
-                  Resend Confirmation Email
-                </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                className="w-full"
-                onClick={() => {
-                  setAuthError(null);
-                  setAuthErrorType(null);
-                  navigate("/auth", { replace: true });
-                }}
-              >
-                Back to Login
-              </Button>
+              {specialContent}
             </div>
-          ) : isResetMode && user ? (
-            <ResetPasswordForm />
-          ) : isResetMode && !user ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                The password reset link is invalid or has expired. Please request a new one.
-              </div>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => {
-                  setShowForgotPassword(true);
-                  navigate("/auth", { replace: true });
-                }}
-              >
-                Request New Reset Link
-              </Button>
-            </div>
-          ) : showForgotPassword ? (
-            <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
-          ) : showResendConfirmation ? (
-            <ResendConfirmationForm onBack={() => setShowResendConfirmation(false)} />
           ) : (
-          <Tabs defaultValue="login" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Log In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-
-            {error && (
-              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                {error}
+            <>
+              {/* Header */}
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  {isSignUp ? "Create an account" : "Welcome back"}
+                </h1>
+                <p className="mt-2 text-muted-foreground">
+                  {isSignUp ? "Start generating AI-powered metadata today" : "Please enter your details"}
+                </p>
+                {selectedPlan && selectedPlanKey !== "free" && (
+                  <div className="mt-4 p-3 rounded-lg bg-secondary/10 border border-secondary/20">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-secondary" />
+                      <span className="text-muted-foreground">Selected plan:</span>
+                      <Badge variant="secondary" className="font-medium">
+                        {selectedPlan.displayName} - ${selectedPlan.price}{selectedPlan.period}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You'll be directed to complete your subscription after signing up
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Login Tab */}
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive mb-6">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {error}
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+              )}
+
+              {/* Auth Forms */}
+              {isSignUp ? (
+                <form onSubmit={handleSignup} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      disabled={isLoading}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email address</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="h-11"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Must be at least 6 characters
+                    </p>
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-11"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => { setIsSignUp(false); setError(null); }}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email address</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="remember" />
+                      <label
+                        htmlFor="remember"
+                        className="text-sm text-muted-foreground cursor-pointer"
+                      >
+                        Remember for 30 days
+                      </label>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowForgotPassword(true)}
-                      className="text-xs text-primary hover:underline"
+                      className="text-sm font-medium text-primary hover:underline"
                     >
-                      Forgot password?
+                      Forgot password
                     </button>
                   </div>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
+                  <Button
+                    type="submit"
+                    className="w-full h-11"
                     disabled={isLoading}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full rounded-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
-                    </>
-                  ) : (
-                    "Log In"
-                  )}
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Didn't receive confirmation email?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setShowResendConfirmation(true)}
-                    className="text-primary hover:underline"
                   >
-                    Resend it
-                  </button>
-                </p>
-              </form>
-            </TabsContent>
-
-            {/* Signup Tab */}
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name (optional)</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={signupName}
-                    onChange={(e) => setSignupName(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Must be at least 6 characters
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign in"
+                    )}
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => { setIsSignUp(true); setError(null); }}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Sign up
+                    </button>
                   </p>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full rounded-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                  <p className="text-center text-xs text-muted-foreground">
+                    Didn't receive confirmation email?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowResendConfirmation(true)}
+                      className="text-primary hover:underline"
+                    >
+                      Resend it
+                    </button>
+                  </p>
+                </form>
+              )}
+            </>
           )}
+
+          {/* Back to home */}
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            <a href="/" className="hover:text-foreground transition-colors">
+              ← Back to home
+            </a>
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Decorative */}
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-secondary/20 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <svg className="absolute top-20 left-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <svg className="absolute top-32 right-20 w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <svg className="absolute top-48 left-1/4 w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+          <svg className="absolute bottom-40 right-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <svg className="absolute bottom-60 left-16 w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          {/* Decorative circles */}
+          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full bg-secondary/40" />
+          <div className="absolute top-1/3 right-1/3 w-2 h-2 rounded-full bg-secondary/30" />
+          <div className="absolute bottom-1/4 left-1/4 w-4 h-4 rounded-full bg-secondary/30" />
+          <div className="absolute top-2/3 right-1/5 w-2 h-2 rounded-full bg-secondary/40" />
         </div>
 
-        {/* Back to home */}
-        <p className="text-center text-sm text-muted-foreground">
-          <a href="/" className="hover:text-foreground transition-colors">
-            ← Back to home
-          </a>
-        </p>
+        {/* Main content */}
+        <div className="relative z-10 max-w-lg text-center px-8">
+          {/* Feature icons */}
+          <div className="flex items-center justify-center gap-6 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
+              <Image className="w-8 h-8 text-secondary" />
+            </div>
+            <div className="w-20 h-20 rounded-2xl bg-background/90 backdrop-blur-sm shadow-xl flex items-center justify-center">
+              <Wand2 className="w-10 h-10 text-secondary" />
+            </div>
+            <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
+              <FileCheck className="w-8 h-8 text-secondary" />
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-foreground mb-4">
+            AI-Powered Metadata Generation
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Upload your images and let AI generate optimized titles, descriptions, and keywords for stock marketplaces in seconds.
+          </p>
+
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-8">
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                <Zap className="w-6 h-6 text-secondary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Fast</p>
+              <p className="text-xs text-muted-foreground">Seconds per image</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                <Check className="w-6 h-6 text-secondary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Accurate</p>
+              <p className="text-xs text-muted-foreground">AI-optimized</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                <Sparkles className="w-6 h-6 text-secondary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Smart</p>
+              <p className="text-xs text-muted-foreground">SEO ready</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
