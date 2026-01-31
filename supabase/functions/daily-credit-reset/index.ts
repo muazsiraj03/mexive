@@ -44,43 +44,40 @@ Deno.serve(async (req) => {
     let totalUpdated = 0;
 
     for (const plan of plansWithDailyReset) {
-      // Get the start of the current day
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+      console.log(`Processing plan: ${plan.plan_name} with ${plan.credits} credits`);
 
-      // Find users on this plan who haven't been reset today
-      const { data: usersToReset, error: usersError } = await supabase
-        .from("profiles")
-        .select("id, credits, total_credits")
+      // Find subscriptions on this plan with status 'active'
+      // Reset credits for all users on plans with daily reset
+      const { data: subsToReset, error: subsError } = await supabase
+        .from("subscriptions")
+        .select("id, user_id, credits_remaining, credits_total")
         .eq("plan", plan.plan_name)
-        .eq("has_unlimited_credits", false)
-        .lt("last_credit_reset", todayStart.toISOString());
+        .eq("status", "active");
 
-      if (usersError) {
-        console.error(`Error fetching users for plan ${plan.plan_name}:`, usersError);
+      if (subsError) {
+        console.error(`Error fetching subscriptions for plan ${plan.plan_name}:`, subsError);
         continue;
       }
 
-      console.log(`Found ${usersToReset?.length || 0} users to reset for plan ${plan.plan_name}`);
+      console.log(`Found ${subsToReset?.length || 0} subscriptions to reset for plan ${plan.plan_name}`);
 
-      if (usersToReset && usersToReset.length > 0) {
-        // Reset credits for these users
-        const userIds = usersToReset.map((u) => u.id);
+      if (subsToReset && subsToReset.length > 0) {
+        // Reset credits for these subscriptions
+        for (const sub of subsToReset) {
+          const { error: updateError } = await supabase
+            .from("subscriptions")
+            .update({
+              credits_remaining: plan.credits,
+              credits_total: plan.credits,
+            })
+            .eq("id", sub.id);
 
-        const { error: updateError, count } = await supabase
-          .from("profiles")
-          .update({
-            credits: plan.credits,
-            total_credits: plan.credits,
-            last_credit_reset: new Date().toISOString(),
-          })
-          .in("id", userIds);
-
-        if (updateError) {
-          console.error(`Error updating users for plan ${plan.plan_name}:`, updateError);
-        } else {
-          totalUpdated += usersToReset.length;
-          console.log(`Reset credits for ${usersToReset.length} users on ${plan.plan_name} plan`);
+          if (updateError) {
+            console.error(`Error updating subscription ${sub.id}:`, updateError);
+          } else {
+            totalUpdated++;
+            console.log(`Reset credits for subscription ${sub.id} (user ${sub.user_id}) to ${plan.credits}`);
+          }
         }
       }
     }
