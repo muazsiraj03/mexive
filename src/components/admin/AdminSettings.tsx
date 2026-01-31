@@ -170,13 +170,13 @@ export function AdminSettings() {
     }
   };
 
-  const handleToggleSetting = async (key: string, value: boolean) => {
+  const handleToggleSetting = async (key: string, value: boolean | string | number) => {
     setTogglingSettings(prev => ({ ...prev, [key]: true }));
     const success = await updateSetting(key, value);
     if (success) {
       toast({
         title: "Setting updated",
-        description: `${key.replace(/_/g, ' ')} has been ${value ? 'enabled' : 'disabled'}.`,
+        description: `${key.replace(/_/g, ' ')} has been updated.`,
       });
     } else {
       toast({
@@ -237,11 +237,56 @@ export function AdminSettings() {
 
             {/* General Settings Tab */}
             <TabsContent value="general" className="space-y-6">
-              {/* Platform Features */}
+              {/* Credit Settings */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Zap className="h-5 w-5 text-primary" />
+                    Credit Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Configure initial and daily credits for new users
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstSignupCredits">First Signup Credits</Label>
+                      <Input
+                        id="firstSignupCredits"
+                        type="number"
+                        min="0"
+                        value={systemSettings.firstSignupCredits}
+                        onChange={(e) => handleToggleSetting('first_signup_credits', e.target.value)}
+                        placeholder="10"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        One-time credits given when a new user signs up
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dailyRenewableCredits">Daily Renewable Credits</Label>
+                      <Input
+                        id="dailyRenewableCredits"
+                        type="number"
+                        min="0"
+                        value={systemSettings.dailyRenewableCredits}
+                        onChange={(e) => handleToggleSetting('daily_renewable_credits', e.target.value)}
+                        placeholder="2"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Credits restored daily after initial signup credits are used
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform Features */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Users className="h-5 w-5 text-primary" />
                     Platform Features
                   </CardTitle>
                   <CardDescription>

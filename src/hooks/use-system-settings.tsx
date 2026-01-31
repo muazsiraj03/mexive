@@ -10,6 +10,9 @@ export interface SystemSettings {
   enableNewSignups: boolean;
   maintenanceMode: boolean;
   enableResendConfirmation: boolean;
+  // Credit settings
+  firstSignupCredits: number;
+  dailyRenewableCredits: number;
   // Branding - Logos
   logoLightMode: string;
   logoDarkMode: string;
@@ -32,6 +35,8 @@ const defaultSettings: SystemSettings = {
   enableNewSignups: true,
   maintenanceMode: false,
   enableResendConfirmation: true,
+  firstSignupCredits: 10,
+  dailyRenewableCredits: 2,
   logoLightMode: "",
   logoDarkMode: "",
   faviconUrl: "",
@@ -49,7 +54,7 @@ const defaultSettings: SystemSettings = {
 interface SystemSettingsContextType {
   settings: SystemSettings;
   loading: boolean;
-  updateSetting: (key: string, value: boolean | string) => Promise<boolean>;
+  updateSetting: (key: string, value: boolean | string | number) => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -91,6 +96,8 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
           enableNewSignups: settingsMap.enable_new_signups ?? defaultSettings.enableNewSignups,
           maintenanceMode: settingsMap.maintenance_mode ?? defaultSettings.maintenanceMode,
           enableResendConfirmation: settingsMap.enable_resend_confirmation ?? defaultSettings.enableResendConfirmation,
+          firstSignupCredits: parseInt(settingsMap.first_signup_credits) || defaultSettings.firstSignupCredits,
+          dailyRenewableCredits: parseInt(settingsMap.daily_renewable_credits) || defaultSettings.dailyRenewableCredits,
           logoLightMode: settingsMap.logo_light_mode || "",
           logoDarkMode: settingsMap.logo_dark_mode || "",
           faviconUrl: settingsMap.favicon_url || "",
@@ -116,7 +123,7 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
     fetchSettings();
   }, [fetchSettings]);
 
-  const updateSetting = async (key: string, value: boolean | string): Promise<boolean> => {
+  const updateSetting = async (key: string, value: boolean | string | number): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from("system_settings")
