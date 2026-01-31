@@ -310,6 +310,8 @@ Deno.serve(async (req) => {
         const targetUserId = path.replace("/users/", "");
         const body = await req.json();
         
+        console.log("Updating user:", targetUserId, "with:", body);
+        
         // Handle profile updates
         const profileFields = ["full_name", "avatar_url"];
         const profileUpdates: Record<string, unknown> = {};
@@ -320,10 +322,23 @@ Deno.serve(async (req) => {
         }
 
         // Handle subscription updates
-        const subFields = ["plan", "credits"];
         const subUpdates: Record<string, unknown> = {};
-        if (body.plan !== undefined) subUpdates.plan = body.plan;
-        if (body.credits !== undefined) subUpdates.credits_remaining = body.credits;
+        
+        // When plan changes, update status to active and set expiration
+        if (body.plan !== undefined) {
+          subUpdates.plan = body.plan;
+          subUpdates.status = "active";
+          const expiresAt = new Date();
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+          subUpdates.expires_at = expiresAt.toISOString();
+          subUpdates.started_at = new Date().toISOString();
+        }
+        
+        // When credits are updated, also update credits_total
+        if (body.credits !== undefined) {
+          subUpdates.credits_remaining = body.credits;
+          subUpdates.credits_total = body.credits;
+        }
 
         if (Object.keys(profileUpdates).length === 0 && Object.keys(subUpdates).length === 0) {
           return new Response(
@@ -346,6 +361,7 @@ Deno.serve(async (req) => {
 
         // Update subscription if needed
         if (Object.keys(subUpdates).length > 0) {
+          console.log("Updating subscription for user:", targetUserId, "with:", subUpdates);
           const { error: subError } = await adminClient
             .from("subscriptions")
             .update(subUpdates)
@@ -353,9 +369,14 @@ Deno.serve(async (req) => {
 
           if (subError) {
             console.error("Subscription update error:", subError);
+            return new Response(
+              JSON.stringify({ error: "Failed to update subscription" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
         }
 
+        console.log("User update successful for:", targetUserId);
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
