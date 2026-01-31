@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, DollarSign, TrendingUp, Download, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Download, Calendar, ArrowUpRight, ArrowDownRight, Trash2, AlertTriangle } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar, ResponsiveContainer } from "recharts";
 import { AdminHeader } from "./AdminHeader";
 import { format, startOfWeek, startOfMonth, startOfYear, parseISO } from "date-fns";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type AggregationType = "daily" | "weekly" | "monthly" | "yearly";
 
@@ -21,9 +23,10 @@ interface AggregatedData {
 }
 
 export function AdminRevenue() {
-  const { revenueData, fetchRevenue, loading } = useAdmin();
+  const { revenueData, fetchRevenue, loading, resetRevenueData } = useAdmin();
   const [days, setDays] = useState("365");
   const [aggregation, setAggregation] = useState<AggregationType>("monthly");
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     fetchRevenue(parseInt(days));
@@ -187,10 +190,59 @@ export function AdminRevenue() {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={exportToCSV} className="flex-1 sm:flex-none">
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="flex-1 sm:flex-none">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Reset All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      Reset All Revenue Data?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all transaction records and credit pack purchases. 
+                      This action cannot be undone. Charts and statistics will be cleared.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={resetting}
+                      onClick={async () => {
+                        setResetting(true);
+                        const success = await resetRevenueData();
+                        setResetting(false);
+                        if (success) {
+                          toast.success("All revenue data has been reset");
+                          fetchRevenue(parseInt(days));
+                        } else {
+                          toast.error("Failed to reset revenue data");
+                        }
+                      }}
+                    >
+                      {resetting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Resetting...
+                        </>
+                      ) : (
+                        "Yes, Reset All Data"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
 
           {loading || !revenueData ? (
