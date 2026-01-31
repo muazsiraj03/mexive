@@ -45,7 +45,7 @@ export function DashboardSidebar() {
   const { logo } = useThemeLogo();
   const { resolvedTheme } = useTheme();
   const collapsed = state === "collapsed";
-  const logoIcon = resolvedTheme === "dark" ? logoIconDark : logoIconLight;
+  const logoIcon = resolvedTheme === "dark" ? logoIconLight : logoIconDark;
 
   const sizeClasses = {
     small: collapsed ? "h-6 w-6" : "h-8 w-auto max-w-[120px]",
