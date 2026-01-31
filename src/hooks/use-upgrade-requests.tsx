@@ -134,6 +134,32 @@ export function useUpgradeRequests() {
         return { success: false };
       }
 
+      // Get user profile for admin notification
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .single();
+
+      // Send admin email notification
+      try {
+        await fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-admin-notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "upgrade_request",
+            userName: profile?.full_name || data.senderName || "Unknown",
+            userEmail: user.email || "Unknown",
+            planName: data.planName.charAt(0).toUpperCase() + data.planName.slice(1),
+            credits: data.requestedCredits,
+            amount: data.requestedPriceCents,
+          }),
+        });
+      } catch (emailErr) {
+        console.error("Failed to send admin notification email:", emailErr);
+        // Don't fail the request if email fails
+      }
+
       toast.success("Upgrade request submitted! We'll review it shortly.");
       await fetchRequests();
       return { success: true };
