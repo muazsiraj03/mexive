@@ -81,16 +81,11 @@ export function SubscriptionPage() {
   };
 
   const handleUpgradeConfirm = async () => {
-    if (!selectedPlan) return;
-    const result = await subscribe(
-      selectedPlan.name, 
-      selectedPlan.selectedCredits, 
-      selectedPlan.selectedPrice
-    );
-    if (result.success) {
-      setUpgradeDialogOpen(false);
-      setSelectedPlan(null);
-    }
+    // Manual checkout flow: the actual request is created in <CheckoutForm /> (upgrade_requests).
+    // Calling subscribe() here would invoke the manage-subscription edge function and can fail
+    // due to the subscriptions table having a unique constraint per user.
+    setUpgradeDialogOpen(false);
+    setSelectedPlan(null);
   };
 
   const handleCancelConfirm = async () => {
