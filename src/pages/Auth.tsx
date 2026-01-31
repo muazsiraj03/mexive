@@ -14,7 +14,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { ResendConfirmationForm } from "@/components/auth/ResendConfirmationForm";
-import { useThemeLogo } from "@/hooks/use-theme-logo";
+import { Header } from "@/components/landing/Header";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -59,9 +59,6 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
   const [showSignupPassword, setShowSignupPassword] = useState(false);
-
-  // Logo
-  const { logo } = useThemeLogo();
 
   // Handle auth tokens from URL hash (password reset or email confirmation)
   useEffect(() => {
@@ -316,18 +313,14 @@ export default function Auth() {
   const specialContent = renderSpecialContent();
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left Side - Form */}
-      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-12 xl:px-20 bg-background">
-        <div className="w-full max-w-md mx-auto">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3 group mb-12">
-            <img 
-              src={logo} 
-              alt="Logo" 
-              className="h-10 w-auto"
-            />
-          </a>
+    <div className="flex min-h-screen flex-col">
+      {/* Header */}
+      <Header />
+      
+      <div className="flex flex-1 pt-14 md:pt-16">
+        {/* Left Side - Form */}
+        <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-12 xl:px-20 bg-background">
+          <div className="w-full max-w-md mx-auto">
 
           {/* Special content or main auth forms */}
           {specialContent ? (
@@ -553,77 +546,78 @@ export default function Auth() {
           </p>
         </div>
       </div>
-
       {/* Right Side - Decorative */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-secondary/20 relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-30">
-          <svg className="absolute top-20 left-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <svg className="absolute top-32 right-20 w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          <svg className="absolute top-48 left-1/4 w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-          </svg>
-          <svg className="absolute bottom-40 right-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          <svg className="absolute bottom-60 left-16 w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          {/* Decorative circles */}
-          <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full bg-secondary/40" />
-          <div className="absolute top-1/3 right-1/3 w-2 h-2 rounded-full bg-secondary/30" />
-          <div className="absolute bottom-1/4 left-1/4 w-4 h-4 rounded-full bg-secondary/30" />
-          <div className="absolute top-2/3 right-1/5 w-2 h-2 rounded-full bg-secondary/40" />
-        </div>
-
-        {/* Main content */}
-        <div className="relative z-10 max-w-lg text-center px-8">
-          {/* Feature icons */}
-          <div className="flex items-center justify-center gap-6 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
-              <Image className="w-8 h-8 text-secondary" />
-            </div>
-            <div className="w-20 h-20 rounded-2xl bg-background/90 backdrop-blur-sm shadow-xl flex items-center justify-center">
-              <Wand2 className="w-10 h-10 text-secondary" />
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
-              <FileCheck className="w-8 h-8 text-secondary" />
-            </div>
+        {/* Right Side - Decorative */}
+        <div className="hidden lg:flex flex-1 items-center justify-center bg-secondary/20 relative overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-30">
+            <svg className="absolute top-20 left-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <svg className="absolute top-32 right-20 w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <svg className="absolute top-48 left-1/4 w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <svg className="absolute bottom-40 right-10 w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <svg className="absolute bottom-60 left-16 w-7 h-7 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            {/* Decorative circles */}
+            <div className="absolute top-1/4 right-1/4 w-3 h-3 rounded-full bg-secondary/40" />
+            <div className="absolute top-1/3 right-1/3 w-2 h-2 rounded-full bg-secondary/30" />
+            <div className="absolute bottom-1/4 left-1/4 w-4 h-4 rounded-full bg-secondary/30" />
+            <div className="absolute top-2/3 right-1/5 w-2 h-2 rounded-full bg-secondary/40" />
           </div>
 
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            AI-Powered Metadata Generation
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Upload your images and let AI generate optimized titles, descriptions, and keywords for stock marketplaces in seconds.
-          </p>
+          {/* Main content */}
+          <div className="relative z-10 max-w-lg text-center px-8">
+            {/* Feature icons */}
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
+                <Image className="w-8 h-8 text-secondary" />
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-background/90 backdrop-blur-sm shadow-xl flex items-center justify-center">
+                <Wand2 className="w-10 h-10 text-secondary" />
+              </div>
+              <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm shadow-lg flex items-center justify-center">
+                <FileCheck className="w-8 h-8 text-secondary" />
+              </div>
+            </div>
 
-          {/* Stats */}
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
-                <Zap className="w-6 h-6 text-secondary" />
+            <h2 className="text-2xl font-bold text-foreground mb-4">
+              AI-Powered Metadata Generation
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Upload your images and let AI generate optimized titles, descriptions, and keywords for stock marketplaces in seconds.
+            </p>
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8">
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                  <Zap className="w-6 h-6 text-secondary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Fast</p>
+                <p className="text-xs text-muted-foreground">Seconds per image</p>
               </div>
-              <p className="text-sm font-medium text-foreground">Fast</p>
-              <p className="text-xs text-muted-foreground">Seconds per image</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
-                <Check className="w-6 h-6 text-secondary" />
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                  <Check className="w-6 h-6 text-secondary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Accurate</p>
+                <p className="text-xs text-muted-foreground">AI-optimized</p>
               </div>
-              <p className="text-sm font-medium text-foreground">Accurate</p>
-              <p className="text-xs text-muted-foreground">AI-optimized</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
-                <Sparkles className="w-6 h-6 text-secondary" />
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-background/80 mx-auto mb-2">
+                  <Sparkles className="w-6 h-6 text-secondary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Smart</p>
+                <p className="text-xs text-muted-foreground">SEO ready</p>
               </div>
-              <p className="text-sm font-medium text-foreground">Smart</p>
-              <p className="text-xs text-muted-foreground">SEO ready</p>
             </div>
           </div>
         </div>
