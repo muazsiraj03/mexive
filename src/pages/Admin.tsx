@@ -15,6 +15,7 @@ import { AdminUpgradeRequests } from "@/components/admin/AdminUpgradeRequests";
 import { AdminPromoCodes } from "@/components/admin/AdminPromoCodes";
 import { AdminReferrals } from "@/components/admin/AdminReferrals";
 import { AdminTestimonials } from "@/components/admin/AdminTestimonials";
+import { AdminFAQs } from "@/components/admin/AdminFAQs";
 
 export default function Admin() {
   return (
@@ -34,6 +35,7 @@ export default function Admin() {
           <Route path="/notifications" element={<AdminNotifications />} />
           <Route path="/file-reviewer" element={<AdminFileReviewerConfig />} />
           <Route path="/testimonials" element={<AdminTestimonials />} />
+          <Route path="/faqs" element={<AdminFAQs />} />
           <Route path="/settings" element={<AdminSettings />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
