@@ -77,7 +77,7 @@ export function AdminReferrals() {
           title="Referral Management" 
           description="Configure and monitor the referral program" 
         />
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 space-y-6 p-4 md:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             <Skeleton className="h-8 w-48" />
             <div className="grid gap-6 md:grid-cols-4">
@@ -99,7 +99,7 @@ export function AdminReferrals() {
         title="Referral Management" 
         description="Configure and monitor the referral program" 
       />
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-6xl mx-auto space-y-6">
 
       {/* Stats Cards */}
