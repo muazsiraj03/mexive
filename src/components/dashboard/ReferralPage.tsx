@@ -259,24 +259,6 @@ export function ReferralPage() {
             </div>
           </div>
 
-          {/* Share Buttons */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Share via</label>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={shareToTwitter}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Twitter
-              </Button>
-              <Button variant="outline" onClick={shareToWhatsApp}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                WhatsApp
-              </Button>
-              <Button variant="outline" onClick={shareToEmail}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Email
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
