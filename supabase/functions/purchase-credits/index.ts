@@ -197,10 +197,10 @@ Deno.serve(async (req) => {
       .from("credit_pack_purchases")
       .insert({
         user_id: userId,
+        pack_id: pack.id,
         credits: totalCredits,
         amount: pack.price_cents,
         status: "pending",
-        payment_reference: `pack_${pack.id}_${Date.now()}`,
       })
       .select()
       .single();
