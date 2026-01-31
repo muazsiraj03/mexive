@@ -184,11 +184,12 @@ export function ImageUploader({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onClick={handleFileSelect}
         className={cn(
           "relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-all",
           isDragging
             ? "border-secondary bg-secondary/5"
-            : "border-border/60 bg-muted/30"
+            : "border-border/60 bg-muted/30 hover:border-secondary/50 hover:bg-muted/50"
         )}
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10">
