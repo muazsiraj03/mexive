@@ -23,6 +23,7 @@ import {
   GitCompare,
   FileText,
   MessageSquare,
+  Share2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -145,6 +146,11 @@ const navItems = [
     title: "Contact Submissions",
     href: "/admin/contact-submissions",
     icon: MessageSquare,
+  },
+  {
+    title: "Social Links",
+    href: "/admin/social-links",
+    icon: Share2,
   },
   {
     title: "Settings",
