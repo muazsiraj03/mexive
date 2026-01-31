@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useSystemSettings } from "@/hooks/use-system-settings";
 import { useThemeLogo } from "@/hooks/use-theme-logo";
-import { Mail, MapPin, Phone, Facebook, Twitter, Instagram, Linkedin, Youtube } from "lucide-react";
+import { useSocialLinks } from "@/hooks/use-social-links";
+import { Mail } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 
 const productLinks = [
   { href: "#features", label: "Features" },
@@ -29,9 +31,15 @@ const legalLinks = [
   { href: "/cookies", label: "Cookie Policy" },
 ];
 
+const SocialIcon = ({ name }: { name: string }) => {
+  const Icon = (LucideIcons as any)[name] || LucideIcons.Link;
+  return <Icon className="w-4 h-4" />;
+};
+
 export function Footer() {
   const { settings } = useSystemSettings();
   const { logo } = useThemeLogo();
+  const { data: socialLinks } = useSocialLinks();
 
   const sizeClasses = {
     small: "h-8",
@@ -69,43 +77,22 @@ export function Footer() {
             </div>
 
             {/* Social Links */}
-            <div className="flex items-center gap-3 mt-6">
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
+            {socialLinks && socialLinks.length > 0 && (
+              <div className="flex items-center gap-3 mt-6">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors"
+                    aria-label={link.platform}
+                  >
+                    <SocialIcon name={link.icon} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Links */}
