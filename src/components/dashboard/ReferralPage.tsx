@@ -35,7 +35,7 @@ export function ReferralPage() {
   const [newCode, setNewCode] = useState("");
 
   const referralLink = referralCode?.code 
-    ? `https://mexive.lovable.app/auth?ref=${referralCode.code}`
+    ? `${window.location.origin}/auth?ref=${referralCode.code}`
     : "";
 
   const copyToClipboard = async (text: string, type: "code" | "link") => {

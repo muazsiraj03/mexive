@@ -172,7 +172,7 @@ export function useReferrals() {
 
   const getReferralLink = () => {
     if (!referralCode?.code) return "";
-    return `https://mexive.lovable.app/auth?ref=${referralCode.code}`;
+    return `${typeof window !== 'undefined' ? window.location.origin : ''}/auth?ref=${referralCode.code}`;
   };
 
   return {
