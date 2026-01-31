@@ -949,6 +949,71 @@ Deno.serve(async (req) => {
         );
       }
 
+      // POST /notify-admins - Create notification for all admin users (called by edge functions)
+      case path === "/notify-admins" && req.method === "POST": {
+        const body = await req.json();
+        const { title, message, type = "info", actionUrl } = body;
+
+        if (!title || !message) {
+          return new Response(
+            JSON.stringify({ error: "Title and message are required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Get all admin user IDs
+        const { data: adminRoles, error: rolesError } = await adminClient
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "admin");
+
+        if (rolesError) {
+          console.error("Failed to fetch admin roles:", rolesError);
+          return new Response(
+            JSON.stringify({ error: "Failed to fetch admins" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (!adminRoles || adminRoles.length === 0) {
+          console.log("No admin users found to notify");
+          return new Response(
+            JSON.stringify({ success: true, notified: 0 }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Create notifications for all admins
+        const notifications = adminRoles.map((role) => ({
+          user_id: role.user_id,
+          title,
+          message,
+          type,
+          action_url: actionUrl || null,
+          is_global: false,
+          created_by: userId, // The user who triggered the action
+        }));
+
+        const { error: insertError } = await adminClient
+          .from("notifications")
+          .insert(notifications);
+
+        if (insertError) {
+          console.error("Failed to create admin notifications:", insertError);
+          return new Response(
+            JSON.stringify({ error: "Failed to notify admins" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.log(`Notified ${adminRoles.length} admins:`, title);
+
+        return new Response(
+          JSON.stringify({ success: true, notified: adminRoles.length }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: "Not found" }),
