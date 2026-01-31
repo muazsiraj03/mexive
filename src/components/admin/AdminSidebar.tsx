@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   Gift,
   Star,
+  HelpCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -103,6 +104,11 @@ const navItems = [
     title: "Testimonials",
     href: "/admin/testimonials",
     icon: Star,
+  },
+  {
+    title: "FAQs",
+    href: "/admin/faqs",
+    icon: HelpCircle,
   },
   {
     title: "Settings",
