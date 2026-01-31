@@ -98,7 +98,7 @@ export function AdminReferrals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{adminStats.totalReferrals}</div>
@@ -111,7 +111,7 @@ export function AdminReferrals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{adminStats.completedReferrals}</div>
@@ -124,7 +124,7 @@ export function AdminReferrals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <Percent className="h-4 w-4 text-muted-foreground" />
+            <Percent className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{adminStats.conversionRate}%</div>
@@ -137,7 +137,7 @@ export function AdminReferrals() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Credits Distributed</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
+            <Gift className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{adminStats.totalCreditsDistributed}</div>

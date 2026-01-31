@@ -144,7 +144,7 @@ export function AdminOverview() {
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</div>
@@ -162,7 +162,7 @@ export function AdminOverview() {
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <CreditCard className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{stats.activeSubscriptions}</div>
@@ -178,7 +178,7 @@ export function AdminOverview() {
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <TrendingUp className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{formatCurrency(stats.mrr)}</div>
@@ -190,7 +190,7 @@ export function AdminOverview() {
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
@@ -216,7 +216,7 @@ export function AdminOverview() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Metadata Generated</CardTitle>
-                <Images className="h-4 w-4 text-muted-foreground" />
+                <Images className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -229,7 +229,7 @@ export function AdminOverview() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Prompts Extracted</CardTitle>
-                <MessageSquareText className="h-4 w-4 text-muted-foreground" />
+                <MessageSquareText className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -242,7 +242,7 @@ export function AdminOverview() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Files Reviewed</CardTitle>
-                <FileSearch className="h-4 w-4 text-muted-foreground" />
+                <FileSearch className="h-4 w-4 text-secondary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">

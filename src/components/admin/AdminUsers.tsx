@@ -78,7 +78,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Currently Online</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
+            <Users className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Connection Status</CardTitle>
-            <Activity className="h-4 w-4 text-primary" />
+            <Activity className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ function LiveUsersTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

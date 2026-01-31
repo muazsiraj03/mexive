@@ -230,7 +230,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Subscriptions</CardTitle>
-              <CreditCard className="h-4 w-4 text-primary" />
+              <CreditCard className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{totalSubscriptions}</div>
@@ -247,7 +247,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-chart-1/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Active Rate</CardTitle>
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{activeRate.toFixed(1)}%</div>
@@ -263,7 +263,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-destructive/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Churn Rate</CardTitle>
-              <TrendingDown className="h-4 w-4 text-primary" />
+              <TrendingDown className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">

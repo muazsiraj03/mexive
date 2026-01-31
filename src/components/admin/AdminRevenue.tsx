@@ -176,7 +176,7 @@ export function AdminRevenue() {
           {/* Controls */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
+              <Calendar className="h-4 w-4 text-secondary" />
               <span className="text-sm text-muted-foreground">Time Period:</span>
               <Select value={days} onValueChange={setDays}>
                 <SelectTrigger className="w-[140px]">
@@ -256,7 +256,7 @@ export function AdminRevenue() {
                 <Card className="relative overflow-hidden">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                    <DollarSign className="h-4 w-4 text-primary" />
+                    <DollarSign className="h-4 w-4 text-secondary" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold">
@@ -270,7 +270,7 @@ export function AdminRevenue() {
                 <Card className="relative overflow-hidden">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">Period Growth</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <TrendingUp className="h-4 w-4 text-secondary" />
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
@@ -291,7 +291,7 @@ export function AdminRevenue() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <TrendingUp className="h-4 w-4 text-secondary" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -304,7 +304,7 @@ export function AdminRevenue() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">Credit Packs</CardTitle>
-                    <DollarSign className="h-4 w-4 text-primary" />
+                    <DollarSign className="h-4 w-4 text-secondary" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
