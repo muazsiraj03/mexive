@@ -44,7 +44,27 @@ async function getBrandSettings(supabase: any): Promise<BrandSettings> {
   };
 }
 
-// Generate the admin email wrapper
+// Icon circle for admin emails
+function getIconCircle(icon: string, brand: BrandSettings): string {
+  const iconMap: Record<string, string> = {
+    user: "👤",
+    upgrade: "📈",
+    credits: "💳",
+    bell: "🔔",
+  };
+  
+  return `
+    <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto 24px auto;">
+      <tr>
+        <td style="width: 64px; height: 64px; background-color: ${brand.primaryColor}15; border-radius: 50%; text-align: center; vertical-align: middle;">
+          <span style="font-size: 28px; line-height: 64px;">${iconMap[icon] || "📧"}</span>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Generate the admin email wrapper - clean minimalist design
 function getAdminEmailWrapper(content: string, brand: BrandSettings) {
   return `
     <!DOCTYPE html>
@@ -54,36 +74,28 @@ function getAdminEmailWrapper(content: string, brand: BrandSettings) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${brand.siteName} Admin</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #18181b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #18181b;">
+    <body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa;">
         <tr>
           <td align="center" style="padding: 40px 20px;">
             <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; width: 100%;">
               
-              <!-- Admin Header Badge -->
+              <!-- Logo Header -->
               <tr>
-                <td align="center" style="padding-bottom: 24px;">
+                <td align="center" style="padding-bottom: 32px;">
                   <table role="presentation" cellspacing="0" cellpadding="0">
                     <tr>
-                      <td style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 8px 16px; border-radius: 20px;">
-                        <span style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                          🔔 Admin Notification
-                        </span>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              
-              <!-- Logo -->
-              <tr>
-                <td align="center" style="padding-bottom: 30px;">
-                  <table role="presentation" cellspacing="0" cellpadding="0">
-                    <tr>
-                      <td style="background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); padding: 14px 28px; border-radius: 10px;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
-                          ${brand.siteName}
-                        </h1>
+                      <td style="padding: 12px 24px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="width: 32px; height: 32px; background-color: ${brand.primaryColor}; border-radius: 8px; text-align: center; vertical-align: middle;">
+                              <span style="color: #ffffff; font-size: 16px; font-weight: 700; line-height: 32px;">M</span>
+                            </td>
+                            <td style="padding-left: 10px;">
+                              <span style="font-size: 20px; font-weight: 700; color: #1f2937; letter-spacing: -0.5px;">${brand.siteName}</span>
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>
@@ -93,9 +105,9 @@ function getAdminEmailWrapper(content: string, brand: BrandSettings) {
               <!-- Main Content Card -->
               <tr>
                 <td>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #27272a; border-radius: 16px; border: 1px solid #3f3f46;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
                     <tr>
-                      <td style="padding: 32px;">
+                      <td style="padding: 48px 40px;">
                         ${content}
                       </td>
                     </tr>
@@ -103,21 +115,35 @@ function getAdminEmailWrapper(content: string, brand: BrandSettings) {
                 </td>
               </tr>
               
-              <!-- Admin Footer -->
+              <!-- Footer -->
               <tr>
-                <td style="padding-top: 24px;">
+                <td style="padding-top: 32px;">
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <!-- Admin Link -->
                     <tr>
-                      <td align="center">
-                        <a href="${brand.adminUrl}" style="display: inline-block; background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
-                          Open Admin Dashboard →
-                        </a>
+                      <td align="center" style="padding-bottom: 16px;">
+                        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                          If you have additional questions, please refer to the 
+                          <a href="${brand.adminUrl}" style="color: ${brand.primaryColor}; text-decoration: none; font-weight: 500;">Admin Dashboard</a>.
+                        </p>
                       </td>
                     </tr>
+                    
+                    <!-- Disclaimer -->
                     <tr>
-                      <td align="center" style="padding-top: 24px;">
-                        <p style="margin: 0; color: #71717a; font-size: 12px;">
-                          This is an automated admin notification from ${brand.siteName}
+                      <td align="center" style="padding: 20px 0; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px; line-height: 1.6;">
+                          Please do not reply to this email. This mailbox is not monitored.
+                          <br>This is an automated admin notification from ${brand.siteName}.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Copyright -->
+                    <tr>
+                      <td align="center">
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          Copyright © ${new Date().getFullYear()} ${brand.siteName}. All rights reserved.
                         </p>
                       </td>
                     </tr>
@@ -136,167 +162,162 @@ function getAdminEmailWrapper(content: string, brand: BrandSettings) {
 
 // Get notification content based on type
 function getNotificationContent(payload: NotificationPayload, brand: BrandSettings) {
-  const labelStyle = `color: #a1a1aa; font-size: 13px; padding-bottom: 4px;`;
-  const valueStyle = `color: #fafafa; font-size: 15px; font-weight: 500;`;
-  const rowStyle = `padding: 12px 0; border-bottom: 1px solid #3f3f46;`;
-  const badgeStyle = `display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;`;
+  const textStyle = `color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 16px 0;`;
+  const labelStyle = `color: #6b7280; font-size: 13px; margin: 0 0 4px 0;`;
+  const valueStyle = `color: #1f2937; font-size: 15px; font-weight: 500; margin: 0 0 16px 0;`;
+  const buttonStyle = `display: inline-block; background-color: ${brand.primaryColor}; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;`;
+  const linkStyle = `color: ${brand.primaryColor}; text-decoration: none; font-weight: 500;`;
+  const badgeStyle = `display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;`;
 
   switch (payload.type) {
     case "new_user":
       return {
-        subject: `🎉 New User Signup`,
+        subject: `New User Signup`,
         content: `
-          <div style="text-align: center; margin-bottom: 24px;">
-            <span style="font-size: 48px;">👤</span>
-            <h2 style="margin: 12px 0 4px 0; color: #fafafa; font-size: 22px; font-weight: 600;">New User Registered</h2>
-            <span style="${badgeStyle} background-color: #22c55e; color: #ffffff;">New Signup</span>
+          ${getIconCircle("user", brand)}
+          
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            New User Registered
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear Admin,</strong>
+          </p>
+          
+          <p style="${textStyle}">
+            A new user has signed up on ${brand.siteName}. Here are the details:
+          </p>
+          
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <p style="${labelStyle}">Name</p>
+            <p style="${valueStyle}">${payload.userName || "Not provided"}</p>
+            
+            <p style="${labelStyle}">Email</p>
+            <p style="${valueStyle} margin-bottom: 0;">${payload.userEmail || "Not provided"}</p>
           </div>
           
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #3f3f46; border-radius: 10px; padding: 4px;">
-            <tr>
-              <td style="padding: 16px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Name</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userName || "Not provided"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <p style="${labelStyle} margin: 0;">Email</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userEmail || "Not provided"}</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
+          <div style="text-align: center; margin: 8px 0 32px 0;">
+            <span style="${badgeStyle} background-color: #dcfce7; color: #166534;">New Signup</span>
+          </div>
           
-          <p style="color: #a1a1aa; font-size: 13px; text-align: center; margin-top: 20px; margin-bottom: 0;">
-            A new user has signed up on your platform.
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${brand.adminUrl}/users" style="${buttonStyle}">
+              View in Admin
+            </a>
+          </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px;">
+            Can't see the button? Use the link: <a href="${brand.adminUrl}/users" style="${linkStyle}">[link here]</a>
           </p>
         `,
       };
 
     case "upgrade_request":
       return {
-        subject: `📈 New Upgrade Request - ${payload.planName}`,
+        subject: `New Upgrade Request - ${payload.planName}`,
         content: `
-          <div style="text-align: center; margin-bottom: 24px;">
-            <span style="font-size: 48px;">📈</span>
-            <h2 style="margin: 12px 0 4px 0; color: #fafafa; font-size: 22px; font-weight: 600;">New Upgrade Request</h2>
-            <span style="${badgeStyle} background-color: #f59e0b; color: #ffffff;">Pending Review</span>
+          ${getIconCircle("upgrade", brand)}
+          
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            New Upgrade Request
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear Admin,</strong>
+          </p>
+          
+          <p style="${textStyle}">
+            A user has submitted an upgrade request. Please review the payment details below:
+          </p>
+          
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <p style="${labelStyle}">User</p>
+            <p style="${valueStyle}">${payload.userName || "Unknown"}</p>
+            
+            <p style="${labelStyle}">Email</p>
+            <p style="${valueStyle}">${payload.userEmail || "Unknown"}</p>
+            
+            <p style="${labelStyle}">Requested Plan</p>
+            <p style="${valueStyle}">${payload.planName || "Unknown"}</p>
+            
+            ${payload.credits ? `
+            <p style="${labelStyle}">Credits</p>
+            <p style="${valueStyle}">${payload.credits}</p>
+            ` : ''}
+            
+            <p style="${labelStyle}">Amount</p>
+            <p style="color: #059669; font-size: 20px; font-weight: 700; margin: 0;">
+              ৳${payload.amount ? (payload.amount / 100).toFixed(0) : 0}
+            </p>
           </div>
           
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #3f3f46; border-radius: 10px; padding: 4px;">
-            <tr>
-              <td style="padding: 16px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">User</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userName || "Unknown"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Email</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userEmail || "Unknown"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Requested Plan</p>
-                      <p style="${valueStyle} margin: 0;">
-                        <span style="${badgeStyle} background: linear-gradient(135deg, ${brand.primaryColor} 0%, #8b5cf6 100%); color: #ffffff;">
-                          ${payload.planName || "Unknown"}
-                        </span>
-                      </p>
-                    </td>
-                  </tr>
-                  ${payload.credits ? `
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Credits</p>
-                      <p style="${valueStyle} margin: 0;">${payload.credits}</p>
-                    </td>
-                  </tr>
-                  ` : ''}
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <p style="${labelStyle} margin: 0;">Amount</p>
-                      <p style="color: #22c55e; font-size: 20px; font-weight: 700; margin: 0;">
-                        ৳${payload.amount ? (payload.amount / 100).toFixed(0) : 0}
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
+          <div style="text-align: center; margin: 8px 0 32px 0;">
+            <span style="${badgeStyle} background-color: #fef3c7; color: #92400e;">Pending Review</span>
+          </div>
           
-          <p style="color: #fbbf24; font-size: 13px; text-align: center; margin-top: 20px; margin-bottom: 0;">
-            ⚠️ Please review this request in your admin panel.
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${brand.adminUrl}/upgrade-requests" style="${buttonStyle}">
+              Review Request
+            </a>
+          </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px;">
+            Can't see the button? Use the link: <a href="${brand.adminUrl}/upgrade-requests" style="${linkStyle}">[link here]</a>
           </p>
         `,
       };
 
     case "credit_pack_request":
       return {
-        subject: `💳 New Credit Pack Purchase - ${payload.credits} Credits`,
+        subject: `New Credit Pack Purchase - ${payload.credits} Credits`,
         content: `
-          <div style="text-align: center; margin-bottom: 24px;">
-            <span style="font-size: 48px;">💳</span>
-            <h2 style="margin: 12px 0 4px 0; color: #fafafa; font-size: 22px; font-weight: 600;">Credit Pack Purchase</h2>
-            <span style="${badgeStyle} background-color: #3b82f6; color: #ffffff;">Pending Review</span>
+          ${getIconCircle("credits", brand)}
+          
+          <h1 style="text-align: center; margin: 0 0 32px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+            Credit Pack Purchase Request
+          </h1>
+          
+          <p style="${textStyle}">
+            <strong>Dear Admin,</strong>
+          </p>
+          
+          <p style="${textStyle}">
+            A user has submitted a credit pack purchase request. Please review the payment details below:
+          </p>
+          
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <p style="${labelStyle}">User</p>
+            <p style="${valueStyle}">${payload.userName || "Unknown"}</p>
+            
+            <p style="${labelStyle}">Email</p>
+            <p style="${valueStyle}">${payload.userEmail || "Unknown"}</p>
+            
+            <p style="${labelStyle}">Pack</p>
+            <p style="${valueStyle}">${payload.planName || "Unknown"}</p>
+            
+            <p style="${labelStyle}">Credits</p>
+            <p style="color: ${brand.primaryColor}; font-size: 24px; font-weight: 700; margin: 0 0 16px 0;">
+              ${payload.credits || 0}
+            </p>
+            
+            <p style="${labelStyle}">Amount</p>
+            <p style="color: #059669; font-size: 20px; font-weight: 700; margin: 0;">
+              ৳${payload.amount ? (payload.amount / 100).toFixed(0) : 0}
+            </p>
           </div>
           
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #3f3f46; border-radius: 10px; padding: 4px;">
-            <tr>
-              <td style="padding: 16px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">User</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userName || "Unknown"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Email</p>
-                      <p style="${valueStyle} margin: 0;">${payload.userEmail || "Unknown"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Pack</p>
-                      <p style="${valueStyle} margin: 0;">${payload.planName || "Unknown"}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="${rowStyle}">
-                      <p style="${labelStyle} margin: 0;">Credits</p>
-                      <p style="color: #3b82f6; font-size: 24px; font-weight: 700; margin: 0;">
-                        ${payload.credits || 0}
-                      </p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <p style="${labelStyle} margin: 0;">Amount</p>
-                      <p style="color: #22c55e; font-size: 20px; font-weight: 700; margin: 0;">
-                        ৳${payload.amount ? (payload.amount / 100).toFixed(0) : 0}
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
+          <div style="text-align: center; margin: 8px 0 32px 0;">
+            <span style="${badgeStyle} background-color: #dbeafe; color: #1e40af;">Pending Review</span>
+          </div>
           
-          <p style="color: #fbbf24; font-size: 13px; text-align: center; margin-top: 20px; margin-bottom: 0;">
-            ⚠️ Please review this purchase request in your admin panel.
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${brand.adminUrl}/credit-pack-purchases" style="${buttonStyle}">
+              Review Purchase
+            </a>
+          </div>
+          
+          <p style="text-align: center; color: #6b7280; font-size: 13px;">
+            Can't see the button? Use the link: <a href="${brand.adminUrl}/credit-pack-purchases" style="${linkStyle}">[link here]</a>
           </p>
         `,
       };
