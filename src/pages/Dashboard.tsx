@@ -6,6 +6,7 @@ import { SettingsPage } from "@/components/dashboard/SettingsPage";
 import { SubscriptionPage } from "@/components/dashboard/SubscriptionPage";
 import { ImageToPromptPage } from "@/components/dashboard/ImageToPromptPage";
 import { FileReviewerPage } from "@/components/dashboard/FileReviewerPage";
+import { ReferralPage } from "@/components/dashboard/ReferralPage";
 
 export default function Dashboard() {
   return (
@@ -17,6 +18,7 @@ export default function Dashboard() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="image-to-prompt" element={<ImageToPromptPage />} />
         <Route path="file-reviewer" element={<FileReviewerPage />} />
+        <Route path="referrals" element={<ReferralPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </DashboardLayout>

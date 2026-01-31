@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Tag,
   ShoppingCart,
+  Gift,
 } from "lucide-react";
 import {
   Sidebar,
@@ -71,6 +72,11 @@ const navItems = [
     title: "Promo Codes",
     href: "/admin/promo-codes",
     icon: Tag,
+  },
+  {
+    title: "Referrals",
+    href: "/admin/referrals",
+    icon: Gift,
   },
   {
     title: "Revenue",
