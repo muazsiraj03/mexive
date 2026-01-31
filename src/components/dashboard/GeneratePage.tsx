@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { processFileForAnalysis } from "@/lib/file-processor";
 import { generateSEOFilename } from "@/lib/seo-filename";
-import { downloadAllAsZip, getFileExtension } from "@/lib/file-downloader";
+import { downloadAllAsZip, downloadSingleImage, getFileExtension } from "@/lib/file-downloader";
 import { cn } from "@/lib/utils";
 import JSZip from "jszip";
 import {
@@ -1130,26 +1130,28 @@ export function GeneratePage() {
                           : null
                       );
                     }}
-                    onDownload={() => {
+                    onDownload={async () => {
                       const filename = generateSEOFilename({
                         title: result.title,
                         keywords: result.keywords,
                         marketplace: result.marketplace,
                         originalExtension: getFileExtension(selectedBatchResult.fileName),
                       });
-                      downloadAllAsZip(
-                        selectedBatchResult.imageUrl,
-                        [{
-                          marketplace: result.marketplace,
+                      try {
+                        await downloadSingleImage(
+                          selectedBatchResult.imageUrl,
                           filename,
-                          metadata: {
+                          {
                             title: result.title,
                             description: result.description || "",
                             keywords: result.keywords,
-                          },
-                        }],
-                        `${filename}.zip`
-                      );
+                          }
+                        );
+                        toast.success(`Downloaded with embedded metadata`);
+                      } catch (error) {
+                        console.error("Download error:", error);
+                        toast.error("Failed to download image");
+                      }
                     }}
                   />
                 );
