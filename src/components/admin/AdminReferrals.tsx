@@ -31,6 +31,7 @@ import {
   Loader2
 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminHeader } from "./AdminHeader";
 
 export function AdminReferrals() {
   const { 
@@ -71,27 +72,35 @@ export function AdminReferrals() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-6 md:grid-cols-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-        </div>
-        <Skeleton className="h-96" />
-      </div>
+      <>
+        <AdminHeader 
+          title="Referral Management" 
+          description="Configure and monitor the referral program" 
+        />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <Skeleton className="h-8 w-48" />
+            <div className="grid gap-6 md:grid-cols-4">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+            <Skeleton className="h-96" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Referral Management</h1>
-        <p className="text-muted-foreground">
-          Configure and monitor the referral program
-        </p>
-      </div>
+    <>
+      <AdminHeader 
+        title="Referral Management" 
+        description="Configure and monitor the referral program" 
+      />
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -362,6 +371,8 @@ export function AdminReferrals() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
