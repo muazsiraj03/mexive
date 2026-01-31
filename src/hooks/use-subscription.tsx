@@ -24,7 +24,7 @@ export interface PlanInfo {
 }
 
 export function useSubscription() {
-  const { plans: pricingPlans } = usePricing();
+  const { plans: pricingPlans, loading: pricingLoading } = usePricing();
   
   // Convert to PlanInfo format for backward compatibility
   const plans: PlanInfo[] = pricingPlans.map(plan => ({
@@ -108,7 +108,25 @@ export function useSubscription() {
 
   useEffect(() => {
     fetchSubscription();
-  }, [fetchSubscription]);
+
+    // Subscribe to real-time updates for subscriptions
+    if (user) {
+      const channel = supabase
+        .channel("subscription_changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
+          () => {
+            fetchSubscription();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [fetchSubscription, user]);
 
   const subscribe = async (plan: string, requestedCredits?: number, requestedPrice?: number) => {
     if (!user) {
@@ -201,7 +219,7 @@ export function useSubscription() {
   return {
     subscription,
     subscriptionHistory,
-    loading,
+    loading: loading || pricingLoading,
     actionLoading,
     subscribe,
     cancel,
