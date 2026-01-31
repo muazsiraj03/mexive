@@ -110,7 +110,7 @@ export default function Auth() {
               setAuthErrorType("confirmation");
             }
           } else if (isSignupCallback) {
-            toast.success("Email confirmed! Welcome to StockMeta AI.");
+            toast.success("Email confirmed! Welcome aboard.");
           }
           
           const mode = isRecovery ? "?mode=reset" : "";
@@ -324,10 +324,9 @@ export default function Auth() {
           <a href="/" className="flex items-center gap-3 group mb-12">
             <img 
               src={logo} 
-              alt="StockMeta AI" 
+              alt="Logo" 
               className="h-10 w-auto"
             />
-            <span className="font-semibold text-xl text-foreground">StockMeta AI</span>
           </a>
 
           {/* Special content or main auth forms */}
