@@ -25,7 +25,7 @@ const tools = [
     description: "AI-powered titles, descriptions & keywords",
     icon: Wand2,
     href: "/dashboard/generate",
-    color: "bg-primary/10 text-primary",
+    color: "bg-secondary/10 text-secondary",
   },
   {
     title: "Image to Prompt",
@@ -39,7 +39,7 @@ const tools = [
     description: "Check files before marketplace submission",
     icon: FileSearch,
     href: "/dashboard/file-reviewer",
-    color: "bg-accent/10 text-accent-foreground",
+    color: "bg-secondary/10 text-secondary",
   },
 ];
 
@@ -170,8 +170,8 @@ export function OverviewPage() {
               {/* Metadata Generations */}
               <div className="rounded-2xl border border-border/60 bg-card p-5 card-elevated">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                    <Images className="h-6 w-6 text-primary" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 shrink-0">
+                    <Images className="h-6 w-6 text-secondary" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-muted-foreground">Metadata Generated</p>
@@ -198,8 +198,8 @@ export function OverviewPage() {
               {/* Files Reviewed */}
               <div className="rounded-2xl border border-border/60 bg-card p-5 card-elevated">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 shrink-0">
-                    <FileSearch className="h-6 w-6 text-accent-foreground" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 shrink-0">
+                    <FileSearch className="h-6 w-6 text-secondary" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-muted-foreground">Files Reviewed</p>
@@ -274,8 +274,8 @@ export function OverviewPage() {
               <div className="rounded-2xl border border-border/60 bg-card p-5 card-elevated">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                      <Images className="h-4 w-4 text-primary" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+                      <Images className="h-4 w-4 text-secondary" />
                     </div>
                     <h3 className="font-semibold text-foreground">Metadata</h3>
                   </div>
@@ -362,8 +362,8 @@ export function OverviewPage() {
               <div className="rounded-2xl border border-border/60 bg-card p-5 card-elevated">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
-                      <FileSearch className="h-4 w-4 text-accent-foreground" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+                      <FileSearch className="h-4 w-4 text-secondary" />
                     </div>
                     <h3 className="font-semibold text-foreground">Reviews</h3>
                   </div>
