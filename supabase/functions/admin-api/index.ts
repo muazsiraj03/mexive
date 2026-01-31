@@ -92,17 +92,19 @@ Deno.serve(async (req) => {
     switch (true) {
       // GET /stats - Dashboard statistics
       case path === "/stats" && req.method === "GET": {
-        const [usersResult, subscriptionsResult, transactionsResult, recentProfilesResult] = await Promise.all([
+        const [usersResult, subscriptionsResult, upgradeRequestsResult, recentProfilesResult] = await Promise.all([
           adminClient.from("profiles").select("id, created_at", { count: "exact" }),
           adminClient.from("subscriptions").select("plan, status, user_id", { count: "exact" }),
-          adminClient.from("transactions").select("amount, status, created_at").eq("status", "completed"),
+          adminClient.from("upgrade_requests").select("requested_price_cents, status").eq("status", "approved"),
           adminClient.from("profiles").select("id, user_id, full_name, avatar_url, created_at").order("created_at", { ascending: false }).limit(5),
         ]);
 
         // Calculate stats
         const totalUsers = usersResult.count || 0;
         const activeSubscriptions = subscriptionsResult.data?.filter(s => s.status === "active").length || 0;
-        const totalRevenue = transactionsResult.data?.reduce((sum, t) => sum + t.amount, 0) || 0;
+        
+        // Calculate total revenue from approved upgrade requests
+        const totalRevenue = upgradeRequestsResult.data?.reduce((sum, r) => sum + (r.requested_price_cents || 0), 0) || 0;
         
         // Calculate MRR (sum of active subscription values - simplified)
         const subscriptionsByPlan = subscriptionsResult.data?.filter(s => s.status === "active").reduce((acc, s) => {
