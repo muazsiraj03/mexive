@@ -51,13 +51,45 @@ export function useReferrals() {
     queryKey: ["referral-code", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      
+      // First, check if user has a referral code
       const { data, error } = await supabase
         .from("referral_codes")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      
+      // If no code exists, generate one
+      if (!data) {
+        // Get user's profile for name
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        // Generate code using the database function
+        const { data: generatedCode, error: genError } = await supabase
+          .rpc("generate_referral_code", {
+            p_user_id: user.id,
+            p_full_name: profile?.full_name || user.email || "USER"
+          });
+        
+        if (genError) throw genError;
+        
+        // Insert the new referral code
+        const { data: newCode, error: insertError } = await supabase
+          .from("referral_codes")
+          .insert({ user_id: user.id, code: generatedCode })
+          .select()
+          .single();
+        
+        if (insertError) throw insertError;
+        return newCode as ReferralCode;
+      }
+      
       return data as ReferralCode;
     },
     enabled: !!user?.id,
@@ -87,10 +119,11 @@ export function useReferrals() {
       const { data, error } = await supabase
         .from("referral_settings")
         .select("*")
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
-      return data as ReferralSettings;
+      // Return default settings if none exist
+      return data as ReferralSettings | null;
     },
   });
 
