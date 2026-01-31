@@ -29,18 +29,20 @@ async function getBrandSettings(supabase: any): Promise<BrandSettings> {
   const { data: settings } = await supabase
     .from("system_settings")
     .select("key, value")
-    .in("key", ["app_name", "support_email"]);
+    .in("key", ["app_name", "support_email", "website_url"]);
 
   const settingsMap: Record<string, string> = {};
   settings?.forEach((s: any) => {
     settingsMap[s.key] = s.value || "";
   });
 
+  const baseUrl = settingsMap.website_url || "https://mexive.lovable.app";
+
   return {
     siteName: settingsMap.app_name || "Mexive",
     supportEmail: settingsMap.support_email || "support@mexive.com",
     primaryColor: "#6366f1",
-    adminUrl: "https://mexive.lovable.app/admin",
+    adminUrl: `${baseUrl}/admin`,
   };
 }
 

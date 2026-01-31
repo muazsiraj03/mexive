@@ -42,7 +42,7 @@ async function getBrandSettings(supabase: any): Promise<BrandSettings> {
   const { data: settings } = await supabase
     .from("system_settings")
     .select("key, value")
-    .in("key", ["app_name", "support_email", "whatsapp_number"]);
+    .in("key", ["app_name", "support_email", "whatsapp_number", "website_url"]);
 
   const settingsMap: Record<string, string> = {};
   settings?.forEach((s: any) => {
@@ -53,7 +53,7 @@ async function getBrandSettings(supabase: any): Promise<BrandSettings> {
     siteName: settingsMap.app_name || "Mexive",
     supportEmail: settingsMap.support_email || "support@mexive.com",
     primaryColor: "#6366f1",
-    websiteUrl: "https://mexive.lovable.app",
+    websiteUrl: settingsMap.website_url || "https://mexive.lovable.app",
     whatsappNumber: settingsMap.whatsapp_number || "",
   };
 }
@@ -192,7 +192,7 @@ function getEmailWrapper(content: string, brand: BrandSettings) {
 // Get email content based on type
 function getEmailContent(payload: EmailPayload, brand: BrandSettings) {
   const { type, userName, planName, credits, adminNotes, expiresIn } = payload;
-  const dashboardUrl = payload.dashboardUrl || "https://mexive.lovable.app/dashboard";
+  const dashboardUrl = payload.dashboardUrl || `${brand.websiteUrl}/dashboard`;
   
   const buttonStyle = `display: inline-block; background-color: ${brand.primaryColor}; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;`;
   const linkStyle = `color: ${brand.primaryColor}; text-decoration: none; font-weight: 500;`;
