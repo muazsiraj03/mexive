@@ -40,13 +40,12 @@ export function CreditTierSelector({
 
       if (error) {
         console.error("Error fetching credit tiers:", error);
-        // Fallback to hardcoded tiers
-        setTiers(FALLBACK_TIERS[planName] || []);
+        setTiers([]);
       } else if (data && data.length > 0) {
         setTiers(data.map(t => ({ credits: t.credits, price: t.price_cents / 100 })));
       } else {
-        // Use fallback if no tiers in database
-        setTiers(FALLBACK_TIERS[planName] || []);
+        // No tiers in database - don't show selector
+        setTiers([]);
       }
       setLoading(false);
     };
@@ -70,7 +69,13 @@ export function CreditTierSelector({
     };
   }, [planName]);
 
+  // Don't render anything if loading or no tiers exist
   if (loading || tiers.length === 0) {
+    return null;
+  }
+
+  // Only show selector if there are multiple tiers
+  if (tiers.length === 1) {
     return null;
   }
 
@@ -99,17 +104,7 @@ export function CreditTierSelector({
   );
 }
 
-// Fallback credit tier configurations (used if DB fetch fails)
-const FALLBACK_TIERS: Record<string, CreditTier[]> = {
-  starter: [
-    { credits: 2000, price: 4.99 },
-  ],
-  pro: [
-    { credits: 5000, price: 9.99 },
-  ],
-};
-
-// Helper to get default tier for a plan
+// Helper to get default tier for a plan (returns null if no tiers exist)
 export function useDefaultTier(planName: string): CreditTier | null {
   const [tier, setTier] = useState<CreditTier | null>(null);
 
@@ -122,12 +117,11 @@ export function useDefaultTier(planName: string): CreditTier | null {
         .eq("is_active", true)
         .order("sort_order")
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
-        // Fallback
-        const fallback = FALLBACK_TIERS[planName];
-        setTier(fallback ? fallback[0] : null);
+        // No tiers in database
+        setTier(null);
       } else {
         setTier({ credits: data.credits, price: data.price_cents / 100 });
       }
