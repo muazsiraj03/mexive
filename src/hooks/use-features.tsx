@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Feature {
   id: string;
+  tool: string;
   icon: string;
   title: string;
   description: string;
@@ -22,6 +23,7 @@ export function useFeatures() {
       const { data, error } = await supabase
         .from("features")
         .select("*")
+        .order("tool")
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
@@ -84,11 +86,21 @@ export function useFeatures() {
     },
   });
 
+  const getFeaturesByTool = (tool: string) => {
+    if (tool === "all") {
+      return features.filter((f) => f.tool === "all" && f.is_active);
+    }
+    return features
+      .filter((f) => (f.tool === tool || f.tool === "all") && f.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  };
+
   return {
     features,
     isLoading,
     createFeature,
     updateFeature,
     deleteFeature,
+    getFeaturesByTool,
   };
 }
