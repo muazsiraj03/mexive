@@ -87,11 +87,8 @@ export function useFeatures() {
   });
 
   const getFeaturesByTool = (tool: string) => {
-    if (tool === "all") {
-      return features.filter((f) => f.tool === "all" && f.is_active);
-    }
     return features
-      .filter((f) => (f.tool === tool || f.tool === "all") && f.is_active)
+      .filter((f) => f.tool === tool && f.is_active)
       .sort((a, b) => a.sort_order - b.sort_order);
   };
 

@@ -27,7 +27,6 @@ import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 
 const TOOLS = [
-  { id: "all", label: "General" },
   { id: "metadata-generator", label: "Metadata Generator" },
   { id: "image-to-prompt", label: "Image to Prompt" },
   { id: "file-reviewer", label: "File Reviewer" },
@@ -44,9 +43,9 @@ export function AdminFeatures() {
   const { features, isLoading, createFeature, updateFeature, deleteFeature } = useFeatures();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("metadata-generator");
   const [formData, setFormData] = useState({
-    tool: "all",
+    tool: "metadata-generator",
     icon: "Wand2",
     title: "",
     description: "",
@@ -136,7 +135,7 @@ export function AdminFeatures() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           {TOOLS.map((tool) => (
             <TabsTrigger key={tool.id} value={tool.id}>
               {tool.label}
