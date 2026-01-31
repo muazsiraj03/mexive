@@ -105,7 +105,7 @@ const Contact = () => {
                 </div>
                 <h3 className="font-semibold mb-2">Response Time</h3>
                 <p className="text-muted-foreground text-sm">
-                  Usually within 24 hours
+                  {settings.responseTime || "Usually within 24 hours"}
                 </p>
               </div>
             </div>

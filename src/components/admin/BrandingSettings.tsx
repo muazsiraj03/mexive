@@ -20,6 +20,7 @@ import {
   Type,
   Mail,
   Phone,
+  Clock,
   Search,
   Share2,
   Save,
@@ -331,6 +332,7 @@ export function BrandingSettings() {
   const [footerText, setFooterText] = useState(settings.footerText);
   const [supportEmail, setSupportEmail] = useState(settings.supportEmail);
   const [whatsappNumber, setWhatsappNumber] = useState(settings.whatsappNumber);
+  const [responseTime, setResponseTime] = useState(settings.responseTime);
   const [metaDescription, setMetaDescription] = useState(settings.metaDescription);
   const [metaKeywords, setMetaKeywords] = useState(settings.metaKeywords);
   const [savingIdentity, setSavingIdentity] = useState(false);
@@ -343,6 +345,7 @@ export function BrandingSettings() {
     setFooterText(settings.footerText);
     setSupportEmail(settings.supportEmail);
     setWhatsappNumber(settings.whatsappNumber);
+    setResponseTime(settings.responseTime);
     setMetaDescription(settings.metaDescription);
     setMetaKeywords(settings.metaKeywords);
   });
@@ -437,6 +440,7 @@ export function BrandingSettings() {
         updateSetting("footer_text", footerText),
         updateSetting("support_email", supportEmail),
         updateSetting("whatsapp_number", whatsappNumber),
+        updateSetting("response_time", responseTime),
       ]);
       toast({ title: "Brand identity saved" });
     } catch {
@@ -713,14 +717,29 @@ export function BrandingSettings() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="footerText">Footer Text</Label>
-            <Input
-              id="footerText"
-              value={footerText}
-              onChange={(e) => setFooterText(e.target.value)}
-              placeholder="© 2025 MetaGen. All rights reserved."
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="responseTime" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Response Time
+              </Label>
+              <Input
+                id="responseTime"
+                value={responseTime}
+                onChange={(e) => setResponseTime(e.target.value)}
+                placeholder="Usually within 24 hours"
+              />
+              <p className="text-xs text-muted-foreground">Shown on contact page</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="footerText">Footer Text</Label>
+              <Input
+                id="footerText"
+                value={footerText}
+                onChange={(e) => setFooterText(e.target.value)}
+                placeholder="© 2025 MetaGen. All rights reserved."
+              />
+            </div>
           </div>
 
           <div className="flex justify-end">
