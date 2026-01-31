@@ -13,6 +13,7 @@ import {
   FileSearch,
   ClipboardCheck,
   Tag,
+  ShoppingCart,
 } from "lucide-react";
 import {
   Sidebar,
@@ -60,6 +61,11 @@ const navItems = [
     title: "Credit Packs",
     href: "/admin/credit-packs",
     icon: Package,
+  },
+  {
+    title: "Pack Purchases",
+    href: "/admin/credit-pack-purchases",
+    icon: ShoppingCart,
   },
   {
     title: "Promo Codes",

@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { packId, action, purchaseId } = await req.json();
+    const { packId, action, purchaseId, senderName, senderAccount, transactionId, notes } = await req.json();
 
     // Create admin client for database operations
     const supabaseAdmin = createClient(
@@ -88,21 +88,30 @@ Deno.serve(async (req) => {
         // Update purchase status
         await supabaseAdmin
           .from("credit_pack_purchases")
-          .update({ status: "completed" })
+          .update({ 
+            status: "completed",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: userId,
+          })
           .eq("id", purchaseId);
 
-        // Add credits to user's profile
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("credits")
-          .eq("id", purchase.user_id)
+        // Add credits to user's subscription (not profiles)
+        const { data: subscription } = await supabaseAdmin
+          .from("subscriptions")
+          .select("credits_remaining, bonus_credits")
+          .eq("user_id", purchase.user_id)
           .single();
 
-        const currentCredits = profile?.credits || 0;
+        const currentCredits = subscription?.credits_remaining || 0;
+        const currentBonus = subscription?.bonus_credits || 0;
+        
         await supabaseAdmin
-          .from("profiles")
-          .update({ credits: currentCredits + purchase.credits })
-          .eq("id", purchase.user_id);
+          .from("subscriptions")
+          .update({ 
+            credits_remaining: currentCredits + purchase.credits,
+            bonus_credits: currentBonus + purchase.credits,
+          })
+          .eq("user_id", purchase.user_id);
 
         // Create transaction record
         await supabaseAdmin.from("transactions").insert({
@@ -128,10 +137,14 @@ Deno.serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        // Reject - delete the purchase
+        // Reject - update the purchase
         await supabaseAdmin
           .from("credit_pack_purchases")
-          .update({ status: "rejected" })
+          .update({ 
+            status: "rejected",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: userId,
+          })
           .eq("id", purchaseId);
 
         // Notify user
@@ -192,15 +205,20 @@ Deno.serve(async (req) => {
     // Calculate total credits (including bonus)
     const totalCredits = pack.credits + (pack.bonus_credits || 0);
 
-    // Create purchase record
+    // Create purchase record with payment info
     const { data: newPurchase, error: purchaseError } = await supabaseAdmin
       .from("credit_pack_purchases")
       .insert({
         user_id: userId,
         pack_id: pack.id,
+        pack_name: pack.name,
         credits: totalCredits,
         amount: pack.price_cents,
         status: "pending",
+        sender_name: senderName || null,
+        sender_account: senderAccount || null,
+        transaction_id: transactionId || null,
+        notes: notes || null,
       })
       .select()
       .single();

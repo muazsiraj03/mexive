@@ -6,6 +6,7 @@ import { AdminUsers } from "@/components/admin/AdminUsers";
 import { AdminSubscriptions } from "@/components/admin/AdminSubscriptions";
 import { AdminPlans } from "@/components/admin/AdminPlans";
 import { AdminCreditPacks } from "@/components/admin/AdminCreditPacks";
+import { AdminCreditPackPurchases } from "@/components/admin/AdminCreditPackPurchases";
 import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
@@ -24,6 +25,7 @@ export default function Admin() {
           <Route path="/upgrade-requests" element={<AdminUpgradeRequests />} />
           <Route path="/plans" element={<AdminPlans />} />
           <Route path="/credit-packs" element={<AdminCreditPacks />} />
+          <Route path="/credit-pack-purchases" element={<AdminCreditPackPurchases />} />
           <Route path="/promo-codes" element={<AdminPromoCodes />} />
           <Route path="/revenue" element={<AdminRevenue />} />
           <Route path="/notifications" element={<AdminNotifications />} />
