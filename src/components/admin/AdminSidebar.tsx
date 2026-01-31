@@ -20,6 +20,7 @@ import {
   Sparkles,
   Layers,
   Award,
+  GitCompare,
 } from "lucide-react";
 import {
   Sidebar,
@@ -127,6 +128,11 @@ const navItems = [
     title: "Benefits",
     href: "/admin/benefits",
     icon: Award,
+  },
+  {
+    title: "Comparisons",
+    href: "/admin/comparisons",
+    icon: GitCompare,
   },
   {
     title: "Settings",
