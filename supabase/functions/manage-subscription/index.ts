@@ -178,6 +178,33 @@ Deno.serve(async (req) => {
           type: "info",
         });
 
+        // Get user info for admin notification
+        const { data: userProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", userId)
+          .single();
+        
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+        // Send admin email notification
+        try {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-admin-notification`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "upgrade_request",
+              userName: userProfile?.full_name || "Unknown",
+              userEmail: authUser?.user?.email || "Unknown",
+              planName: plan.charAt(0).toUpperCase() + plan.slice(1),
+              credits: requestedCredits || undefined,
+              amount: requestedPriceCents || undefined,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send admin notification email:", emailErr);
+        }
+
         console.log(`Subscription request created for user ${userId}, plan: ${plan}, credits: ${requestedCredits || 'default'}, price: ${requestedPriceCents || 'default'}, isUpgrade: ${!!activeSub}`);
 
         return new Response(

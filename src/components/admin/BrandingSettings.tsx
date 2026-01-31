@@ -333,6 +333,7 @@ export function BrandingSettings() {
   const [supportEmail, setSupportEmail] = useState(settings.supportEmail);
   const [whatsappNumber, setWhatsappNumber] = useState(settings.whatsappNumber);
   const [responseTime, setResponseTime] = useState(settings.responseTime);
+  const [adminNotificationEmail, setAdminNotificationEmail] = useState(settings.adminNotificationEmail);
   const [metaDescription, setMetaDescription] = useState(settings.metaDescription);
   const [metaKeywords, setMetaKeywords] = useState(settings.metaKeywords);
   const [savingIdentity, setSavingIdentity] = useState(false);
@@ -346,6 +347,7 @@ export function BrandingSettings() {
     setSupportEmail(settings.supportEmail);
     setWhatsappNumber(settings.whatsappNumber);
     setResponseTime(settings.responseTime);
+    setAdminNotificationEmail(settings.adminNotificationEmail);
     setMetaDescription(settings.metaDescription);
     setMetaKeywords(settings.metaKeywords);
   });
@@ -441,6 +443,7 @@ export function BrandingSettings() {
         updateSetting("support_email", supportEmail),
         updateSetting("whatsapp_number", whatsappNumber),
         updateSetting("response_time", responseTime),
+        updateSetting("admin_notification_email", adminNotificationEmail),
       ]);
       toast({ title: "Brand identity saved" });
     } catch {
@@ -740,6 +743,23 @@ export function BrandingSettings() {
                 placeholder="© 2025 MetaGen. All rights reserved."
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="adminNotificationEmail" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Admin Notification Email
+            </Label>
+            <Input
+              id="adminNotificationEmail"
+              type="email"
+              value={adminNotificationEmail}
+              onChange={(e) => setAdminNotificationEmail(e.target.value)}
+              placeholder="admin@example.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              Receive email notifications for new signups, upgrade requests, and credit pack purchases
+            </p>
           </div>
 
           <div className="flex justify-end">
