@@ -127,13 +127,38 @@ Deno.serve(async (req) => {
           description: `Credit pack purchase: ${purchase.credits} credits`,
         });
 
-        // Notify user
+        // Notify user (in-app)
         await supabaseAdmin.from("notifications").insert({
           user_id: purchase.user_id,
           title: "Credit Pack Approved! 🎉",
           message: `Your purchase of ${purchase.credits} credits has been approved and added to your account.`,
           type: "success",
         });
+
+        // Get user info for email
+        const { data: userProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", purchase.user_id)
+          .single();
+        
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(purchase.user_id);
+
+        // Send approval email to user
+        try {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-user-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "credit_pack_approved",
+              userEmail: authUser?.user?.email,
+              userName: userProfile?.full_name,
+              credits: purchase.credits,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send user email:", emailErr);
+        }
 
         console.log(`Credit pack ${purchaseId} approved by admin ${userId}`);
 
@@ -152,13 +177,37 @@ Deno.serve(async (req) => {
           })
           .eq("id", purchaseId);
 
-        // Notify user
+        // Notify user (in-app)
         await supabaseAdmin.from("notifications").insert({
           user_id: purchase.user_id,
           title: "Credit Pack Purchase Declined",
           message: `Your credit pack purchase was not approved. Please contact support for more information.`,
           type: "error",
         });
+
+        // Get user info for email
+        const { data: userProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", purchase.user_id)
+          .single();
+        
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(purchase.user_id);
+
+        // Send rejection email to user
+        try {
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-user-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "credit_pack_rejected",
+              userEmail: authUser?.user?.email,
+              userName: userProfile?.full_name,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send user email:", emailErr);
+        }
 
         console.log(`Credit pack ${purchaseId} rejected by admin ${userId}`);
 

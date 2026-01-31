@@ -252,7 +252,7 @@ export function useUpgradeRequests() {
         description: `${request.plan_name.charAt(0).toUpperCase() + request.plan_name.slice(1)} plan subscription (${isUnlimited ? 'unlimited' : creditsToGrant} credits)`,
       });
 
-      // Create notification for user
+      // Create notification for user (in-app)
       const creditsMessage = isUnlimited 
         ? "You now have unlimited credits!" 
         : `You have ${creditsToGrant} credits available.`;
@@ -262,6 +262,27 @@ export function useUpgradeRequests() {
         message: `Your upgrade to the ${request.plan_name} plan has been approved. ${creditsMessage}`,
         type: "success",
       });
+
+      // Get user email and send email notification
+      const { data: authData } = await supabase.auth.admin?.getUserById?.(request.user_id) || { data: null };
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", request.user_id)
+        .single();
+      
+      // Send email notification via edge function
+      fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-user-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "upgrade_approved",
+          userEmail: authData?.user?.email,
+          userName: profile?.full_name,
+          planName: request.plan_name.charAt(0).toUpperCase() + request.plan_name.slice(1),
+          credits: isUnlimited ? undefined : creditsToGrant,
+        }),
+      }).catch(console.error);
 
       toast.success("Request approved successfully");
       await fetchRequests();
@@ -306,13 +327,34 @@ export function useUpgradeRequests() {
         return { success: false };
       }
 
-      // Notify user
+      // Notify user (in-app)
       await supabase.from("notifications").insert({
         user_id: request.user_id,
         title: "Upgrade Request Declined",
         message: adminNotes || `Your upgrade request for the ${request.plan_name} plan was not approved. Please contact support for more information.`,
         type: "error",
       });
+
+      // Get user email and send email notification
+      const { data: authData } = await supabase.auth.admin?.getUserById?.(request.user_id) || { data: null };
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", request.user_id)
+        .single();
+      
+      // Send rejection email
+      fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-user-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "upgrade_rejected",
+          userEmail: authData?.user?.email,
+          userName: profile?.full_name,
+          planName: request.plan_name.charAt(0).toUpperCase() + request.plan_name.slice(1),
+          adminNotes: adminNotes || undefined,
+        }),
+      }).catch(console.error);
 
       toast.success("Request rejected");
       await fetchRequests();
