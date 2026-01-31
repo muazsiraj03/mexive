@@ -11,6 +11,7 @@ import { Loader2, AlertCircle, Check, Image, Zap, Wand2, FileCheck, Eye, EyeOff,
 import { z } from "zod";
 import { toast } from "sonner";
 import { usePricing } from "@/hooks/use-pricing";
+import { useSystemSettings } from "@/hooks/use-system-settings";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { ResendConfirmationForm } from "@/components/auth/ResendConfirmationForm";
@@ -30,6 +31,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { user, signIn, signUp, loading: authLoading } = useAuth();
   const { getPlanByName } = usePricing();
+  const { settings } = useSystemSettings();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export default function Auth() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authErrorType, setAuthErrorType] = useState<"reset" | "confirmation" | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showEmailNotConfirmedHint, setShowEmailNotConfirmedHint] = useState(false);
   
   // Check if this is a password reset flow or confirmation flow
   const isResetMode = searchParams.get("mode") === "reset";
@@ -149,6 +152,7 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setShowEmailNotConfirmedHint(false);
     
     const emailResult = emailSchema.safeParse(loginEmail);
     if (!emailResult.success) {
@@ -169,6 +173,9 @@ export default function Auth() {
     if (error) {
       if (error.message.includes("Invalid login credentials")) {
         setError("Invalid email or password. Please try again.");
+      } else if (error.message.includes("Email not confirmed")) {
+        setError("Please confirm your email before logging in.");
+        setShowEmailNotConfirmedHint(true);
       } else {
         setError(error.message);
       }
@@ -523,16 +530,18 @@ export default function Auth() {
                       Sign up
                     </button>
                   </p>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Didn't receive confirmation email?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setShowResendConfirmation(true)}
-                      className="text-primary hover:underline"
-                    >
-                      Resend it
-                    </button>
-                  </p>
+                  {showEmailNotConfirmedHint && settings.enableResendConfirmation && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Didn't receive confirmation email?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setShowResendConfirmation(true)}
+                        className="text-primary hover:underline"
+                      >
+                        Resend it
+                      </button>
+                    </p>
+                  )}
                 </form>
               )}
             </>
