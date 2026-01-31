@@ -1,11 +1,13 @@
 import { Home, Wand2, Settings, Sparkles, LogOut, Shield, CreditCard, MessageSquareText, FileSearch } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useAuth } from "@/hooks/use-auth";
 import { useSystemSettings } from "@/hooks/use-system-settings";
 import { useThemeLogo } from "@/hooks/use-theme-logo";
-import logoIcon from "@/assets/logo-icon.png";
+import logoIconLight from "@/assets/logo-icon-light.png";
+import logoIconDark from "@/assets/logo-icon-dark.png";
 import {
   Sidebar,
   SidebarContent,
@@ -41,7 +43,9 @@ export function DashboardSidebar() {
   const { signOut } = useAuth();
   const { settings } = useSystemSettings();
   const { logo } = useThemeLogo();
+  const { resolvedTheme } = useTheme();
   const collapsed = state === "collapsed";
+  const logoIcon = resolvedTheme === "dark" ? logoIconDark : logoIconLight;
 
   const sizeClasses = {
     small: collapsed ? "h-6 w-6" : "h-8 w-auto max-w-[120px]",
