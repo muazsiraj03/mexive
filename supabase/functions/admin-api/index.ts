@@ -251,8 +251,18 @@ Deno.serve(async (req) => {
         const userIds = (profiles || []).map(p => p.user_id);
         const { data: subscriptions } = await adminClient
           .from("subscriptions")
-          .select("user_id, plan, credits_remaining, credits_total, status")
+          .select("user_id, plan, credits_remaining, credits_total, bonus_credits, status")
           .in("user_id", userIds);
+
+        // Fetch pricing config to check which plans are unlimited
+        const { data: pricingConfig } = await adminClient
+          .from("pricing_config")
+          .select("plan_name, is_unlimited");
+
+        // Build unlimited plans set
+        const unlimitedPlans = new Set(
+          (pricingConfig || []).filter(p => p.is_unlimited).map(p => p.plan_name)
+        );
 
         // Build subscription map
         const subscriptionMap = new Map<string, any>();
@@ -263,6 +273,7 @@ Deno.serve(async (req) => {
         // Combine profile and subscription data
         let users = (profiles || []).map((profile: any) => {
           const sub = subscriptionMap.get(profile.user_id) || {};
+          const isUnlimited = unlimitedPlans.has(sub.plan);
           return {
             id: profile.user_id || profile.id,
             full_name: profile.full_name,
@@ -270,7 +281,8 @@ Deno.serve(async (req) => {
             plan: sub.plan || "free",
             credits: sub.credits_remaining || 0,
             total_credits: sub.credits_total || 0,
-            has_unlimited_credits: false,
+            bonus_credits: sub.bonus_credits || 0,
+            has_unlimited_credits: isUnlimited,
             created_at: profile.created_at,
             updated_at: profile.updated_at,
           };
