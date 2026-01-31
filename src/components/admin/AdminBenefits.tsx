@@ -114,35 +114,38 @@ export function AdminBenefits() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-4 md:p-6">
+      <>
         <AdminHeader
           title="Benefits"
           description="Manage tool-specific benefits shown on the landing page"
         />
-        <div className="animate-pulse space-y-4 max-w-6xl">
-          <div className="h-10 bg-muted rounded w-32" />
-          <div className="h-64 bg-muted rounded" />
-        </div>
-      </div>
+        <main className="flex-1 space-y-6 p-4 md:p-6">
+          <div className="max-w-6xl animate-pulse space-y-4">
+            <div className="h-10 bg-muted rounded w-32" />
+            <div className="h-64 bg-muted rounded" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="flex-1 p-4 md:p-6">
+    <>
       <AdminHeader
         title="Benefits"
         description="Manage tool-specific benefits shown on the landing page"
       />
 
-      <div className="max-w-6xl space-y-6">
-        <div className="flex justify-end">
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-          Add Benefit
-        </Button>
-      </div>
+      <main className="flex-1 space-y-6 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          <div className="flex justify-end">
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Benefit
+            </Button>
+          </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           {TOOLS.map((tool) => (
             <TabsTrigger key={tool.id} value={tool.id}>
@@ -323,7 +326,8 @@ export function AdminBenefits() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
