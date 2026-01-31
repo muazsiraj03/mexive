@@ -60,6 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
+
+    // Send admin notification for new signup (fire and forget)
+    if (!error && data?.user) {
+      fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-admin-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_user",
+          userName: fullName || "Not provided",
+          userEmail: email,
+        }),
+      }).catch(console.error);
+    }
+
     return { error, data };
   };
 

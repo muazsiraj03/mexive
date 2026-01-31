@@ -244,6 +244,33 @@ Deno.serve(async (req) => {
       type: "info",
     });
 
+    // Get user info for admin notification
+    const { data: userProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", userId)
+      .single();
+    
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+    // Send admin email notification
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-admin-notification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "credit_pack_request",
+          userName: userProfile?.full_name || "Unknown",
+          userEmail: authUser?.user?.email || "Unknown",
+          planName: pack.name,
+          credits: totalCredits,
+          amount: pack.price_cents,
+        }),
+      });
+    } catch (emailErr) {
+      console.error("Failed to send admin notification email:", emailErr);
+    }
+
     console.log(`Credit pack purchase created for user ${userId}, pack: ${pack.name}, credits: ${totalCredits}`);
 
     return new Response(

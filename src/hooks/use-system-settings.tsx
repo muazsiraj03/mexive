@@ -26,6 +26,7 @@ export interface SystemSettings {
   supportEmail: string;
   whatsappNumber: string;
   responseTime: string;
+  adminNotificationEmail: string;
   // SEO
   metaDescription: string;
   metaKeywords: string;
@@ -50,6 +51,7 @@ const defaultSettings: SystemSettings = {
   supportEmail: "support@metagen.com",
   whatsappNumber: "",
   responseTime: "Usually within 24 hours",
+  adminNotificationEmail: "",
   metaDescription: "Generate optimized metadata for your stock images and videos with AI",
   metaKeywords: "metadata generator, stock photography, AI, keywords, SEO",
   ogImageUrl: "",
@@ -113,6 +115,7 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
           supportEmail: settingsMap.support_email || defaultSettings.supportEmail,
           whatsappNumber: settingsMap.whatsapp_number || defaultSettings.whatsappNumber,
           responseTime: settingsMap.response_time || defaultSettings.responseTime,
+          adminNotificationEmail: settingsMap.admin_notification_email || defaultSettings.adminNotificationEmail,
           metaDescription: settingsMap.meta_description || defaultSettings.metaDescription,
           metaKeywords: settingsMap.meta_keywords || defaultSettings.metaKeywords,
           ogImageUrl: settingsMap.og_image_url || "",
