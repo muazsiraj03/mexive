@@ -135,14 +135,9 @@ export function AdminBenefits() {
       />
 
       <div className="max-w-6xl space-y-6">
-      <AdminHeader
-        title="Benefits"
-        description="Manage tool-specific benefits shown on the landing page"
-      />
-
-      <div className="flex justify-end">
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
+        <div className="flex justify-end">
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
           Add Benefit
         </Button>
       </div>
