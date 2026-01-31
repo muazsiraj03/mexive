@@ -1,9 +1,11 @@
 import { Home, Wand2, Settings, Sparkles, LogOut, Shield, CreditCard, MessageSquareText, FileSearch } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useAuth } from "@/hooks/use-auth";
 import { useSystemSettings } from "@/hooks/use-system-settings";
 import { useThemeLogo } from "@/hooks/use-theme-logo";
+import logoIcon from "@/assets/logo-icon.png";
 import {
   Sidebar,
   SidebarContent,
@@ -55,13 +57,21 @@ export function DashboardSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className={collapsed ? "p-2" : "p-4"}>
-        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"}`}>
-          <img 
-            src={logo} 
-            alt={settings.appName} 
-            className={`object-contain transition-all ${sizeClasses[settings.logoSize]}`}
-          />
-        </div>
+        <Link to="/" className={`flex items-center ${collapsed ? "justify-center" : "justify-start"}`}>
+          {collapsed ? (
+            <img 
+              src={logoIcon} 
+              alt={settings.appName} 
+              className="h-8 w-8 object-contain"
+            />
+          ) : (
+            <img 
+              src={logo} 
+              alt={settings.appName} 
+              className={`object-contain transition-all ${sizeClasses[settings.logoSize]}`}
+            />
+          )}
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
