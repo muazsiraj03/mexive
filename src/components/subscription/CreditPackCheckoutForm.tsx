@@ -245,7 +245,7 @@ export function CreditPackCheckoutForm({
 
                   {bankLoading ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     </div>
                   ) : (
                     <div className="space-y-2 text-sm">

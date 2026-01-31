@@ -66,7 +66,7 @@ export function CreditSummaryCard({ currentPlan }: CreditSummaryCardProps) {
           {/* Monthly Subscription Credits */}
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-              <Coins className="h-6 w-6 text-muted-foreground" />
+              <Coins className="h-6 w-6 text-primary" />
             </div>
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Monthly Credits</p>

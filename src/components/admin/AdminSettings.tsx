@@ -196,7 +196,7 @@ export function AdminSettings() {
           description="Configure platform settings and notifications" 
         />
         <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
       </>
     );
@@ -459,11 +459,11 @@ export function AdminSettings() {
                 <CardContent>
                   {adminsLoading ? (
                     <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                   ) : admins.length === 0 ? (
                     <div className="text-center py-12">
-                      <Shield className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                      <Shield className="h-12 w-12 mx-auto text-primary/50 mb-3" />
                       <p className="text-muted-foreground">No administrators found</p>
                     </div>
                   ) : (

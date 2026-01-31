@@ -442,7 +442,7 @@ export function FileReviewerPage() {
                           : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
                       )}
                     >
-                      <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                      <Upload className="h-10 w-10 text-primary mb-3" />
                       <p className="text-sm font-medium text-foreground">
                         Or drag and drop files here
                       </p>
@@ -795,11 +795,11 @@ export function FileReviewerPage() {
                 <div className="mt-4">
                   {isLoadingHistory ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                   ) : reviewHistory.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <History className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                      <History className="h-12 w-12 text-primary/50 mb-3" />
                       <p className="text-muted-foreground">No review history yet</p>
                       <p className="text-sm text-muted-foreground">
                         Upload and review files to see them here

@@ -407,7 +407,7 @@ function ExampleCard({ example, onDelete }: { example: PromptExample; onDelete: 
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          className="h-6 w-6 text-primary hover:text-destructive"
           onClick={onDelete}
         >
           <Trash2 className="h-3 w-3" />

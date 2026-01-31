@@ -404,7 +404,7 @@ export function ReviewResultCard({ review, onDelete, showImage = true, showViewD
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                className="h-8 w-8 text-primary hover:text-destructive"
                 onClick={onDelete}
               >
                 <Trash2 className="h-4 w-4" />

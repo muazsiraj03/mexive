@@ -230,7 +230,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Subscriptions</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CreditCard className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{totalSubscriptions}</div>
@@ -247,7 +247,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-chart-1/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Active Rate</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{activeRate.toFixed(1)}%</div>
@@ -263,7 +263,7 @@ export function AdminSubscriptions() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-destructive/10 to-transparent rounded-bl-full" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Churn Rate</CardTitle>
-              <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              <TrendingDown className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
@@ -688,7 +688,7 @@ export function AdminSubscriptions() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                      <CheckCircle className="h-8 w-8 text-muted-foreground" />
+                      <CheckCircle className="h-8 w-8 text-primary" />
                     </div>
                     <h3 className="text-lg font-semibold">All caught up!</h3>
                     <p className="text-muted-foreground mt-1">No pending subscriptions to review</p>
@@ -724,7 +724,7 @@ export function AdminSubscriptions() {
               <CardContent>
                 {loading ? (
                   <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : (
                   <>
@@ -806,7 +806,7 @@ export function AdminSubscriptions() {
                             <TableRow>
                               <TableCell colSpan={6} className="text-center py-12">
                                 <div className="flex flex-col items-center gap-2">
-                                  <CreditCard className="h-8 w-8 text-muted-foreground" />
+                                  <CreditCard className="h-8 w-8 text-primary" />
                                   <span className="text-muted-foreground">No subscriptions found</span>
                                 </div>
                               </TableCell>

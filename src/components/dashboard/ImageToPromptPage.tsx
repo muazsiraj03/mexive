@@ -922,7 +922,7 @@ export function ImageToPromptPage() {
                   )}
                   onClick={handleFileButtonClick}
                 >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <Upload className="h-12 w-12 mx-auto text-primary mb-4" />
                   <p className="text-lg font-medium text-foreground mb-1">
                     Or drag and drop here
                   </p>

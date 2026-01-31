@@ -167,7 +167,7 @@ export function PromptHistoryDrawer({ onRegenerate }: PromptHistoryDrawerProps) 
             <ScrollArea className="h-[calc(100vh-220px)]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : filteredHistory.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -436,7 +436,7 @@ function HistoryCard({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            className="h-7 w-7 text-primary hover:text-destructive"
             onClick={onDelete}
             title="Delete"
           >

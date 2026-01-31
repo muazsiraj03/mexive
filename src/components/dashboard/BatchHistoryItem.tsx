@@ -100,7 +100,7 @@ export function BatchHistoryItem({
               </div>
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                <FolderOpen className="h-8 w-8 text-primary" />
               </div>
             )}
             {remainingCount > 0 && (
@@ -215,7 +215,7 @@ export function BatchHistoryItem({
                     {gen.marketplaces.length} marketplace{gen.marketplaces.length !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Eye className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             ))}
           </div>
