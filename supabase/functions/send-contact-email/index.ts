@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email service is not configured");
     }
 
+    // Initialize Supabase client with service role for database insert
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const resend = new Resend(resendApiKey);
     const { name, email, subject, message }: ContactFormRequest = await req.json();
 
@@ -47,7 +53,25 @@ const handler = async (req: Request): Promise<Response> => {
     if (subject.length > 200) throw new Error("Subject must be less than 200 characters");
     if (message.length > 5000) throw new Error("Message must be less than 5000 characters");
 
-    console.log(`Sending contact form email from ${name} (${email})`);
+    console.log(`Processing contact form from ${name} (${email})`);
+
+    // Save to database first
+    const { error: dbError } = await supabase
+      .from("contact_submissions")
+      .insert({
+        name,
+        email,
+        subject,
+        message,
+        status: "unread",
+      });
+
+    if (dbError) {
+      console.error("Error saving to database:", dbError);
+      // Continue with email even if DB fails
+    } else {
+      console.log("Contact submission saved to database");
+    }
 
     // Send email to support
     const emailResponse = await resend.emails.send({

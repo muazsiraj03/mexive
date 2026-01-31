@@ -22,6 +22,7 @@ import {
   Award,
   GitCompare,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import {
   Sidebar,
@@ -139,6 +140,11 @@ const navItems = [
     title: "Blog Posts",
     href: "/admin/blog-posts",
     icon: FileText,
+  },
+  {
+    title: "Contact Submissions",
+    href: "/admin/contact-submissions",
+    icon: MessageSquare,
   },
   {
     title: "Settings",
