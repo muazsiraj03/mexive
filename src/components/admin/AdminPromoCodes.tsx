@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { usePromoCodes, PromoCode, PromoCodeFormData } from "@/hooks/use-promo-codes";
+import { usePricing } from "@/hooks/use-pricing";
 import { AdminHeader } from "./AdminHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -16,6 +18,7 @@ import { format } from "date-fns";
 
 export function AdminPromoCodes() {
   const { promoCodes, loading, createPromoCode, updatePromoCode, deletePromoCode } = usePromoCodes();
+  const { plans } = usePricing();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<PromoCode | null>(null);
   const [formData, setFormData] = useState<PromoCodeFormData>({
@@ -87,6 +90,17 @@ export function AdminPromoCodes() {
 
   const handleToggleActive = async (promo: PromoCode) => {
     await updatePromoCode(promo.id, { is_active: !promo.is_active });
+  };
+
+  const activePlans = plans.filter(p => p.isActive && p.plan_name !== "free");
+
+  const togglePlan = (planName: string) => {
+    const current = formData.applicable_plans || [];
+    if (current.includes(planName)) {
+      setFormData({ ...formData, applicable_plans: current.filter(p => p !== planName) });
+    } else {
+      setFormData({ ...formData, applicable_plans: [...current, planName] });
+    }
   };
 
   const PromoForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
@@ -173,6 +187,26 @@ export function AdminPromoCodes() {
             value={formData.expires_at ? formData.expires_at.slice(0, 16) : ""}
             onChange={(e) => setFormData({ ...formData, expires_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
           />
+        </div>
+      </div>
+
+      {/* Applicable Plans */}
+      <div className="space-y-2">
+        <Label>Applicable Plans</Label>
+        <p className="text-xs text-muted-foreground">Leave empty to apply to all plans</p>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          {activePlans.map((plan) => (
+            <div key={plan.id} className="flex items-center gap-2">
+              <Checkbox
+                id={`plan-${plan.id}`}
+                checked={(formData.applicable_plans || []).includes(plan.plan_name)}
+                onCheckedChange={() => togglePlan(plan.plan_name)}
+              />
+              <Label htmlFor={`plan-${plan.id}`} className="text-sm font-normal cursor-pointer">
+                {plan.displayName}
+              </Label>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -282,6 +316,7 @@ export function AdminPromoCodes() {
                     <TableRow>
                       <TableHead>Code</TableHead>
                       <TableHead>Discount</TableHead>
+                      <TableHead>Plans</TableHead>
                       <TableHead>Uses</TableHead>
                       <TableHead>Expires</TableHead>
                       <TableHead>Status</TableHead>
@@ -311,6 +346,19 @@ export function AdminPromoCodes() {
                               </>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {promo.applicable_plans && promo.applicable_plans.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {promo.applicable_plans.map((plan) => (
+                                <Badge key={plan} variant="outline" className="text-xs">
+                                  {plan}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">All plans</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {promo.current_uses}
