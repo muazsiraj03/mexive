@@ -39,8 +39,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Eye, Trash2, MoreHorizontal, CheckCircle, Clock, Archive } from "lucide-react";
+import { Mail, Eye, Trash2, MoreHorizontal, CheckCircle, Clock, Archive, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminHeader } from "./AdminHeader";
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   unread: { label: "Unread", variant: "default" },
@@ -83,24 +84,27 @@ export function AdminContactSubmissions() {
   const unreadCount = submissions?.filter((s) => s.status === "unread").length || 0;
 
   if (isLoading) {
-    return <div className="p-6">Loading contact submissions...</div>;
+    return (
+      <>
+        <AdminHeader title="Contact Submissions" description="View and manage contact form submissions" />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+      </>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            Contact Submissions
-            {unreadCount > 0 && (
-              <Badge variant="default">{unreadCount} new</Badge>
-            )}
-          </h1>
-          <p className="text-muted-foreground">
-            View and manage contact form submissions
-          </p>
-        </div>
-      </div>
+    <>
+      <AdminHeader title="Contact Submissions" description="View and manage contact form submissions" />
+      
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          {unreadCount > 0 && (
+            <Badge variant="default" className="mb-4">{unreadCount} new submissions</Badge>
+          )}
 
       <div className="border rounded-lg">
         <Table>
@@ -283,6 +287,8 @@ export function AdminContactSubmissions() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }

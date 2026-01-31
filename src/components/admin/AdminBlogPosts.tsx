@@ -26,8 +26,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Eye, EyeOff, ImageIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Plus, Pencil, Trash2, Eye, EyeOff, ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminHeader } from "./AdminHeader";
 
 export function AdminBlogPosts() {
   const navigate = useNavigate();
@@ -44,25 +46,32 @@ export function AdminBlogPosts() {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading blog posts...</div>;
+    return (
+      <>
+        <AdminHeader title="Blog Posts" description="Manage your blog articles and content" />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+      </>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Blog Posts</h1>
-          <p className="text-muted-foreground">
-            Manage your blog articles and content
-          </p>
-        </div>
-        <Button onClick={() => navigate("/admin/blog-posts/new")}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Post
-        </Button>
-      </div>
+    <>
+      <AdminHeader title="Blog Posts" description="Manage your blog articles and content" />
+      
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          <div className="flex justify-end">
+            <Button onClick={() => navigate("/admin/blog-posts/new")}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Post
+            </Button>
+          </div>
 
-      <div className="border rounded-lg">
+          <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
@@ -169,7 +178,9 @@ export function AdminBlogPosts() {
             )}
           </TableBody>
         </Table>
-      </div>
-    </div>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
