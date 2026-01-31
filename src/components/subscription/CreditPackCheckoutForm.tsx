@@ -85,24 +85,31 @@ export function CreditPackCheckoutForm({
           transactionId: transactionId.trim() || undefined,
           notes: `Email: ${user.email || "N/A"}`,
         },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
+      // Handle both response.error and result.error
       if (response.error) {
-        throw new Error(response.error.message || "Failed to submit purchase");
+        const errorMessage = response.error.message || "Failed to submit purchase";
+        toast.error(errorMessage);
+        return;
       }
 
       const result = response.data;
       
-      if (result.error) {
+      if (result?.error) {
         toast.error(result.error);
         return;
       }
 
+      if (!result?.success) {
+        toast.error("Failed to submit purchase. Please try again.");
+        return;
+      }
+
       setStep("success");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Purchase error:", error);
-      toast.error("Failed to submit credit pack purchase");
+      toast.error(error?.message || "Failed to submit credit pack purchase");
     } finally {
       setSubmitting(false);
     }
