@@ -71,6 +71,109 @@ interface FileReviewerConfig {
   warning_threshold: number;
 }
 
+interface UserCredits {
+  hasCredits: boolean;
+  isUnlimited: boolean;
+  isAdmin: boolean;
+  userId: string;
+  currentCredits: number;
+}
+
+/**
+ * Verify user has credits and return user info
+ */
+async function verifyUserCredits(authHeader: string | null): Promise<UserCredits> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  if (!authHeader) {
+    throw new Error("Authorization header required");
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: authHeader } }
+  });
+  
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("Authentication required");
+  }
+  
+  // Check if user is admin
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  
+  const isAdmin = !!roleData;
+  
+  // Get user subscription
+  const { data: subscription, error: subError } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining, plan")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  
+  if (subError) {
+    console.error("Error fetching subscription:", subError);
+    throw new Error("Could not verify subscription");
+  }
+  
+  // Check for unlimited plan
+  const { data: planConfig } = await supabase
+    .from("pricing_config")
+    .select("is_unlimited")
+    .eq("plan_name", subscription?.plan || "free")
+    .maybeSingle();
+  
+  const isUnlimited = planConfig?.is_unlimited || false;
+  const currentCredits = subscription?.credits_remaining || 0;
+  const hasCredits = isAdmin || isUnlimited || currentCredits >= 1;
+  
+  return {
+    hasCredits,
+    isUnlimited,
+    isAdmin,
+    userId: user.id,
+    currentCredits
+  };
+}
+
+/**
+ * Deduct 1 credit from user's subscription
+ */
+async function deductCredit(userId: string): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  // Get current credits and decrement
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("credits_remaining")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .single();
+  
+  if (sub) {
+    await supabase
+      .from("subscriptions")
+      .update({ 
+        credits_remaining: Math.max(0, sub.credits_remaining - 1),
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", userId)
+      .eq("status", "active");
+    
+    console.log(`Deducted 1 credit from user ${userId}. Remaining: ${sub.credits_remaining - 1}`);
+  }
+}
+
 async function loadConfig(): Promise<FileReviewerConfig | null> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -110,7 +213,7 @@ function getFileCategory(fileType: string): string {
   if (["eps"].includes(type)) return "eps";
   if (["ai"].includes(type)) return "ai";
   if (["mp4", "mov", "webm", "avi", "wmv"].includes(type)) return "video";
-  return "raster"; // Default to raster for unknown types
+  return "raster";
 }
 
 function buildSystemPrompt(
@@ -122,13 +225,11 @@ function buildSystemPrompt(
   const rejectionReasons = config?.rejection_reasons || DEFAULT_REJECTION_CATALOG;
   const relevantCatalog = (rejectionReasons as Record<string, Record<string, { message: string; severity: string; category: string; enabled: boolean }>>)[category] || {};
   
-  // Only include enabled reasons
   const enabledReasons = Object.entries(relevantCatalog)
     .filter(([_, info]: [string, { message: string; severity: string; category: string; enabled: boolean }]) => info.enabled !== false)
     .map(([code, info]: [string, { message: string; severity: string; category: string; enabled: boolean }]) => `- ${code}: ${info.message}`)
     .join("\n");
 
-  // Get marketplace rules if available
   const marketplaceRulesText = config?.marketplace_rules
     ? marketplaces.map((mp) => {
         const rule = config.marketplace_rules[mp];
@@ -139,7 +240,6 @@ function buildSystemPrompt(
       }).filter(Boolean).join("\n")
     : "";
 
-  // Get scoring weights
   const weights = config?.scoring_weights || { visual_quality: 25, technical: 30, content: 25, commercial: 20 };
   const passThreshold = config?.pass_threshold || 70;
   const warningThreshold = config?.warning_threshold || 50;
@@ -256,7 +356,6 @@ async function callAIWithRetry(
           throw new Error("AI credits exhausted. Please add credits to continue.");
         }
 
-        // Retry on 5xx errors
         if (response.status >= 500 && attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000;
           console.log(`Retrying in ${delay}ms...`);
@@ -269,7 +368,6 @@ async function callAIWithRetry(
 
       const data = await response.json();
 
-      // Check for error in response
       if (data.error) {
         console.error("AI response error:", data.error);
         if (attempt < maxRetries) {
@@ -285,7 +383,6 @@ async function callAIWithRetry(
         throw new Error("Empty response from AI");
       }
 
-      // Parse JSON from response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("Could not parse AI response as JSON");
@@ -312,6 +409,27 @@ serve(async (req) => {
   }
 
   try {
+    // Verify user has credits
+    const authHeader = req.headers.get("Authorization");
+    let userCredits: UserCredits;
+    
+    try {
+      userCredits = await verifyUserCredits(authHeader);
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: authError instanceof Error ? authError.message : "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!userCredits.hasCredits) {
+      return new Response(
+        JSON.stringify({ error: "Insufficient credits. Please purchase more credits to continue." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { imageUrl, fileType, fileName, marketplaces = ["Adobe Stock", "Freepik", "Shutterstock"] } = await req.json();
 
     if (!imageUrl || !fileType || !fileName) {
@@ -322,6 +440,7 @@ serve(async (req) => {
     }
 
     console.log(`Reviewing file: ${fileName} (${fileType})`);
+    console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     // Load config from database
     const config = await loadConfig();
@@ -339,6 +458,15 @@ serve(async (req) => {
     const analysis = await callAIWithRetry(imageUrl, systemPrompt, apiKey);
 
     console.log(`Analysis complete: ${analysis.verdict} (score: ${analysis.overallScore})`);
+
+    // Deduct credit after successful analysis (skip for admin/unlimited)
+    if (!userCredits.isAdmin && !userCredits.isUnlimited) {
+      try {
+        await deductCredit(userCredits.userId);
+      } catch (creditError) {
+        console.error("Failed to deduct credit:", creditError);
+      }
+    }
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
