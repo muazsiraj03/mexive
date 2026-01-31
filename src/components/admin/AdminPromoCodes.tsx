@@ -295,7 +295,7 @@ export function AdminPromoCodes() {
                     Create Code
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>Create Promo Code</DialogTitle>
                     <DialogDescription>Add a new discount code for checkout</DialogDescription>
@@ -383,7 +383,7 @@ export function AdminPromoCodes() {
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
                                 <DialogHeader>
                                   <DialogTitle>Edit Promo Code</DialogTitle>
                                   <DialogDescription>Update the discount code settings</DialogDescription>
