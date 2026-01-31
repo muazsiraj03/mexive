@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PlanInfo } from "@/hooks/use-subscription";
-import { PaymentFormDialog } from "./PaymentFormDialog";
+import { CheckoutForm } from "./CheckoutForm";
 import { Check, Infinity } from "lucide-react";
 
 interface ExtendedPlanInfo extends PlanInfo {
@@ -33,7 +33,7 @@ export function UpgradeDialog({
   onConfirm,
   loading 
 }: UpgradeDialogProps) {
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   if (!plan) return null;
 
@@ -42,13 +42,13 @@ export function UpgradeDialog({
   const displayCredits = plan.selectedCredits ?? plan.credits;
   const displayPrice = plan.selectedPrice ?? plan.price;
 
-  const handleProceedToPayment = () => {
+  const handleProceedToCheckout = () => {
     onOpenChange(false);
-    setShowPaymentForm(true);
+    setShowCheckout(true);
   };
 
-  const handlePaymentSuccess = () => {
-    setShowPaymentForm(false);
+  const handleCheckoutSuccess = () => {
+    setShowCheckout(false);
     onConfirm();
   };
 
@@ -80,10 +80,6 @@ export function UpgradeDialog({
                     ))}
                   </ul>
                 </div>
-
-                <p className="text-sm text-muted-foreground">
-                  You'll be shown bank transfer details to complete your payment. Once verified, your subscription will be activated.
-                </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -92,21 +88,21 @@ export function UpgradeDialog({
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleProceedToPayment}
+              onClick={handleProceedToCheckout}
               disabled={loading}
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Proceed to Payment
+              Proceed to Checkout
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <PaymentFormDialog
-        open={showPaymentForm}
-        onOpenChange={setShowPaymentForm}
+      <CheckoutForm
+        open={showCheckout}
+        onOpenChange={setShowCheckout}
         plan={plan}
-        onSuccess={handlePaymentSuccess}
+        onSuccess={handleCheckoutSuccess}
       />
     </>
   );
