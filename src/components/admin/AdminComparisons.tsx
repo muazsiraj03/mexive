@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useComparisons, Comparison } from "@/hooks/use-comparisons";
+import { AdminHeader } from "./AdminHeader";
 
 const TOOLS = [
   { id: "metadata-generator", label: "Metadata Generator" },
@@ -95,25 +96,29 @@ export function AdminComparisons() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-64 w-full" />
-      </div>
+      <>
+        <AdminHeader title="Comparison Section" description="Manage the Manual vs AI comparison table for each tool" />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Comparison Section</h1>
-          <p className="text-muted-foreground">Manage the Manual vs AI comparison table for each tool</p>
-        </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Comparison
-        </Button>
-      </div>
+    <>
+      <AdminHeader title="Comparison Section" description="Manage the Manual vs AI comparison table for each tool" />
+      
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          <div className="flex justify-end">
+            <Button onClick={openCreateDialog}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Comparison
+            </Button>
+          </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
@@ -275,6 +280,8 @@ export function AdminComparisons() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }

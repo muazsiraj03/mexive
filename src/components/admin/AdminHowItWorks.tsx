@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import { AdminHeader } from "./AdminHeader";
 
 const TOOLS = [
   { id: "metadata-generator", label: "Metadata Generator" },
@@ -119,30 +120,35 @@ export function AdminHowItWorks() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <>
+        <AdminHeader title="How It Works" description="Manage the steps shown for each tool" />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">How It Works</h1>
-          <p className="text-muted-foreground">Manage the steps shown for each tool</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Step
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingStep ? "Edit Step" : "Add Step"}</DialogTitle>
-            </DialogHeader>
+    <>
+      <AdminHeader title="How It Works" description="Manage the steps shown for each tool" />
+      
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          <div className="flex justify-end">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Step
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingStep ? "Edit Step" : "Add Step"}</DialogTitle>
+                </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Tool</Label>
@@ -310,6 +316,8 @@ export function AdminHowItWorks() {
           );
         })}
       </Tabs>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }

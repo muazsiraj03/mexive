@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { BlogCoverUpload } from "./BlogCoverUpload";
 import { BlogContentEditor } from "./BlogContentEditor";
+import { AdminHeader } from "./AdminHeader";
 import { toast } from "sonner";
 
 const generateSlug = (title: string) => {
@@ -137,64 +138,67 @@ export function AdminBlogEditor() {
 
   if (isEditing && isLoadingPost) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <>
+        <AdminHeader 
+          title={isEditing ? "Edit Blog Post" : "New Blog Post"}
+          description={isEditing ? "Update your blog article" : "Create a new blog article"}
+        />
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/admin/blog-posts")}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {isEditing ? "Edit Blog Post" : "New Blog Post"}
-            </h1>
-            <p className="text-muted-foreground">
-              {isEditing
-                ? "Update your blog article"
-                : "Create a new blog article"}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isEditing && formData.is_published && (
-            <Button variant="outline" onClick={handlePreview}>
-              <Eye className="w-4 h-4 mr-2" />
-              Preview
+    <>
+      <AdminHeader 
+        title={isEditing ? "Edit Blog Post" : "New Blog Post"}
+        description={isEditing ? "Update your blog article" : "Create a new blog article"}
+      />
+      
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl space-y-6">
+          {/* Action Bar */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/admin/blog-posts")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Posts
             </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => handleSave(false)}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Draft
-          </Button>
-          <Button onClick={() => handleSave(true)} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : null}
-            {formData.is_published ? "Update & Publish" : "Publish"}
-          </Button>
-        </div>
-      </div>
+            <div className="flex items-center gap-2">
+              {isEditing && formData.is_published && (
+                <Button variant="outline" onClick={handlePreview}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => handleSave(false)}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Draft
+              </Button>
+              <Button onClick={() => handleSave(true)} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                {formData.is_published ? "Update & Publish" : "Publish"}
+              </Button>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -343,7 +347,9 @@ export function AdminBlogEditor() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
