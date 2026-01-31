@@ -16,30 +16,57 @@ export type Database = {
     Tables: {
       credit_pack_purchases: {
         Row: {
+          admin_notes: string | null
           amount: number
           created_at: string
           credits: number
           id: string
+          notes: string | null
           pack_id: string | null
+          pack_name: string | null
+          payment_date: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sender_account: string | null
+          sender_name: string | null
           status: string
+          transaction_id: string | null
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           amount: number
           created_at?: string
           credits: number
           id?: string
+          notes?: string | null
           pack_id?: string | null
+          pack_name?: string | null
+          payment_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_account?: string | null
+          sender_name?: string | null
           status?: string
+          transaction_id?: string | null
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           amount?: number
           created_at?: string
           credits?: number
           id?: string
+          notes?: string | null
           pack_id?: string | null
+          pack_name?: string | null
+          payment_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_account?: string | null
+          sender_name?: string | null
           status?: string
+          transaction_id?: string | null
           user_id?: string
         }
         Relationships: [

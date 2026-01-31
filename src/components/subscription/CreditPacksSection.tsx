@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreditPacks } from "@/hooks/use-credit-packs";
+import { useCreditPacks, CreditPack } from "@/hooks/use-credit-packs";
 import { useSystemSettings } from "@/hooks/use-system-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,36 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, AlertCircle, Sparkles, Plus } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { CreditPack } from "@/hooks/use-credit-packs";
+import { Package, Sparkles, Plus } from "lucide-react";
+import { CreditPackCheckoutForm } from "./CreditPackCheckoutForm";
 
 export function CreditPacksSection() {
-  const { packs, loading, purchaseLoading, purchasePack } = useCreditPacks();
+  const { packs, loading, refreshPurchases } = useCreditPacks();
   const { settings, loading: settingsLoading } = useSystemSettings();
-  const [confirmPack, setConfirmPack] = useState<CreditPack | null>(null);
+  const [selectedPack, setSelectedPack] = useState<CreditPack | null>(null);
 
   const handlePurchase = (packId: string) => {
     const pack = packs.find((p) => p.id === packId);
     if (pack) {
-      setConfirmPack(pack);
+      setSelectedPack(pack);
     }
   };
 
-  const handleConfirmPurchase = async () => {
-    if (!confirmPack) return;
-    
-    await purchasePack(confirmPack.id);
-    setConfirmPack(null);
+  const handleSuccess = () => {
+    setSelectedPack(null);
+    refreshPurchases();
   };
 
   // Don't show if credit packs are disabled
@@ -137,12 +125,11 @@ export function CreditPacksSection() {
                       <TableCell className="text-right">
                         <Button
                           onClick={() => handlePurchase(pack.id)}
-                          disabled={purchaseLoading}
                           variant={pack.isPopular ? "default" : "outline"}
                           size="sm"
                           className="rounded-full"
                         >
-                          {purchaseLoading ? "..." : "Buy"}
+                          Buy
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -154,44 +141,13 @@ export function CreditPacksSection() {
         </CardContent>
       </Card>
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmPack} onOpenChange={(open) => !open && setConfirmPack(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-secondary" />
-              Confirm Purchase
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>You're about to purchase the <strong>{confirmPack?.name}</strong>:</p>
-                <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-                  <p className="font-medium text-foreground">
-                    {confirmPack?.credits} credits
-                    {confirmPack?.bonusCredits ? ` + ${confirmPack.bonusCredits} bonus` : ""}
-                  </p>
-                  <p className="text-lg font-bold text-foreground">
-                    ${confirmPack ? (confirmPack.priceCents / 100).toFixed(2) : 0}
-                  </p>
-                </div>
-                <p className="text-sm">
-                  Your purchase request will be submitted for approval. Credits will be added to your account once approved.
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmPurchase}
-              disabled={purchaseLoading}
-              className="bg-foreground text-background hover:bg-foreground/85"
-            >
-              {purchaseLoading ? "Processing..." : "Confirm Purchase"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Checkout Form */}
+      <CreditPackCheckoutForm
+        open={!!selectedPack}
+        onOpenChange={(open) => !open && setSelectedPack(null)}
+        pack={selectedPack}
+        onSuccess={handleSuccess}
+      />
     </>
   );
 }
