@@ -317,7 +317,7 @@ export function AdminCreditPacks() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Packs</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{packs.length}</div>
@@ -327,7 +327,7 @@ export function AdminCreditPacks() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Pending Purchases</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${pendingPurchases.length > 0 ? "text-warning" : ""}`}>
@@ -341,7 +341,7 @@ export function AdminCreditPacks() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Popular Pack</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
+              <Star className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{popularPack?.name || "None"}</div>
@@ -351,7 +351,7 @@ export function AdminCreditPacks() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Credit Range</CardTitle>
-              <Coins className="h-4 w-4 text-muted-foreground" />
+              <Coins className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
