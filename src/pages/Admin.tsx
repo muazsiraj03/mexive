@@ -17,6 +17,7 @@ import { AdminReferrals } from "@/components/admin/AdminReferrals";
 import { AdminTestimonials } from "@/components/admin/AdminTestimonials";
 import { AdminFAQs } from "@/components/admin/AdminFAQs";
 import { AdminFeatures } from "@/components/admin/AdminFeatures";
+import { AdminHowItWorks } from "@/components/admin/AdminHowItWorks";
 
 export default function Admin() {
   return (
@@ -38,6 +39,7 @@ export default function Admin() {
           <Route path="/testimonials" element={<AdminTestimonials />} />
           <Route path="/faqs" element={<AdminFAQs />} />
           <Route path="/features" element={<AdminFeatures />} />
+          <Route path="/how-it-works" element={<AdminHowItWorks />} />
           <Route path="/settings" element={<AdminSettings />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
