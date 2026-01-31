@@ -12,6 +12,7 @@ import {
   DollarSign,
   FileSearch,
   ClipboardCheck,
+  Tag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,6 +60,11 @@ const navItems = [
     title: "Credit Packs",
     href: "/admin/credit-packs",
     icon: Package,
+  },
+  {
+    title: "Promo Codes",
+    href: "/admin/promo-codes",
+    icon: Tag,
   },
   {
     title: "Revenue",

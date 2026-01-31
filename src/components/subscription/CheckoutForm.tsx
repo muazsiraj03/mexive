@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useBankSettings } from "@/hooks/use-bank-settings";
 import { useUpgradeRequests } from "@/hooks/use-upgrade-requests";
+import { usePromoCodes } from "@/hooks/use-promo-codes";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanInfo } from "@/hooks/use-subscription";
 import { 
@@ -18,15 +19,13 @@ import {
   Copy, 
   Check, 
   Building2, 
-  CreditCard, 
-  User, 
-  MapPin, 
-  Globe,
   Infinity,
   ShoppingCart,
   Receipt,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Tag,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +50,7 @@ export function CheckoutForm({
   const { user } = useAuth();
   const { settings: bankSettings, loading: bankLoading } = useBankSettings();
   const { createRequest, actionLoading } = useUpgradeRequests();
+  const { validatePromoCode, incrementPromoCodeUse } = usePromoCodes();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [step, setStep] = useState<"checkout" | "success">("checkout");
 
@@ -58,18 +58,59 @@ export function CheckoutForm({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [transactionId, setTransactionId] = useState("");
+  
+  // Promo code state
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    id: string;
+    code: string;
+    discountAmount: number;
+    finalPrice: number;
+  } | null>(null);
 
   if (!plan) return null;
 
   const isUnlimited = plan.name === "unlimited";
   const displayCredits = plan.selectedCredits ?? plan.credits;
-  const displayPrice = plan.selectedPrice ?? plan.price;
+  const basePriceCents = (plan.selectedPrice ?? plan.price) * 100;
+  const basePrice = plan.selectedPrice ?? plan.price;
+  
+  // Calculate final price with discount
+  const finalPriceCents = appliedPromo ? appliedPromo.finalPrice : basePriceCents;
+  const finalPrice = finalPriceCents / 100;
+  const discountAmount = appliedPromo ? appliedPromo.discountAmount / 100 : 0;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     toast.success("Copied to clipboard");
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    
+    setPromoLoading(true);
+    const result = await validatePromoCode(promoCode, basePriceCents, plan.name);
+    setPromoLoading(false);
+    
+    if (result.valid && result.promo) {
+      setAppliedPromo({
+        id: result.promo.id,
+        code: result.promo.code,
+        discountAmount: result.discountAmount!,
+        finalPrice: result.finalPrice!,
+      });
+      toast.success(`Promo code applied! You save $${(result.discountAmount! / 100).toFixed(2)}`);
+    } else {
+      toast.error(result.error || "Invalid promo code");
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,14 +124,18 @@ export function CheckoutForm({
     const result = await createRequest({
       planName: plan.name,
       requestedCredits: plan.selectedCredits,
-      requestedPriceCents: plan.selectedPrice ? plan.selectedPrice * 100 : undefined,
+      requestedPriceCents: finalPriceCents,
       transactionId: transactionId.trim() || undefined,
       senderName: fullName.trim(),
       senderAccount: phone.trim() || undefined,
-      notes: `Email: ${user?.email || "N/A"}`,
+      notes: `Email: ${user?.email || "N/A"}${appliedPromo ? ` | Promo: ${appliedPromo.code} (-$${discountAmount.toFixed(2)})` : ""}`,
     });
 
     if (result.success) {
+      // Increment promo code usage
+      if (appliedPromo) {
+        await incrementPromoCodeUse(appliedPromo.id);
+      }
       setStep("success");
     }
   };
@@ -103,6 +148,8 @@ export function CheckoutForm({
     setFullName("");
     setPhone("");
     setTransactionId("");
+    setPromoCode("");
+    setAppliedPromo(null);
     onOpenChange(false);
   };
 
@@ -154,7 +201,7 @@ export function CheckoutForm({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold">${displayPrice}</p>
+                      <p className="text-2xl font-bold">${basePrice}</p>
                       <p className="text-xs text-muted-foreground">{plan.period}</p>
                     </div>
                   </div>
@@ -163,12 +210,61 @@ export function CheckoutForm({
                   
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${displayPrice}</span>
+                    <span>${basePrice.toFixed(2)}</span>
                   </div>
+                  
+                  {appliedPromo && (
+                    <div className="flex items-center justify-between text-sm text-green-600">
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        Discount ({appliedPromo.code})
+                      </span>
+                      <span>-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between font-medium">
                     <span>Total</span>
-                    <span className="text-lg text-primary">${displayPrice}</span>
+                    <span className="text-lg text-primary">${finalPrice.toFixed(2)}</span>
                   </div>
+                </div>
+                
+                {/* Promo Code Input */}
+                <div className="mt-4">
+                  <Label className="text-sm text-muted-foreground">Promo Code</Label>
+                  {appliedPromo ? (
+                    <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <Tag className="h-4 w-4 text-green-600" />
+                      <span className="font-mono font-medium text-green-700">{appliedPromo.code}</span>
+                      <span className="text-sm text-green-600">(-${discountAmount.toFixed(2)})</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto h-6 w-6 p-0"
+                        onClick={handleRemovePromo}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        className="font-mono"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleApplyPromo}
+                        disabled={promoLoading || !promoCode.trim()}
+                      >
+                        {promoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -308,7 +404,7 @@ export function CheckoutForm({
                   ) : (
                     <>
                       <Receipt className="h-5 w-5 mr-2" />
-                      Place Order - ${displayPrice}
+                      Place Order - ${finalPrice.toFixed(2)}
                       <ArrowRight className="h-5 w-5 ml-2" />
                     </>
                   )}
@@ -327,13 +423,13 @@ export function CheckoutForm({
             </div>
             <h2 className="text-xl font-semibold mb-2">Order Placed Successfully!</h2>
             <p className="text-muted-foreground mb-6">
-              Your upgrade request has been submitted. Please complete the bank transfer of <strong>${displayPrice}</strong> to activate your subscription.
+              Your upgrade request has been submitted. Please complete the bank transfer of <strong>${finalPrice.toFixed(2)}</strong> to activate your subscription.
             </p>
             
             <div className="rounded-lg bg-muted/50 p-4 text-left text-sm mb-6">
               <p className="font-medium mb-2">Next Steps:</p>
               <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>Transfer ${displayPrice} to the bank account shown above</li>
+                <li>Transfer ${finalPrice.toFixed(2)} to the bank account shown above</li>
                 <li>Use your email as payment reference</li>
                 <li>We'll verify and activate your subscription within 24 hours</li>
               </ol>
