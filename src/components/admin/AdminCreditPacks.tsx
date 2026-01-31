@@ -82,11 +82,9 @@ interface PendingPurchase {
   amount: number;
   status: string | null;
   created_at: string | null;
-  profiles: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  };
+  sender_name: string | null;
+  notes: string | null;
+  pack_name: string | null;
 }
 
 export function AdminCreditPacks() {
@@ -131,15 +129,12 @@ export function AdminCreditPacks() {
     try {
       const { data, error } = await supabase
         .from("credit_pack_purchases")
-        .select(`
-          id, user_id, credits, amount, status, created_at,
-          profiles!inner(id, full_name, avatar_url)
-        `)
+        .select("id, user_id, credits, amount, status, created_at, sender_name, notes, pack_name")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPendingPurchases((data as unknown as PendingPurchase[]) || []);
+      setPendingPurchases(data || []);
     } catch (error) {
       console.error("Error fetching pending purchases:", error);
     }
@@ -542,14 +537,13 @@ export function AdminCreditPacks() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9 border">
-                                <AvatarImage src={purchase.profiles?.avatar_url || undefined} />
                                 <AvatarFallback className="bg-muted">
-                                  {purchase.profiles?.full_name?.charAt(0) || "U"}
+                                  {purchase.sender_name?.charAt(0) || "U"}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{purchase.profiles?.full_name || "Unknown"}</div>
-                                <div className="text-xs text-muted-foreground">ID: {purchase.user_id.slice(0, 8)}...</div>
+                                <div className="font-medium">{purchase.sender_name || "Unknown"}</div>
+                                <div className="text-xs text-muted-foreground">{purchase.pack_name || `ID: ${purchase.user_id.slice(0, 8)}...`}</div>
                               </div>
                             </div>
                           </TableCell>
