@@ -21,6 +21,7 @@ import { AdminHowItWorks } from "@/components/admin/AdminHowItWorks";
 import { AdminBenefits } from "@/components/admin/AdminBenefits";
 import { AdminComparisons } from "@/components/admin/AdminComparisons";
 import { AdminBlogPosts } from "@/components/admin/AdminBlogPosts";
+import { AdminBlogEditor } from "@/components/admin/AdminBlogEditor";
 
 export default function Admin() {
   return (
@@ -46,6 +47,7 @@ export default function Admin() {
           <Route path="/benefits" element={<AdminBenefits />} />
           <Route path="/comparisons" element={<AdminComparisons />} />
           <Route path="/blog-posts" element={<AdminBlogPosts />} />
+          <Route path="/blog-posts/:slug" element={<AdminBlogEditor />} />
           <Route path="/settings" element={<AdminSettings />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
