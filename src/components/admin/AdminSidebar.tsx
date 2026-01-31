@@ -19,6 +19,7 @@ import {
   HelpCircle,
   Sparkles,
   Layers,
+  Award,
 } from "lucide-react";
 import {
   Sidebar,
@@ -121,6 +122,11 @@ const navItems = [
     title: "How It Works",
     href: "/admin/how-it-works",
     icon: Layers,
+  },
+  {
+    title: "Benefits",
+    href: "/admin/benefits",
+    icon: Award,
   },
   {
     title: "Settings",
