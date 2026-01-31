@@ -63,35 +63,59 @@ ${keywordsListItems}
 
 /**
  * Embed XMP metadata into JPEG using APP1 marker
+ * Enhanced to include IPTC-compatible fields for better stock site compatibility
  */
 function embedXMPIntoJpeg(
   jpegBuffer: Uint8Array<ArrayBuffer>,
   metadata: ImageMetadata
 ): Uint8Array<ArrayBuffer> {
+  // Validate we have metadata to embed
+  const hasTitle = metadata.title && metadata.title.trim().length > 0;
+  const hasDescription = metadata.description && metadata.description.trim().length > 0;
+  const hasKeywords = metadata.keywords && metadata.keywords.length > 0;
+  
+  if (!hasTitle && !hasDescription && !hasKeywords) {
+    console.log("No metadata to embed, returning original");
+    return jpegBuffer;
+  }
+
+  const safeTitle = escapeXml(metadata.title || "");
+  const safeDescription = escapeXml(metadata.description || "");
+  const keywordItems = metadata.keywords
+    .filter(k => k && k.trim())
+    .map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`)
+    .join("\n");
+
   const xmpContent = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="MetaGen by Lovable">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about=""
         xmlns:dc="http://purl.org/dc/elements/1.1/"
         xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/"
-        xmlns:xmp="http://ns.adobe.com/xap/1.0/">
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+        xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/"
+        xmlns:Iptc4xmpCore="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/">
       <dc:title>
         <rdf:Alt>
-          <rdf:li xml:lang="x-default">${escapeXml(metadata.title)}</rdf:li>
+          <rdf:li xml:lang="x-default">${safeTitle}</rdf:li>
         </rdf:Alt>
       </dc:title>
       <dc:description>
         <rdf:Alt>
-          <rdf:li xml:lang="x-default">${escapeXml(metadata.description)}</rdf:li>
+          <rdf:li xml:lang="x-default">${safeDescription}</rdf:li>
         </rdf:Alt>
       </dc:description>
       <dc:subject>
         <rdf:Bag>
-${metadata.keywords.map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`).join("\n")}
+${keywordItems}
         </rdf:Bag>
       </dc:subject>
-      <photoshop:Headline>${escapeXml(metadata.title)}</photoshop:Headline>
+      <photoshop:Headline>${safeTitle}</photoshop:Headline>
+      <photoshop:CaptionWriter>MetaGen</photoshop:CaptionWriter>
       <xmp:CreatorTool>MetaGen by Lovable</xmp:CreatorTool>
+      <xmp:CreateDate>${new Date().toISOString()}</xmp:CreateDate>
+      <xmp:ModifyDate>${new Date().toISOString()}</xmp:ModifyDate>
+      <Iptc4xmpCore:IntellectualGenre>Stock Photography</Iptc4xmpCore:IntellectualGenre>
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>
@@ -103,6 +127,13 @@ ${metadata.keywords.map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`).joi
 
   // APP1 marker (0xFFE1) + length (2 bytes) + namespace + content
   const app1Length = 2 + xmpNamespaceBytes.length + xmpContentBytes.length;
+  
+  // Check if the segment is too large (max 65533 bytes)
+  if (app1Length > 65533) {
+    console.log("XMP segment too large, returning original");
+    return jpegBuffer;
+  }
+  
   const app1Segment = new Uint8Array(2 + app1Length);
   app1Segment[0] = 0xff;
   app1Segment[1] = 0xe1;
@@ -123,6 +154,7 @@ ${metadata.keywords.map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`).joi
   result.set(app1Segment, 2); // New APP1
   result.set(jpegBuffer.subarray(2), 2 + app1Segment.length); // Rest of image
 
+  console.log("Successfully embedded XMP metadata, new size:", result.length);
   return result;
 }
 
@@ -189,19 +221,25 @@ Deno.serve(async (req) => {
     // Embed metadata if JPEG and metadata provided
     if (isJpeg && (title || description || keywords)) {
       console.log("Embedding XMP metadata into JPEG");
+      console.log("Metadata:", { title, description, keywordsCount: metadata.keywords.length });
       const imageBuffer = new Uint8Array(arrayBuffer);
       const processedBuffer = embedXMPIntoJpeg(imageBuffer as Uint8Array<ArrayBuffer>, metadata);
       responseBody = processedBuffer.buffer as ArrayBuffer;
+      console.log("Original size:", arrayBuffer.byteLength, "New size:", responseBody.byteLength);
     }
 
     console.log("Returning image for download:", filename, "size:", responseBody.byteLength);
+
+    // Use RFC 5987 encoding for filename to support special characters
+    const safeFilename = encodeURIComponent(filename).replace(/'/g, "%27");
 
     return new Response(responseBody, {
       headers: {
         ...corsHeaders,
         "Content-Type": isJpeg ? "image/jpeg" : contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${safeFilename}`,
         "Content-Length": responseBody.byteLength.toString(),
+        "Cache-Control": "no-cache",
       },
     });
   } catch (error) {

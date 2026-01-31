@@ -115,7 +115,7 @@ function buildDownloadUrl(
 }
 
 /**
- * Download a single image with an SEO-optimized filename
+ * Download a single image with an SEO-optimized filename (direct download, no ZIP)
  * Uses edge function to embed metadata and return file with proper headers
  * Works reliably in iframes since it opens a direct link
  */
@@ -134,6 +134,27 @@ export async function downloadImageWithSEOName(
   if (metadata && needsXMPSidecar(newFilename)) {
     await delay(500);
     const xmpUrl = buildDownloadUrl(imageUrl, newFilename, metadata, "xmp");
+    downloadByNavigatingToUrl(xmpUrl);
+  }
+}
+
+/**
+ * Download a single image directly with embedded metadata (no ZIP wrapper)
+ * This is the preferred method for single marketplace downloads
+ */
+export async function downloadSingleImage(
+  imageUrl: string,
+  filename: string,
+  metadata?: ImageMetadata
+): Promise<void> {
+  // Use the edge function approach which handles metadata embedding server-side
+  const downloadUrl = buildDownloadUrl(imageUrl, filename, metadata, "image");
+  downloadByNavigatingToUrl(downloadUrl);
+  
+  // For non-JPEG files, also download XMP sidecar after a delay
+  if (metadata && needsXMPSidecar(filename)) {
+    await delay(500);
+    const xmpUrl = buildDownloadUrl(imageUrl, filename, metadata, "xmp");
     downloadByNavigatingToUrl(xmpUrl);
   }
 }
