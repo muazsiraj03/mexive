@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function StickyCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -28,9 +29,11 @@ export function StickyCTA() {
         </div>
 
         <div className="flex items-center gap-3 flex-1 sm:flex-initial justify-end">
-          <Button size="default" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-6 font-medium btn-hover-lift flex-1 sm:flex-initial">
-            Try Free
-            <ArrowRight className="w-4 h-4 ml-2" />
+          <Button size="default" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-6 font-medium btn-hover-lift flex-1 sm:flex-initial" asChild>
+            <Link to="/auth">
+              Try Free
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
           </Button>
           <button
             onClick={() => setIsDismissed(true)}

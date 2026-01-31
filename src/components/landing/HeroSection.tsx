@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { AnimatedToolDemo } from "./AnimatedToolDemo";
+import { Link } from "react-router-dom";
 
 export function HeroSection() {
   return (
@@ -28,9 +29,11 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-            <Button size="lg" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-8 font-medium h-12 text-base btn-hover-lift">
-              Try Free
-              <ArrowRight className="w-4 h-4 ml-2" />
+            <Button size="lg" className="bg-foreground text-background hover:bg-foreground/85 rounded-full px-8 font-medium h-12 text-base btn-hover-lift" asChild>
+              <Link to="/auth">
+                Try Free
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
             </Button>
             <Button variant="outline" size="lg" className="rounded-full px-8 font-medium h-12 text-base border-foreground/20 hover:bg-muted hover:border-foreground/40 hover:text-foreground btn-hover-lift" asChild>
               <a href="#pricing">View Pricing</a>
