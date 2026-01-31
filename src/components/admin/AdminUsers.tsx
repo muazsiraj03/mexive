@@ -498,7 +498,7 @@ export function AdminUsers() {
                                         Unlimited
                                       </Badge>
                                     ) : (
-                                      `${user.credits} / ${Math.max(user.credits, user.total_credits)}`
+                                      `${user.credits} / ${user.total_credits}`
                                     )}
                                   </TableCell>
                                   <TableCell>
