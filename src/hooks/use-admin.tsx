@@ -80,6 +80,7 @@ interface AdminContextType {
   checkAdminStatus: () => Promise<boolean>;
   approveSubscription: (subscriptionId: string) => Promise<boolean>;
   rejectSubscription: (subscriptionId: string) => Promise<boolean>;
+  resetRevenueData: () => Promise<boolean>;
 }
 
 const AdminContext = createContext<AdminContextType | null>(null);
@@ -238,6 +239,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
+  const resetRevenueData = useCallback(async () => {
+    try {
+      await callAdminApi("/revenue", { method: "DELETE" });
+      setRevenueData(null);
+      return true;
+    } catch (error) {
+      console.error("Reset revenue error:", error);
+      return false;
+    }
+  }, [callAdminApi]);
+
   useEffect(() => {
     if (session) {
       checkAdminStatus();
@@ -266,6 +278,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         checkAdminStatus,
         approveSubscription,
         rejectSubscription,
+        resetRevenueData,
       }}
     >
       {children}

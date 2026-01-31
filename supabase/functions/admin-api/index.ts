@@ -866,6 +866,42 @@ Deno.serve(async (req) => {
         );
       }
 
+      // DELETE /revenue - Reset all revenue data (transactions)
+      case path === "/revenue" && req.method === "DELETE": {
+        console.log(`Admin ${userId} is resetting all revenue data`);
+
+        // Delete all transactions
+        const { error: transactionsError } = await adminClient
+          .from("transactions")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all rows
+
+        if (transactionsError) {
+          console.error("Transactions reset error:", transactionsError);
+          return new Response(
+            JSON.stringify({ error: "Failed to reset transactions" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Delete all credit pack purchases
+        const { error: purchasesError } = await adminClient
+          .from("credit_pack_purchases")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+
+        if (purchasesError) {
+          console.error("Credit pack purchases reset error:", purchasesError);
+        }
+
+        console.log(`Revenue data reset completed by admin ${userId}`);
+
+        return new Response(
+          JSON.stringify({ success: true, message: "All revenue data has been reset" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: "Not found" }),
