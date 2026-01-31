@@ -9,6 +9,7 @@ export interface SystemSettings {
   enableCreditPacks: boolean;
   enableNewSignups: boolean;
   maintenanceMode: boolean;
+  enableResendConfirmation: boolean;
   // Branding - Logos
   logoLightMode: string;
   logoDarkMode: string;
@@ -30,6 +31,7 @@ const defaultSettings: SystemSettings = {
   enableCreditPacks: true,
   enableNewSignups: true,
   maintenanceMode: false,
+  enableResendConfirmation: true,
   logoLightMode: "",
   logoDarkMode: "",
   faviconUrl: "",
@@ -88,6 +90,7 @@ export function SystemSettingsProvider({ children }: { children: ReactNode }) {
           enableCreditPacks: settingsMap.enable_credit_packs ?? defaultSettings.enableCreditPacks,
           enableNewSignups: settingsMap.enable_new_signups ?? defaultSettings.enableNewSignups,
           maintenanceMode: settingsMap.maintenance_mode ?? defaultSettings.maintenanceMode,
+          enableResendConfirmation: settingsMap.enable_resend_confirmation ?? defaultSettings.enableResendConfirmation,
           logoLightMode: settingsMap.logo_light_mode || "",
           logoDarkMode: settingsMap.logo_dark_mode || "",
           faviconUrl: settingsMap.favicon_url || "",
