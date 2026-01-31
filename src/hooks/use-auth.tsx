@@ -61,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    // Send admin notification for new signup (fire and forget)
+    // Send notifications for new signup (fire and forget)
     if (!error && data?.user) {
+      // Send admin notification
       fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-admin-notification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,6 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           type: "new_user",
           userName: fullName || "Not provided",
           userEmail: email,
+        }),
+      }).catch(console.error);
+
+      // Send welcome email to user
+      fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-user-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "welcome",
+          userEmail: email,
+          userName: fullName || undefined,
         }),
       }).catch(console.error);
     }
