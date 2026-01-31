@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2, AlertCircle, Check, Image, Zap, Wand2, FileCheck } from "lucide-react";
+import { Loader2, AlertCircle, Check, Image, Zap, Wand2, FileCheck, Eye, EyeOff, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { usePricing } from "@/hooks/use-pricing";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { ResendConfirmationForm } from "@/components/auth/ResendConfirmationForm";
+import { useThemeLogo } from "@/hooks/use-theme-logo";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -51,11 +52,16 @@ export default function Auth() {
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   
   // Signup form
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+
+  // Logo
+  const { logo } = useThemeLogo();
 
   // Handle auth tokens from URL hash (password reset or email confirmation)
   useEffect(() => {
@@ -315,10 +321,12 @@ export default function Auth() {
       <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-12 xl:px-20 bg-background">
         <div className="w-full max-w-md mx-auto">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group mb-12">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-secondary/80 shadow-sm group-hover:shadow-md transition-all duration-200">
-              <Sparkles className="w-5 h-5 text-secondary-foreground" />
-            </div>
+          <a href="/" className="flex items-center gap-3 group mb-12">
+            <img 
+              src={logo} 
+              alt="StockMeta AI" 
+              className="h-10 w-auto"
+            />
             <span className="font-semibold text-xl text-foreground">StockMeta AI</span>
           </a>
 
@@ -396,16 +404,25 @@ export default function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      disabled={isLoading}
-                      required
-                      className="h-11"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showSignupPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        disabled={isLoading}
+                        required
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Must be at least 6 characters
                     </p>
@@ -452,16 +469,25 @@ export default function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      disabled={isLoading}
-                      required
-                      className="h-11"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showLoginPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        disabled={isLoading}
+                        required
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
