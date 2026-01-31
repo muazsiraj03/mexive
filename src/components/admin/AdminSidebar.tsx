@@ -21,6 +21,7 @@ import {
   Layers,
   Award,
   GitCompare,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -133,6 +134,11 @@ const navItems = [
     title: "Comparisons",
     href: "/admin/comparisons",
     icon: GitCompare,
+  },
+  {
+    title: "Blog Posts",
+    href: "/admin/blog-posts",
+    icon: FileText,
   },
   {
     title: "Settings",
