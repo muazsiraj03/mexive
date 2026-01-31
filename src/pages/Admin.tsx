@@ -10,6 +10,7 @@ import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { AdminFileReviewerConfig } from "@/components/admin/AdminFileReviewerConfig";
+import { AdminUpgradeRequests } from "@/components/admin/AdminUpgradeRequests";
 
 export default function Admin() {
   return (
@@ -19,6 +20,7 @@ export default function Admin() {
           <Route path="/" element={<AdminOverview />} />
           <Route path="/users" element={<AdminUsers />} />
           <Route path="/subscriptions" element={<AdminSubscriptions />} />
+          <Route path="/upgrade-requests" element={<AdminUpgradeRequests />} />
           <Route path="/plans" element={<AdminPlans />} />
           <Route path="/credit-packs" element={<AdminCreditPacks />} />
           <Route path="/revenue" element={<AdminRevenue />} />

@@ -11,6 +11,7 @@ import {
   Package,
   DollarSign,
   FileSearch,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,6 +44,11 @@ const navItems = [
     title: "Subscriptions",
     href: "/admin/subscriptions",
     icon: CreditCard,
+  },
+  {
+    title: "Upgrade Requests",
+    href: "/admin/upgrade-requests",
+    icon: ClipboardCheck,
   },
   {
     title: "Plans",
