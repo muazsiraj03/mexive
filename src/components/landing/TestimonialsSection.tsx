@@ -124,7 +124,7 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        <div className="px-12">
+        <div className="relative">
           {isLoadingTestimonials ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -156,8 +156,10 @@ export function TestimonialsSection() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-12 bg-card border-border/60 hover:bg-muted" />
-              <CarouselNext className="hidden md:flex -right-12 bg-card border-border/60 hover:bg-muted" />
+              <div className="hidden md:flex items-center justify-center gap-2 mt-6">
+                <CarouselPrevious className="static translate-y-0 bg-card border-border/60 hover:bg-muted" />
+                <CarouselNext className="static translate-y-0 bg-card border-border/60 hover:bg-muted" />
+              </div>
             </Carousel>
           )}
         </div>
