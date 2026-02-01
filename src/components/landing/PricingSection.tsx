@@ -169,8 +169,8 @@ export function PricingSection() {
               <Skeleton className="h-64 w-full" />
             </div>
           ) : packs.length > 0 ? (
-            <div className="bg-card rounded-2xl border border-border/60 overflow-hidden card-elevated">
-              <Table>
+            <div className="bg-card rounded-2xl border border-border/60 overflow-hidden card-elevated overflow-x-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow className="border-border/60 hover:bg-transparent">
                     <TableHead className="font-semibold text-foreground">Pack</TableHead>
@@ -191,9 +191,9 @@ export function PricingSection() {
                     >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {pack.name}
+                          <span className="whitespace-nowrap">{pack.name}</span>
                           {pack.isPopular && (
-                            <Badge variant="secondary" className="gap-1">
+                            <Badge variant="secondary" className="gap-1 whitespace-nowrap">
                               <Sparkles className="w-3 h-3" />
                               Best Value
                             </Badge>
@@ -215,17 +215,17 @@ export function PricingSection() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center font-semibold">
+                      <TableCell className="text-center font-semibold whitespace-nowrap">
                         {formatPrice(pack.priceCents)}
                       </TableCell>
-                      <TableCell className="text-center text-muted-foreground text-sm">
+                      <TableCell className="text-center text-muted-foreground text-sm whitespace-nowrap">
                         ${getPricePerCredit(pack)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant={pack.isPopular ? "default" : "outline"}
-                          className="rounded-full"
+                          className="rounded-full whitespace-nowrap"
                           onClick={() => navigate("/auth", { state: { creditPack: pack.id } })}
                         >
                           Buy Now

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Check, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useComparisons } from "@/hooks/use-comparisons";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const TOOLS = [
   { id: "metadata-generator", label: "Metadata Generator" },
@@ -50,19 +50,22 @@ export function ComparisonSection() {
             See how much time and effort you can save with automated metadata generation
           </p>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-lg">
-              {TOOLS.map((tool) => (
-                <TabsTrigger
-                  key={tool.id}
-                  value={tool.id}
-                  className="px-4 py-2 text-sm font-medium rounded-md data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground transition-all"
-                >
-                  {tool.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-wrap justify-center gap-2">
+            {TOOLS.map((tool) => (
+              <button
+                key={tool.id}
+                onClick={() => setActiveTab(tool.id)}
+                className={cn(
+                  "px-4 py-2.5 rounded-full text-sm font-medium transition-smooth-300",
+                  activeTab === tool.id
+                    ? "bg-secondary text-secondary-foreground shadow-md"
+                    : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-secondary/30"
+                )}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (

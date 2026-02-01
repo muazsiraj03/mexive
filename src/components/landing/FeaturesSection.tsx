@@ -1,8 +1,8 @@
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatures } from "@/hooks/use-features";
+import { cn } from "@/lib/utils";
 
 const TOOLS = [
   { id: "metadata-generator", label: "Metadata Generator" },
@@ -50,19 +50,22 @@ export function FeaturesSection() {
             Everything you need to streamline your stock photography workflow
           </p>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-lg">
-              {TOOLS.map((tool) => (
-                <TabsTrigger
-                  key={tool.id}
-                  value={tool.id}
-                  className="px-4 py-2 text-sm font-medium rounded-md data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground transition-all"
-                >
-                  {tool.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-wrap justify-center gap-2">
+            {TOOLS.map((tool) => (
+              <button
+                key={tool.id}
+                onClick={() => setActiveTab(tool.id)}
+                className={cn(
+                  "px-4 py-2.5 rounded-full text-sm font-medium transition-smooth-300",
+                  activeTab === tool.id
+                    ? "bg-secondary text-secondary-foreground shadow-md"
+                    : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-secondary/30"
+                )}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (
