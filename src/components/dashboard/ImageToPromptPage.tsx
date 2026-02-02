@@ -165,6 +165,9 @@ export function ImageToPromptPage() {
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
   const [shouldStopBatch, setShouldStopBatch] = useState(false);
 
+  // Total prompts generated (from database)
+  const [totalPromptsGenerated, setTotalPromptsGenerated] = useState(0);
+
   // File input refs for folder/file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -173,11 +176,26 @@ export function ImageToPromptPage() {
   const activeTrainingMode = singleGenSettings.enabled ? "single" : hasTrainingData ? "persistent" : "none";
   const hasCredits = isAdmin || user.hasUnlimitedCredits || user.credits >= 1;
 
-  // Stats for completed prompts in queue
-  const completedInQueue = imageQueue.filter(q => q.status === "completed").length;
+  // Fetch total prompts count from database
+  const fetchPromptsCount = useCallback(async () => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const { count } = await supabase
+        .from("prompt_history")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", authUser.id);
+      setTotalPromptsGenerated(count || 0);
+    }
+  }, []);
+
+  // Initial fetch of prompts count
+  useEffect(() => {
+    fetchPromptsCount();
+  }, [fetchPromptsCount]);
+
   const toolStats = [{
     label: "Prompts Generated",
-    value: completedInQueue,
+    value: totalPromptsGenerated,
     icon: FileText
   }];
 
@@ -385,8 +403,9 @@ export function ImageToPromptPage() {
         }]);
       }
 
-      // Refresh profile to get updated credits
+      // Refresh profile to get updated credits and prompts count
       await refreshProfile();
+      await fetchPromptsCount();
       setProgress(100);
       toast.success("Prompt generated successfully!");
 
@@ -670,6 +689,7 @@ export function ImageToPromptPage() {
     setIsBatchProcessing(false);
     setCurrentBatchIndex(0);
     if (processedCount > 0) {
+      await fetchPromptsCount();
       toast.success(`Processed ${processedCount} image${processedCount > 1 ? "s" : ""}!`);
     }
   };
