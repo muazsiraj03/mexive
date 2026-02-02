@@ -22,8 +22,8 @@ export function ToolStatsBar({ stats = [], className }: ToolStatsBarProps) {
   const isLow = !showUnlimited && percentage < 20;
 
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", className)}>
-      {/* Credits Card */}
+    <div className={cn("space-y-4", className)}>
+      {/* Credits Card - Full Width */}
       <div className="rounded-2xl border border-border/60 bg-card p-4 card-elevated">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10 shrink-0">
