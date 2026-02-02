@@ -4,7 +4,34 @@ import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
+const hookSecretRaw = Deno.env.get("SEND_EMAIL_HOOK_SECRET") as string;
+
+function normalizeHookSecret(secret: string): string {
+  // Supabase UI examples often look like: "v1,whsec_<base64url>".
+  // standardwebhooks expects raw base64 (not base64url) secret material.
+  let s = (secret || "").trim();
+  if (!s) return s;
+
+  // Remove version prefix
+  if (s.includes(",")) {
+    s = s.split(",").pop()!.trim();
+  }
+
+  // Remove whsec_ prefix
+  if (s.startsWith("whsec_")) {
+    s = s.slice("whsec_".length);
+  }
+
+  // Convert base64url -> base64
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+
+  // Pad to multiple of 4
+  const pad = s.length % 4;
+  if (pad) s = s + "=".repeat(4 - pad);
+  return s;
+}
+
+const hookSecret = normalizeHookSecret(hookSecretRaw);
 
 interface BrandSettings {
   siteName: string;
@@ -419,6 +446,19 @@ serve(async (req) => {
     const headers = Object.fromEntries(req.headers);
     
     // Verify webhook signature
+    if (!hookSecret) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            http_code: 500,
+            message:
+              "SEND_EMAIL_HOOK_SECRET is missing/empty in Edge Function secrets",
+          },
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const wh = new Webhook(hookSecret);
     const {
       user,
