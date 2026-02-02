@@ -200,14 +200,7 @@ export function ImageToPromptPage() {
 
   // Add files to batch queue
   const addToQueue = useCallback((files: File[]) => {
-    const imageFiles = files.filter(f => {
-      if (!f.type.startsWith("image/")) return false;
-      if (f.size > 10 * 1024 * 1024) {
-        toast.error(`${f.name} is too large (max 10MB)`);
-        return false;
-      }
-      return true;
-    });
+    const imageFiles = files.filter(f => f.type.startsWith("image/"));
 
     if (imageFiles.length === 0) {
       toast.error("No valid image files found");
@@ -228,11 +221,6 @@ export function ImageToPromptPage() {
   const handleFileSelect = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be less than 10MB");
       return;
     }
 
