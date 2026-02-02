@@ -725,8 +725,15 @@ export function AdminUsers() {
             <div className="space-y-4">
               {/* Basic Info */}
               <div className="space-y-3">
+                {viewingUser.email && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Email:</span>
+                    <span className="font-medium">{viewingUser.email}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div className="h-4 w-4 flex items-center justify-center text-muted-foreground text-xs font-mono">#</div>
                   <span className="text-muted-foreground">User ID:</span>
                   <code className="bg-muted px-2 py-0.5 rounded text-xs">{viewingUser.id}</code>
                 </div>
