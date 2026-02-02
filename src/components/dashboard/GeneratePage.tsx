@@ -111,13 +111,8 @@ export function GeneratePage() {
 
   // Stats for the tool bar
   const totalImages = generations.length;
-  const totalKeywords = generations.reduce(
-    (acc, g) => acc + g.marketplaces.reduce((a, m) => a + m.keywords.length, 0),
-    0
-  );
   const toolStats = [
     { label: "Images Processed", value: totalImages, icon: Images },
-    { label: "Keywords Generated", value: totalKeywords, icon: TrendingUp },
   ];
 
   // Filter counts for current batch

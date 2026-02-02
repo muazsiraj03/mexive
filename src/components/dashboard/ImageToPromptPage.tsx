@@ -179,10 +179,6 @@ export function ImageToPromptPage() {
     label: "Prompts Generated",
     value: completedInQueue,
     icon: FileText
-  }, {
-    label: "In Queue",
-    value: imageQueue.length,
-    icon: History
   }];
 
   // Add files to batch queue

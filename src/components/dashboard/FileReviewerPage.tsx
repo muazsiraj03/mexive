@@ -356,7 +356,6 @@ export function FileReviewerPage() {
         <AnimatedSection variant="fade-up">
           <ToolStatsBar stats={[
             { label: "Files Reviewed", value: reviewHistory.length, icon: FileCheck },
-            { label: "Pass Rate", value: reviewHistory.length > 0 ? `${Math.round((reviewHistory.filter(r => r.verdict === "pass").length / reviewHistory.length) * 100)}%` : "N/A", icon: CheckCircle2 },
           ]} />
         </AnimatedSection>
 
