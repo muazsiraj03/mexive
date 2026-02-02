@@ -19,7 +19,8 @@ type EmailType =
 
 interface EmailPayload {
   type: EmailType;
-  userEmail: string;
+  userEmail?: string;
+  userId?: string; // Can provide userId instead of userEmail - will look up from auth
   userName?: string;
   planName?: string;
   credits?: number;
@@ -527,9 +528,29 @@ serve(async (req) => {
   try {
     const payload: EmailPayload = await req.json();
     
-    if (!payload.userEmail) {
+    // Get system settings for branding (need supabaseAdmin early to look up user email)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Resolve user email - either from payload or by looking up from userId
+    let userEmail = payload.userEmail;
+    if (!userEmail && payload.userId) {
+      console.log(`Looking up email for userId: ${payload.userId}`);
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(payload.userId);
+      if (userError) {
+        console.error("Error looking up user:", userError);
+      } else if (userData?.user?.email) {
+        userEmail = userData.user.email;
+        console.log(`Found email: ${userEmail}`);
+      }
+    }
+    
+    if (!userEmail) {
+      console.error("No user email provided and could not look up from userId");
       return new Response(
-        JSON.stringify({ error: "User email is required" }),
+        JSON.stringify({ error: "User email is required (provide userEmail or valid userId)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -545,12 +566,6 @@ serve(async (req) => {
 
     const resend = new Resend(resendApiKey);
 
-    // Get system settings for branding
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     // Get brand settings
     const brand = await getBrandSettings(supabaseAdmin);
 
@@ -563,7 +578,7 @@ serve(async (req) => {
     // Send the email
     const { error: emailError } = await resend.emails.send({
       from: `${brand.siteName} <onboarding@resend.dev>`,
-      to: [payload.userEmail],
+      to: [userEmail],
       subject,
       html,
     });

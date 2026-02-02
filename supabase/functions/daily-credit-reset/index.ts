@@ -144,6 +144,7 @@ Deno.serve(async (req) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 type: "subscription_expiring",
+                userId: sub.user_id,
                 userEmail: authUser.user.email,
                 userName: profile?.full_name || "there",
                 planName: planDisplayNames[sub.plan] || sub.plan,
