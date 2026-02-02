@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, Trash2, Globe, User, Bell, Inbox, ArrowUpRight, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,12 @@ interface NotificationFormData {
 }
 
 export function AdminNotifications() {
-  const { users } = useAdmin();
+  const { users, fetchUsers } = useAdmin();
+  
+  // Fetch users when component mounts (for user selector dropdown)
+  useEffect(() => {
+    fetchUsers(1, "", "");
+  }, [fetchUsers]);
   const {
     pendingItems,
     pendingCount,
