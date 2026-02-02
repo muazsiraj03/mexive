@@ -1,10 +1,11 @@
-import { Check, Coins, Sparkles } from "lucide-react";
+import { Coins, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePricing } from "@/hooks/use-pricing";
 import { useCreditPacks } from "@/hooks/use-credit-packs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { PlanCard } from "@/components/subscription/PlanCard";
 import {
   Table,
   TableBody,
@@ -19,30 +20,9 @@ export function PricingSection() {
   const { packs, loading: packsLoading } = useCreditPacks();
   const navigate = useNavigate();
 
-  // Map database plans directly to landing page display format
-  const landingPlans = plans.map(plan => {
-    return {
-      name: plan.displayName,
-      planKey: plan.name,
-      description: plan.name === "free" 
-        ? "Test the platform with limited credits" 
-        : plan.name === "pro" 
-        ? "For regular contributors" 
-        : "For power users & teams",
-      price: plan.price === 0 ? "Free" : `$${plan.price}`,
-      period: plan.period,
-      credits: plan.name === "free" 
-        ? `${plan.credits} credits included` 
-        : `${plan.credits} credits/month`,
-      features: plan.features.filter(f => !f.toLowerCase().includes("credits")),
-      cta: plan.name === "free" ? "Start Free Trial" : "Subscribe Now",
-      popular: plan.isPopular,
-    };
-  });
-
-  const handlePlanClick = (planKey: string) => {
+  const handlePlanClick = (planName: string, selectedCredits?: number, selectedPrice?: number) => {
     // Navigate to auth page with plan info in state
-    navigate("/auth", { state: { selectedPlan: planKey } });
+    navigate("/auth", { state: { selectedPlan: planName, selectedCredits, selectedPrice } });
   };
 
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -95,57 +75,16 @@ export function PricingSection() {
           </p>
         </div>
 
-        {/* Subscription Plans */}
+        {/* Subscription Plans - Using same PlanCard as subscription page */}
         <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-        {landingPlans.map((plan) => (
-            <div
+          {plans.map((plan) => (
+            <PlanCard
               key={plan.name}
-              className={`relative bg-card rounded-2xl p-6 border transition-smooth-300 hover:-translate-y-1 flex flex-col h-full ${
-                plan.popular
-                  ? "border-secondary/40 card-elevated-lg scale-[1.02] hover:border-secondary/60"
-                  : "border-border/60 card-elevated hover:card-elevated-lg hover:border-secondary/20"
-              }`}
-            >
-              {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground shadow-sm">
-                  Most Popular
-                </Badge>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-foreground mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-
-              <div className="mb-6">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
-                </div>
-                <p className="text-sm text-secondary font-medium mt-2">{plan.credits}</p>
-              </div>
-
-              <ul className="space-y-3 mb-8 flex-grow">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-success flex-shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button 
-                onClick={() => handlePlanClick(plan.planKey)}
-                className={`w-full rounded-full font-medium btn-hover-lift mt-auto ${
-                  plan.popular 
-                    ? "bg-foreground text-background hover:bg-foreground/85" 
-                    : "bg-transparent border border-foreground/20 text-foreground hover:bg-muted hover:border-foreground/30 hover:text-foreground"
-                }`} 
-                size="lg"
-              >
-                {plan.cta}
-              </Button>
-            </div>
+              plan={plan}
+              currentPlan="free"
+              isPending={false}
+              onSelect={handlePlanClick}
+            />
           ))}
         </div>
 
