@@ -663,7 +663,7 @@ export function GeneratePage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-foreground">
-                        Title max characters
+                        Title characters
                       </label>
                       <span className="rounded-full bg-secondary/10 px-3 py-1 text-sm font-semibold text-secondary">
                         {titleMaxChars}
@@ -686,7 +686,7 @@ export function GeneratePage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-foreground">
-                        Description max characters
+                        Description characters
                       </label>
                       <span className="rounded-full bg-secondary/10 px-3 py-1 text-sm font-semibold text-secondary">
                         {descriptionMaxChars}
