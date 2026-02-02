@@ -72,13 +72,9 @@ export function generateSEOFilename(options: SEOFilenameOptions): string {
   const {
     title,
     keywords,
-    marketplace,
     originalExtension,
     maxLength = 100,
   } = options;
-
-  // Get marketplace prefix
-  const prefix = getMarketplacePrefix(marketplace);
 
   // Extract key terms from title (first 2-3 words)
   const titleWords = sanitizeForFilename(title).split("-").slice(0, 3);
@@ -86,8 +82,8 @@ export function generateSEOFilename(options: SEOFilenameOptions): string {
   // Get top keywords
   const topKeywords = extractTopKeywords(keywords, 5);
 
-  // Combine: marketplace prefix + title words + keywords
-  const parts = [prefix, ...titleWords, ...topKeywords];
+  // Combine: title words + keywords (no marketplace prefix)
+  const parts = [...titleWords, ...topKeywords];
 
   // Remove duplicates while preserving order
   const uniqueParts: string[] = [];
@@ -112,7 +108,7 @@ export function generateSEOFilename(options: SEOFilenameOptions): string {
 
   // Ensure we have something
   if (!filename) {
-    filename = `${prefix}-image-${Date.now()}`;
+    filename = `image-${Date.now()}`;
   }
 
   // Add extension (normalize it)
