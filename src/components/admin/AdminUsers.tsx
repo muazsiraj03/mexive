@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useAdminSearch } from "@/hooks/use-admin-search";
 import { useLiveUsers, LiveUser } from "@/hooks/use-live-users";
+import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -178,6 +179,7 @@ export function AdminUsers() {
   const { session } = useAuth();
   const { globalSearch } = useAdminSearch();
   const { onlineCount } = useLiveUsers();
+  const { plans } = usePricing();
   const { toast } = useToast();
   const [localSearch, setLocalSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("");
@@ -401,9 +403,11 @@ export function AdminUsers() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Plans</SelectItem>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.name} value={plan.name}>
+                          {plan.displayName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -563,9 +567,11 @@ export function AdminUsers() {
                                                   <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                  <SelectItem value="free">Free</SelectItem>
-                                                  <SelectItem value="pro">Pro</SelectItem>
-                                                  <SelectItem value="enterprise">Enterprise</SelectItem>
+                                                  {plans.map((plan) => (
+                                                    <SelectItem key={plan.name} value={plan.name}>
+                                                      {plan.displayName}
+                                                    </SelectItem>
+                                                  ))}
                                                 </SelectContent>
                                               </Select>
                                             </div>
