@@ -163,9 +163,7 @@ export function DashboardSidebar() {
                   <p className="font-semibold text-foreground">∞ Unlimited</p>
                 ) : (
                   <>
-                    <p className="font-semibold text-foreground">
-                      {user.credits} / {user.totalCredits}
-                    </p>
+                    <p className="font-semibold text-foreground">{user.credits}</p>
                     <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
                       <span>Plan: {user.planCredits}</span>
                       {user.bonusCredits > 0 && (
