@@ -39,7 +39,7 @@ export function CreditBadge({ credits, totalCredits, isAdmin = false, hasUnlimit
             {showUnlimited ? (
               <>∞ <span className="text-base font-normal text-muted-foreground">Unlimited</span></>
             ) : (
-              <>{credits} <span className="text-base font-normal text-muted-foreground">/ {totalCredits}</span></>
+              <>{credits}</>
             )}
           </p>
         </div>
