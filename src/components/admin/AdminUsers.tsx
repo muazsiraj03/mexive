@@ -15,7 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Loader2, ChevronLeft, ChevronRight, Edit, Infinity, Circle, Users, Activity, Clock, MapPin, RefreshCw, Trash2, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, Edit, Infinity, Circle, Users, Activity, Clock, MapPin, RefreshCw, Trash2, Shield, ShieldCheck, ShieldAlert, Eye, Mail, Calendar, CreditCard, Crown } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { AdminHeader } from "./AdminHeader";
 import { formatDistanceToNow } from "date-fns";
@@ -188,6 +189,7 @@ export function AdminUsers() {
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
+  const [viewingUser, setViewingUser] = useState<typeof users[0] | null>(null);
 
   const callAdminApi = useCallback(async (path: string, options: RequestInit = {}) => {
     if (!session?.access_token) throw new Error("No session");
@@ -520,12 +522,23 @@ export function AdminUsers() {
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <div className="flex items-center justify-end gap-1">
+                                      {/* View Details Button */}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setViewingUser(user)}
+                                        title="View Details"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+
                                       <Dialog>
                                         <DialogTrigger asChild>
                                           <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => handleEditClick(user)}
+                                            title="Edit User"
                                           >
                                             <Edit className="h-4 w-4" />
                                           </Button>
@@ -689,6 +702,132 @@ export function AdminUsers() {
         </Tabs>
         </div>
       </main>
+
+      {/* View User Details Dialog */}
+      <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={viewingUser?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {viewingUser?.full_name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <span>{viewingUser?.full_name || "Anonymous User"}</span>
+                <p className="text-sm font-normal text-muted-foreground">User Details</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="space-y-4">
+              {/* Basic Info */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">User ID:</span>
+                  <code className="bg-muted px-2 py-0.5 rounded text-xs">{viewingUser.id}</code>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Subscription Info */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-secondary" />
+                  Subscription
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Plan:</span>
+                    <Badge variant="outline" className="ml-2 capitalize">{viewingUser.plan}</Badge>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Role:</span>
+                    <Badge variant={getRoleBadgeVariant(userRoles[viewingUser.id] || "user")} className="ml-2 capitalize gap-1">
+                      {getRoleIcon(userRoles[viewingUser.id] || "user")}
+                      {userRoles[viewingUser.id] || "user"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Credits Info */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-secondary" />
+                  Credits
+                </h4>
+                {viewingUser.has_unlimited_credits ? (
+                  <Badge variant="secondary" className="gap-1">
+                    <Infinity className="h-3 w-3" />
+                    Unlimited Credits
+                  </Badge>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-muted-foreground text-xs">Current</p>
+                      <p className="text-lg font-semibold">{viewingUser.credits}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-muted-foreground text-xs">Total Limit</p>
+                      <p className="text-lg font-semibold">{viewingUser.total_credits}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-muted-foreground text-xs">Plan Credits</p>
+                      <p className="text-lg font-semibold">{viewingUser.plan_credits}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-muted-foreground text-xs">Bonus Credits</p>
+                      <p className="text-lg font-semibold text-green-600">+{viewingUser.bonus_credits}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Dates */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-secondary" />
+                  Activity
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Joined:</span>
+                    <p className="font-medium">{new Date(viewingUser.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Last Updated:</span>
+                    <p className="font-medium">{new Date(viewingUser.updated_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingUser(null)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              if (viewingUser) {
+                handleEditClick(viewingUser);
+                setViewingUser(null);
+              }
+            }}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
