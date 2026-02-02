@@ -674,12 +674,11 @@ export function GeneratePage() {
                       onValueChange={(values) => setTitleMaxChars(values[0])}
                       min={10}
                       max={200}
-                      step={10}
+                      step={1}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>10</span>
-                      <span>100</span>
                       <span>200</span>
                     </div>
                   </div>
@@ -698,12 +697,11 @@ export function GeneratePage() {
                       onValueChange={(values) => setDescriptionMaxChars(values[0])}
                       min={50}
                       max={500}
-                      step={50}
+                      step={1}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>50</span>
-                      <span>250</span>
                       <span>500</span>
                     </div>
                   </div>
@@ -722,12 +720,11 @@ export function GeneratePage() {
                       onValueChange={(values) => setKeywordCount(values[0])}
                       min={5}
                       max={50}
-                      step={5}
+                      step={1}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>5</span>
-                      <span>25</span>
                       <span>50</span>
                     </div>
                   </div>
