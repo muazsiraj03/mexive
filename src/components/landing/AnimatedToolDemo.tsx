@@ -255,7 +255,7 @@ export function AnimatedToolDemo() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="px-4 py-1 bg-muted rounded-md text-xs text-muted-foreground">
-              metagen.lovable.app/dashboard
+              mexive.vercel.app/dashboard
             </div>
           </div>
         </div>
