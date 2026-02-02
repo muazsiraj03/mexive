@@ -303,8 +303,8 @@ serve(async (req) => {
 ${marketplaceInstructions}
 
 ## Output Requirements
-- Titles: 1-${validTitleMaxChars} characters, descriptive, no generic filler words. MUST generate a title.
-- Descriptions: 1-${validDescriptionMaxChars} characters, detailed description of image content, style, mood, and potential use cases. MUST generate a description.
+- Titles: EXACTLY ${validTitleMaxChars} characters (not more, not less). Fill the exact character count with descriptive, SEO-optimized content. MUST generate a title.
+- Descriptions: EXACTLY ${validDescriptionMaxChars} characters (not more, not less). Fill the exact character count with detailed description of image content, style, mood, and potential use cases. MUST generate a description.
 - Keywords: Exactly ${validKeywordCount} unique, relevant terms per marketplace. Include:
   - Main subjects and objects
   - Colors and visual elements
@@ -314,18 +314,18 @@ ${marketplaceInstructions}
   - Related concepts and themes
   - Technical photography terms where relevant
 
-IMPORTANT: You MUST provide all three fields (title, description, keywords) for each marketplace. Never leave any field empty.`;
+CRITICAL: Title MUST be EXACTLY ${validTitleMaxChars} characters. Description MUST be EXACTLY ${validDescriptionMaxChars} characters. Count characters carefully and adjust wording to match the exact count. Never leave any field empty.`;
 
     const userPrompt = `Analyze this image and generate optimized metadata for the following marketplaces: ${marketplaces.join(", ")}.
 
 Image URL: ${imageUrl}
 
 For each marketplace, you MUST generate:
-1. A title (1-${validTitleMaxChars} characters)
-2. A description (1-${validDescriptionMaxChars} characters)  
+1. A title that is EXACTLY ${validTitleMaxChars} characters (count carefully, not more, not less)
+2. A description that is EXACTLY ${validDescriptionMaxChars} characters (count carefully, not more, not less)  
 3. Exactly ${validKeywordCount} keywords
 
-Follow the platform-specific guidelines for each marketplace.`;
+Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS MUST BE EXACT.`;
 
     const tools = [
       {
@@ -347,11 +347,11 @@ Follow the platform-specific guidelines for each marketplace.`;
                     },
                     title: { 
                       type: "string",
-                      description: `SEO-optimized title, 1-${validTitleMaxChars} characters. Required field.`
+                      description: `SEO-optimized title, EXACTLY ${validTitleMaxChars} characters. Required field.`
                     },
                     description: {
                       type: "string",
-                      description: `Detailed description of image content, style, and use cases, 1-${validDescriptionMaxChars} characters. Required field.`
+                      description: `Detailed description of image content, style, and use cases, EXACTLY ${validDescriptionMaxChars} characters. Required field.`
                     },
                     keywords: { 
                       type: "array",
