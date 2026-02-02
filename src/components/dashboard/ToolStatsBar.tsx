@@ -40,11 +40,7 @@ export function ToolStatsBar({ stats = [], className }: ToolStatsBarProps) {
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-muted-foreground">Credits</p>
               <p className="text-sm font-semibold text-foreground">
-                {showUnlimited ? (
-                  <>∞ Unlimited</>
-                ) : (
-                  <>{user.credits} / {user.totalCredits}</>
-                )}
+                {showUnlimited ? "∞" : user.credits}
               </p>
             </div>
             <Progress
