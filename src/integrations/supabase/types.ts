@@ -679,7 +679,7 @@ export type Database = {
           message: string
           title: string
           type: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           action_url?: string | null
@@ -691,7 +691,7 @@ export type Database = {
           message: string
           title: string
           type?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           action_url?: string | null
@@ -703,7 +703,7 @@ export type Database = {
           message?: string
           title?: string
           type?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
