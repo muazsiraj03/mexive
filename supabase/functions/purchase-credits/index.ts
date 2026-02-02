@@ -151,6 +151,7 @@ Deno.serve(async (req) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type: "credit_pack_approved",
+              userId: purchase.user_id,
               userEmail: authUser?.user?.email,
               userName: userProfile?.full_name,
               credits: purchase.credits,
@@ -201,6 +202,7 @@ Deno.serve(async (req) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type: "credit_pack_rejected",
+              userId: purchase.user_id,
               userEmail: authUser?.user?.email,
               userName: userProfile?.full_name,
             }),

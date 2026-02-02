@@ -196,14 +196,15 @@ Deno.serve(async (req) => {
       // Get referrer's email from auth
       const { data: referrerAuth } = await supabase.auth.admin.getUserById(referrer_id);
 
-      if (referrerAuth?.user?.email) {
+      if (referrerAuth?.user?.email || referrer_id) {
         try {
           await fetch(`${supabaseUrl}/functions/v1/send-user-email`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type: "referral_reward",
-              userEmail: referrerAuth.user.email,
+              userId: referrer_id,
+              userEmail: referrerAuth?.user?.email,
               userName: referrerProfile?.full_name || "there",
               credits: settings.referrer_reward_credits,
             }),

@@ -289,21 +289,20 @@ export function useUpgradeRequests() {
         type: "success",
       });
 
-      // Get user email and send email notification
-      const { data: authData } = await supabase.auth.admin?.getUserById?.(request.user_id) || { data: null };
+      // Get user profile for name (email will be looked up by edge function using userId)
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("user_id", request.user_id)
         .single();
       
-      // Send email notification via edge function
+      // Send email notification via edge function (pass userId, edge function looks up email)
       fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-user-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "upgrade_approved",
-          userEmail: authData?.user?.email,
+          userId: request.user_id,
           userName: profile?.full_name,
           planName: request.plan_name.charAt(0).toUpperCase() + request.plan_name.slice(1),
           credits: isUnlimited ? undefined : creditsToGrant,
@@ -361,21 +360,20 @@ export function useUpgradeRequests() {
         type: "error",
       });
 
-      // Get user email and send email notification
-      const { data: authData } = await supabase.auth.admin?.getUserById?.(request.user_id) || { data: null };
+      // Get user profile for name
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("user_id", request.user_id)
         .single();
       
-      // Send rejection email
+      // Send rejection email (pass userId, edge function looks up email)
       fetch("https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/send-user-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "upgrade_rejected",
-          userEmail: authData?.user?.email,
+          userId: request.user_id,
           userName: profile?.full_name,
           planName: request.plan_name.charAt(0).toUpperCase() + request.plan_name.slice(1),
           adminNotes: adminNotes || undefined,
