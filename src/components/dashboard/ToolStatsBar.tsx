@@ -22,9 +22,9 @@ export function ToolStatsBar({ stats = [], className }: ToolStatsBarProps) {
   const isLow = !showUnlimited && percentage < 20;
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Credits Card - Full Width */}
-      <div className="rounded-2xl border border-border/60 bg-card p-4 card-elevated">
+    <div className={cn("grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3", className)}>
+      {/* Credits Card - Takes 2 columns on larger screens */}
+      <div className="sm:col-span-1 lg:col-span-2 rounded-2xl border border-border/60 bg-card p-4 card-elevated">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10 shrink-0">
             <Sparkles className={cn("h-5 w-5", isLow ? "text-destructive" : "text-secondary")} />
