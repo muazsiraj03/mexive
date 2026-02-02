@@ -11,45 +11,24 @@ import { AnimatedSection } from "@/components/ui/animated-section";
 import { ToolStatsBar } from "./ToolStatsBar";
 import { ToolAccessGate } from "./ToolAccessGate";
 import { ReviewResultCard } from "@/components/dashboard/ReviewResultCard";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { cn } from "@/lib/utils";
 import { processFileForAnalysis } from "@/lib/file-processor";
-import {
-  PromptStyle,
-  DetailLevel,
-  PromptResult,
-  PROMPT_STYLES,
-  DETAIL_LEVELS,
-  downloadPromptAsText,
-  copyToClipboard,
-} from "@/lib/image-to-prompt";
+import { PromptStyle, DetailLevel, PromptResult, PROMPT_STYLES, DETAIL_LEVELS, downloadPromptAsText, copyToClipboard } from "@/lib/image-to-prompt";
 import { usePromptTraining, PromptTrainingPreferences } from "@/hooks/use-prompt-training";
 import { PromptTrainingPanel } from "./PromptTrainingPanel";
 import { PromptHistoryDrawer, PromptHistoryItem } from "./PromptHistoryDrawer";
-import {
-  SingleGenTraining,
-  SingleGenTrainingSettings,
-  DEFAULT_SINGLE_GEN_SETTINGS,
-} from "./SingleGenTraining";
+import { SingleGenTraining, SingleGenTrainingSettings, DEFAULT_SINGLE_GEN_SETTINGS } from "./SingleGenTraining";
 import { ImagePromptQueue, QueuedImage } from "./ImagePromptQueue";
-
 interface PromptVariation {
   type: "composition" | "color" | "mood";
   label: string;
   prompt: string;
 }
-
 const AI_SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
-
 function extensionForMime(mime: string): "jpg" | "png" | "webp" | "gif" {
   switch (mime) {
     case "image/png":
@@ -63,24 +42,14 @@ function extensionForMime(mime: string): "jpg" | "png" | "webp" | "gif" {
       return "jpg";
   }
 }
-
-async function canvasToBlob(
-  canvas: HTMLCanvasElement,
-  type: "image/jpeg" | "image/png",
-  quality?: number
-): Promise<Blob> {
+async function canvasToBlob(canvas: HTMLCanvasElement, type: "image/jpeg" | "image/png", quality?: number): Promise<Blob> {
   return await new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return reject(new Error("Failed to encode image"));
-        resolve(blob);
-      },
-      type,
-      quality
-    );
+    canvas.toBlob(blob => {
+      if (!blob) return reject(new Error("Failed to encode image"));
+      resolve(blob);
+    }, type, quality);
   });
 }
-
 async function convertRasterImageToJpeg(file: File): Promise<Blob> {
   // Prefer createImageBitmap when available (faster + broader format support in modern browsers)
   if ("createImageBitmap" in window) {
@@ -103,9 +72,7 @@ async function convertRasterImageToJpeg(file: File): Promise<Blob> {
     const img = new Image();
     const url = URL.createObjectURL(file);
     const canvas = document.createElement("canvas");
-
     const cleanup = () => URL.revokeObjectURL(url);
-
     img.onload = async () => {
       try {
         canvas.width = img.naturalWidth || img.width;
@@ -121,39 +88,61 @@ async function convertRasterImageToJpeg(file: File): Promise<Blob> {
         cleanup();
       }
     };
-
     img.onerror = () => {
       cleanup();
       reject(new Error("This image format can't be converted in your browser. Please upload PNG/JPG/WebP/GIF."));
     };
-
     img.src = url;
   });
 }
-
-async function prepareImageForAI(file: File): Promise<{ blob: Blob; contentType: string; ext: string }> {
+async function prepareImageForAI(file: File): Promise<{
+  blob: Blob;
+  contentType: string;
+  ext: string;
+}> {
   // Reuse existing conversion for SVG/video/etc.
   const processed = await processFileForAnalysis(file);
   const blob = processed.blob;
 
   // If already in a provider-supported type, upload as-is.
   if (AI_SUPPORTED_IMAGE_TYPES.includes(blob.type as (typeof AI_SUPPORTED_IMAGE_TYPES)[number])) {
-    return { blob, contentType: blob.type, ext: extensionForMime(blob.type) };
+    return {
+      blob,
+      contentType: blob.type,
+      ext: extensionForMime(blob.type)
+    };
   }
 
   // Otherwise, try to convert to JPEG (fixes AVIF/HEIC/TIFF in browsers that can decode them)
   if (file.type.startsWith("image/")) {
     const jpeg = await convertRasterImageToJpeg(file);
-    return { blob: jpeg, contentType: "image/jpeg", ext: "jpg" };
+    return {
+      blob: jpeg,
+      contentType: "image/jpeg",
+      ext: "jpg"
+    };
   }
-
-  return { blob, contentType: blob.type || "application/octet-stream", ext: "jpg" };
+  return {
+    blob,
+    contentType: blob.type || "application/octet-stream",
+    ext: "jpg"
+  };
 }
-
 export function ImageToPromptPage() {
-  const { user, refreshProfile, isAdmin } = useDashboard();
-  const { addFeedback, addExample, getTrainingContext, hasTrainingData, savePreferences, preferences } = usePromptTraining();
-  
+  const {
+    user,
+    refreshProfile,
+    isAdmin
+  } = useDashboard();
+  const {
+    addFeedback,
+    addExample,
+    getTrainingContext,
+    hasTrainingData,
+    savePreferences,
+    preferences
+  } = usePromptTraining();
+
   // Single image mode state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -168,121 +157,101 @@ export function ImageToPromptPage() {
   const [activeVariationTab, setActiveVariationTab] = useState<string>("main");
   const [isDragging, setIsDragging] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"up" | "down" | null>(null);
-  const [singleGenSettings, setSingleGenSettings] = useState<SingleGenTrainingSettings>(
-    DEFAULT_SINGLE_GEN_SETTINGS
-  );
-  
+  const [singleGenSettings, setSingleGenSettings] = useState<SingleGenTrainingSettings>(DEFAULT_SINGLE_GEN_SETTINGS);
+
   // Batch processing state
   const [imageQueue, setImageQueue] = useState<QueuedImage[]>([]);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
   const [shouldStopBatch, setShouldStopBatch] = useState(false);
-  
+
   // File input refs for folder/file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  
-  // Determine active training mode for indicator
-  const activeTrainingMode = singleGenSettings.enabled 
-    ? "single" 
-    : hasTrainingData 
-      ? "persistent" 
-      : "none";
 
+  // Determine active training mode for indicator
+  const activeTrainingMode = singleGenSettings.enabled ? "single" : hasTrainingData ? "persistent" : "none";
   const hasCredits = isAdmin || user.hasUnlimitedCredits || user.credits >= 1;
 
   // Stats for completed prompts in queue
   const completedInQueue = imageQueue.filter(q => q.status === "completed").length;
-  const toolStats = [
-    { label: "Prompts Generated", value: completedInQueue, icon: FileText },
-    { label: "In Queue", value: imageQueue.length, icon: History },
-  ];
+  const toolStats = [{
+    label: "Prompts Generated",
+    value: completedInQueue,
+    icon: FileText
+  }, {
+    label: "In Queue",
+    value: imageQueue.length,
+    icon: History
+  }];
 
   // Add files to batch queue
   const addToQueue = useCallback((files: File[]) => {
     const imageFiles = files.filter(f => f.type.startsWith("image/"));
-
     if (imageFiles.length === 0) {
       toast.error("No valid image files found");
       return;
     }
-
     const newItems: QueuedImage[] = imageFiles.map(file => ({
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       file,
       previewUrl: URL.createObjectURL(file),
-      status: "pending",
+      status: "pending"
     }));
-
     setImageQueue(prev => [...prev, ...newItems]);
     toast.success(`Added ${imageFiles.length} image${imageFiles.length > 1 ? "s" : ""} to queue`);
   }, []);
-
   const handleFileSelect = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
-
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
     setResult(null);
     setFeedbackGiven(null);
   }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const files = Array.from(e.dataTransfer.files);
-      
-      // If multiple files, add to batch queue
-      if (files.length > 1) {
-        addToQueue(files);
-      } else if (files.length === 1) {
-        handleFileSelect(files[0]);
-      }
-    },
-    [handleFileSelect, addToQueue]
-  );
-
+    // If multiple files, add to batch queue
+    if (files.length > 1) {
+      addToQueue(files);
+    } else if (files.length === 1) {
+      handleFileSelect(files[0]);
+    }
+  }, [handleFileSelect, addToQueue]);
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
-
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
-        
-        // If multiple files, add to batch queue
-        if (fileArray.length > 1) {
-          addToQueue(fileArray);
-        } else if (fileArray.length === 1) {
-          handleFileSelect(fileArray[0]);
-        }
+      // If multiple files, add to batch queue
+      if (fileArray.length > 1) {
+        addToQueue(fileArray);
+      } else if (fileArray.length === 1) {
+        handleFileSelect(fileArray[0]);
       }
-      // Reset input value so the same file can be selected again
-      e.target.value = "";
-    },
-    [handleFileSelect, addToQueue]
-  );
-
+    }
+    // Reset input value so the same file can be selected again
+    e.target.value = "";
+  }, [handleFileSelect, addToQueue]);
   const handleFileButtonClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
-
   const handleFolderButtonClick = useCallback(() => {
     folderInputRef.current?.click();
   }, []);
-
   const handleReset = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
@@ -293,7 +262,6 @@ export function ImageToPromptPage() {
     setActiveVariationTab("main");
     setFeedbackGiven(null);
   }, [previewUrl]);
-
   const handleRemoveFromQueue = useCallback((id: string) => {
     setImageQueue(prev => {
       const item = prev.find(q => q.id === id);
@@ -303,7 +271,6 @@ export function ImageToPromptPage() {
       return prev.filter(q => q.id !== id);
     });
   }, []);
-
   const handleClearQueue = useCallback(() => {
     imageQueue.forEach(item => URL.revokeObjectURL(item.previewUrl));
     setImageQueue([]);
@@ -318,27 +285,21 @@ export function ImageToPromptPage() {
       preferred_length: settings.preferred_length,
       include_keywords: [...(preferences.include_keywords || []), ...settings.include_keywords],
       exclude_keywords: [...(preferences.exclude_keywords || []), ...settings.exclude_keywords],
-      custom_instructions: settings.custom_instructions 
-        ? (preferences.custom_instructions ? `${preferences.custom_instructions}\n${settings.custom_instructions}` : settings.custom_instructions)
-        : preferences.custom_instructions,
+      custom_instructions: settings.custom_instructions ? preferences.custom_instructions ? `${preferences.custom_instructions}\n${settings.custom_instructions}` : settings.custom_instructions : preferences.custom_instructions
     };
     return await savePreferences(newPrefs);
   };
-
   const generatePrompt = async () => {
     if (!selectedFile) {
       toast.error("Please select an image first");
       return;
     }
-
     if (!hasCredits) {
       toast.error("Insufficient credits. Please purchase more credits.");
       return;
     }
-
     setIsGenerating(true);
     setProgress(10);
-
     try {
       const prepared = await prepareImageForAI(selectedFile);
 
@@ -347,18 +308,17 @@ export function ImageToPromptPage() {
       const safeBase = baseName.replace(/[^a-zA-Z0-9._-]+/g, "-");
       const fileName = `prompt-gen/${Date.now()}-${safeBase}.${prepared.ext}`;
       setProgress(30);
-
-      const { error: uploadError } = await supabase.storage
-        .from("generation-images")
-        .upload(fileName, prepared.blob, { contentType: prepared.contentType });
-
+      const {
+        error: uploadError
+      } = await supabase.storage.from("generation-images").upload(fileName, prepared.blob, {
+        contentType: prepared.contentType
+      });
       if (uploadError) {
         throw new Error("Failed to upload image");
       }
-
-      const { data: urlData } = supabase.storage
-        .from("generation-images")
-        .getPublicUrl(fileName);
+      const {
+        data: urlData
+      } = supabase.storage.from("generation-images").getPublicUrl(fileName);
 
       // Store the public URL for reuse in variations
       setUploadedImageUrl(urlData.publicUrl);
@@ -366,7 +326,7 @@ export function ImageToPromptPage() {
 
       // Get training context for personalized generation
       let trainingContext = hasTrainingData ? getTrainingContext() : null;
-      
+
       // If single-gen settings are enabled, merge or override
       if (singleGenSettings.enabled) {
         const singleGenContext = {
@@ -376,41 +336,44 @@ export function ImageToPromptPage() {
             length: singleGenSettings.preferred_length,
             includeKeywords: singleGenSettings.include_keywords,
             excludeKeywords: singleGenSettings.exclude_keywords,
-            customInstructions: singleGenSettings.custom_instructions || null,
+            customInstructions: singleGenSettings.custom_instructions || null
           },
           // Keep examples and feedback from persistent training if available
           positiveExamples: trainingContext?.positiveExamples || [],
           negativeExamples: trainingContext?.negativeExamples || [],
           likedPrompts: trainingContext?.likedPrompts || [],
-          dislikedPrompts: trainingContext?.dislikedPrompts || [],
+          dislikedPrompts: trainingContext?.dislikedPrompts || []
         };
         trainingContext = singleGenContext;
       }
 
       // Call the edge function
-      const { data, error } = await supabase.functions.invoke("image-to-prompt", {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("image-to-prompt", {
         body: {
           imageUrl: urlData.publicUrl,
           style,
           detailLevel,
-          trainingContext,
-        },
+          trainingContext
+        }
       });
-
       setProgress(80);
-
       if (error) throw error;
-
       if (data.error) {
         throw new Error(data.error);
       }
-
       const promptResult = data as PromptResult;
       setResult(promptResult);
       setFeedbackGiven(null);
-      
+
       // Save to history
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("prompt_history").insert([{
           user_id: user.id,
@@ -422,13 +385,12 @@ export function ImageToPromptPage() {
           art_style: promptResult.artStyle || null,
           dominant_colors: promptResult.dominantColors || [],
           aspect_ratio: promptResult.suggestedAspectRatio || null,
-          training_snapshot: trainingContext,
+          training_snapshot: trainingContext
         }]);
       }
-      
+
       // Refresh profile to get updated credits
       await refreshProfile();
-      
       setProgress(100);
       toast.success("Prompt generated successfully!");
 
@@ -438,7 +400,6 @@ export function ImageToPromptPage() {
       console.error("Generation error:", error);
       const anyErr = error as any;
       const status = anyErr?.context?.status as number | undefined;
-
       if (status === 400) {
         toast.error("Unsupported image format. Please upload PNG, JPEG, WebP, or GIF.");
         return;
@@ -451,7 +412,6 @@ export function ImageToPromptPage() {
         toast.error("AI credits exhausted. Please add more credits.");
         return;
       }
-
       const message = error instanceof Error ? error.message : "Failed to generate prompt";
       toast.error(message);
     } finally {
@@ -466,26 +426,29 @@ export function ImageToPromptPage() {
       toast.error("Generate a main prompt first");
       return;
     }
-
     if (!hasCredits) {
       toast.error("Insufficient credits. Please purchase more credits.");
       return;
     }
-
     setIsGeneratingVariations(true);
-    
     try {
       // Generate all 3 variations with modified prompts
-      const variationTypes = [
-        { type: "composition" as const, label: "Composition", instruction: "Focus heavily on composition, framing, perspective, and spatial arrangement. Emphasize camera angles, rule of thirds, leading lines, and visual hierarchy." },
-        { type: "color" as const, label: "Color", instruction: "Focus heavily on color palette, color harmony, saturation, contrast, and color temperature. Emphasize specific color names, gradients, and color relationships." },
-        { type: "mood" as const, label: "Mood", instruction: "Focus heavily on mood, atmosphere, emotion, and feeling. Emphasize lighting quality, time of day, weather, ambiance, and emotional impact." },
-      ];
-
-      const variationPromises = variationTypes.map(async (vt) => {
+      const variationTypes = [{
+        type: "composition" as const,
+        label: "Composition",
+        instruction: "Focus heavily on composition, framing, perspective, and spatial arrangement. Emphasize camera angles, rule of thirds, leading lines, and visual hierarchy."
+      }, {
+        type: "color" as const,
+        label: "Color",
+        instruction: "Focus heavily on color palette, color harmony, saturation, contrast, and color temperature. Emphasize specific color names, gradients, and color relationships."
+      }, {
+        type: "mood" as const,
+        label: "Mood",
+        instruction: "Focus heavily on mood, atmosphere, emotion, and feeling. Emphasize lighting quality, time of day, weather, ambiance, and emotional impact."
+      }];
+      const variationPromises = variationTypes.map(async vt => {
         // Build context with variation focus
         let trainingContext = hasTrainingData ? getTrainingContext() : null;
-        
         if (singleGenSettings.enabled) {
           trainingContext = {
             trainingStrength: singleGenSettings.training_strength / 100,
@@ -494,20 +457,20 @@ export function ImageToPromptPage() {
               length: singleGenSettings.preferred_length,
               includeKeywords: singleGenSettings.include_keywords,
               excludeKeywords: singleGenSettings.exclude_keywords,
-              customInstructions: `${vt.instruction}${singleGenSettings.custom_instructions ? ` ${singleGenSettings.custom_instructions}` : ""}`,
+              customInstructions: `${vt.instruction}${singleGenSettings.custom_instructions ? ` ${singleGenSettings.custom_instructions}` : ""}`
             },
             positiveExamples: trainingContext?.positiveExamples || [],
             negativeExamples: trainingContext?.negativeExamples || [],
             likedPrompts: trainingContext?.likedPrompts || [],
-            dislikedPrompts: trainingContext?.dislikedPrompts || [],
+            dislikedPrompts: trainingContext?.dislikedPrompts || []
           };
         } else if (trainingContext) {
           trainingContext = {
             ...trainingContext,
             preferences: {
               ...trainingContext.preferences,
-              customInstructions: `${vt.instruction}${trainingContext.preferences?.customInstructions ? ` ${trainingContext.preferences.customInstructions}` : ""}`,
-            },
+              customInstructions: `${vt.instruction}${trainingContext.preferences?.customInstructions ? ` ${trainingContext.preferences.customInstructions}` : ""}`
+            }
           };
         } else {
           trainingContext = {
@@ -517,38 +480,37 @@ export function ImageToPromptPage() {
               length: "medium",
               includeKeywords: [] as string[],
               excludeKeywords: [] as string[],
-              customInstructions: vt.instruction,
+              customInstructions: vt.instruction
             },
             positiveExamples: [],
             negativeExamples: [],
             likedPrompts: [],
-            dislikedPrompts: [],
+            dislikedPrompts: []
           };
         }
-
-        const { data, error } = await supabase.functions.invoke("image-to-prompt", {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke("image-to-prompt", {
           body: {
-            imageUrl: uploadedImageUrl, // Use stored public URL instead of blob URL
+            imageUrl: uploadedImageUrl,
+            // Use stored public URL instead of blob URL
             style,
             detailLevel,
-            trainingContext,
-          },
+            trainingContext
+          }
         });
-
         if (error) throw error;
         if (data.error) throw new Error(data.error);
-
         return {
           type: vt.type,
           label: vt.label,
-          prompt: data.prompt,
+          prompt: data.prompt
         };
       });
-
       const results = await Promise.all(variationPromises);
       setVariations(results);
       setActiveVariationTab("composition");
-      
       await refreshProfile();
       toast.success("Generated 3 prompt variations!");
     } catch (error) {
@@ -560,26 +522,26 @@ export function ImageToPromptPage() {
   };
 
   // Process a single image for batch processing (reusable logic)
-  const processImageForPrompt = async (file: File): Promise<{ result: PromptResult; uploadedUrl: string }> => {
+  const processImageForPrompt = async (file: File): Promise<{
+    result: PromptResult;
+    uploadedUrl: string;
+  }> => {
     const prepared = await prepareImageForAI(file);
     const baseName = file.name.replace(/\.[^/.]+$/, "");
     const safeBase = baseName.replace(/[^a-zA-Z0-9._-]+/g, "-");
     const fileName = `prompt-gen/${Date.now()}-${safeBase}.${prepared.ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("generation-images")
-      .upload(fileName, prepared.blob, { contentType: prepared.contentType });
-
+    const {
+      error: uploadError
+    } = await supabase.storage.from("generation-images").upload(fileName, prepared.blob, {
+      contentType: prepared.contentType
+    });
     if (uploadError) {
       throw new Error("Failed to upload image");
     }
-
-    const { data: urlData } = supabase.storage
-      .from("generation-images")
-      .getPublicUrl(fileName);
-
+    const {
+      data: urlData
+    } = supabase.storage.from("generation-images").getPublicUrl(fileName);
     let trainingContext = hasTrainingData ? getTrainingContext() : null;
-    
     if (singleGenSettings.enabled) {
       trainingContext = {
         trainingStrength: singleGenSettings.training_strength / 100,
@@ -588,31 +550,35 @@ export function ImageToPromptPage() {
           length: singleGenSettings.preferred_length,
           includeKeywords: singleGenSettings.include_keywords,
           excludeKeywords: singleGenSettings.exclude_keywords,
-          customInstructions: singleGenSettings.custom_instructions || null,
+          customInstructions: singleGenSettings.custom_instructions || null
         },
         positiveExamples: trainingContext?.positiveExamples || [],
         negativeExamples: trainingContext?.negativeExamples || [],
         likedPrompts: trainingContext?.likedPrompts || [],
-        dislikedPrompts: trainingContext?.dislikedPrompts || [],
+        dislikedPrompts: trainingContext?.dislikedPrompts || []
       };
     }
-
-    const { data, error } = await supabase.functions.invoke("image-to-prompt", {
+    const {
+      data,
+      error
+    } = await supabase.functions.invoke("image-to-prompt", {
       body: {
         imageUrl: urlData.publicUrl,
         style,
         detailLevel,
-        trainingContext,
-      },
+        trainingContext
+      }
     });
-
     if (error) throw error;
     if (data.error) throw new Error(data.error);
-
     const promptResult = data as PromptResult;
 
     // Save to history
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const {
+      data: {
+        user: authUser
+      }
+    } = await supabase.auth.getUser();
     if (authUser) {
       await supabase.from("prompt_history").insert([{
         user_id: authUser.id,
@@ -624,11 +590,13 @@ export function ImageToPromptPage() {
         art_style: promptResult.artStyle || null,
         dominant_colors: promptResult.dominantColors || [],
         aspect_ratio: promptResult.suggestedAspectRatio || null,
-        training_snapshot: trainingContext,
+        training_snapshot: trainingContext
       }]);
     }
-
-    return { result: promptResult, uploadedUrl: urlData.publicUrl };
+    return {
+      result: promptResult,
+      uploadedUrl: urlData.publicUrl
+    };
   };
 
   // Helper to delay between batch requests to avoid rate limits
@@ -640,24 +608,20 @@ export function ImageToPromptPage() {
       toast.error("No images in queue");
       return;
     }
-
     const pendingItems = imageQueue.filter(q => q.status === "pending");
     if (pendingItems.length === 0) {
       toast.error("No pending images to process");
       return;
     }
-
     const creditsNeeded = pendingItems.length;
     if (!isAdmin && !user.hasUnlimitedCredits && user.credits < creditsNeeded) {
       toast.error(`Not enough credits. Need ${creditsNeeded}, have ${user.credits}`);
       return;
     }
-
     setIsBatchProcessing(true);
     setShouldStopBatch(false);
     let processedCount = 0;
     let isFirstRequest = true;
-
     for (let i = 0; i < imageQueue.length; i++) {
       const item = imageQueue[i];
       if (item.status !== "pending") continue;
@@ -668,54 +632,51 @@ export function ImageToPromptPage() {
         await delay(2000); // 2 second delay between requests
       }
       isFirstRequest = false;
-
       setCurrentBatchIndex(i);
-      
-      // Update status to processing
-      setImageQueue(prev => prev.map(q => 
-        q.id === item.id ? { ...q, status: "processing" as const } : q
-      ));
 
+      // Update status to processing
+      setImageQueue(prev => prev.map(q => q.id === item.id ? {
+        ...q,
+        status: "processing" as const
+      } : q));
       try {
-        const { result, uploadedUrl } = await processImageForPrompt(item.file);
-        
+        const {
+          result,
+          uploadedUrl
+        } = await processImageForPrompt(item.file);
+
         // Update with result
-        setImageQueue(prev => prev.map(q => 
-          q.id === item.id ? { 
-            ...q, 
-            status: "completed" as const, 
-            result,
-            uploadedImageUrl: uploadedUrl 
-          } : q
-        ));
-        
+        setImageQueue(prev => prev.map(q => q.id === item.id ? {
+          ...q,
+          status: "completed" as const,
+          result,
+          uploadedImageUrl: uploadedUrl
+        } : q));
         processedCount++;
         await refreshProfile();
       } catch (error) {
         console.error("Batch item error:", error);
         const anyErr = error as any;
         let message = error instanceof Error ? error.message : "Failed to generate prompt";
-        
+
         // If rate limited, add extra delay before next request
         if (anyErr?.message?.includes("429") || anyErr?.message?.includes("Rate limit")) {
           message = "Rate limited - will retry with slower pace";
           await delay(5000); // Extra 5 second delay on rate limit
         }
-        
-        setImageQueue(prev => prev.map(q => 
-          q.id === item.id ? { ...q, status: "error" as const, error: message } : q
-        ));
+        setImageQueue(prev => prev.map(q => q.id === item.id ? {
+          ...q,
+          status: "error" as const,
+          error: message
+        } : q));
       }
     }
-
     setIsBatchProcessing(false);
     setCurrentBatchIndex(0);
-    
     if (processedCount > 0) {
       toast.success(`Processed ${processedCount} image${processedCount > 1 ? "s" : ""}!`);
     }
   };
-
   const stopBatch = useCallback(() => {
     setShouldStopBatch(true);
     toast.info("Stopping after current image...");
@@ -723,19 +684,22 @@ export function ImageToPromptPage() {
 
   // Retry a single failed item
   const handleRetryItem = useCallback((id: string) => {
-    setImageQueue(prev => prev.map(q => 
-      q.id === id ? { ...q, status: "pending" as const, error: undefined } : q
-    ));
+    setImageQueue(prev => prev.map(q => q.id === id ? {
+      ...q,
+      status: "pending" as const,
+      error: undefined
+    } : q));
   }, []);
 
   // Retry all failed items
   const handleRetryAllFailed = useCallback(() => {
-    setImageQueue(prev => prev.map(q => 
-      q.status === "error" ? { ...q, status: "pending" as const, error: undefined } : q
-    ));
+    setImageQueue(prev => prev.map(q => q.status === "error" ? {
+      ...q,
+      status: "pending" as const,
+      error: undefined
+    } : q));
     toast.success("Reset failed items - ready to process again");
   }, []);
-
   const handleCopy = async () => {
     if (!result) return;
     const success = await copyToClipboard(result.prompt);
@@ -745,7 +709,6 @@ export function ImageToPromptPage() {
       toast.error("Failed to copy prompt");
     }
   };
-
   const handleDownload = () => {
     if (!result) return;
     const filename = `prompt-${style}-${detailLevel}-${Date.now()}.txt`;
@@ -756,27 +719,25 @@ export function ImageToPromptPage() {
     downloadPromptAsText(content, filename);
     toast.success("Prompt downloaded!");
   };
-
   const handleFeedback = async (rating: 1 | -1) => {
     if (!result) return;
     const success = await addFeedback({
       prompt_text: result.prompt,
       style,
       detail_level: detailLevel,
-      rating,
+      rating
     });
     if (success) {
       setFeedbackGiven(rating === 1 ? "up" : "down");
     }
   };
-
   const handleSaveAsExample = async (isPositive: boolean) => {
     if (!result) return;
     await addExample({
       prompt_text: result.prompt,
       style,
       is_positive: isPositive,
-      image_url: uploadedImageUrl || undefined,
+      image_url: uploadedImageUrl || undefined
     });
   };
 
@@ -785,33 +746,28 @@ export function ImageToPromptPage() {
     // Set the style and detail level from the history item
     setStyle(historyItem.style as PromptStyle);
     setDetailLevel(historyItem.detail_level as DetailLevel);
-    
+
     // Fetch the image from history and set it for regeneration
     try {
       const response = await fetch(historyItem.image_url);
       if (!response.ok) throw new Error("Failed to fetch image");
       const blob = await response.blob();
-      const file = new File([blob], `regenerate-${Date.now()}.jpg`, { type: blob.type || "image/jpeg" });
-      
+      const file = new File([blob], `regenerate-${Date.now()}.jpg`, {
+        type: blob.type || "image/jpeg"
+      });
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setUploadedImageUrl(historyItem.image_url);
       setResult(null);
       setFeedbackGiven(null);
-      
       toast.success("Image loaded for regeneration. Click 'Generate Prompt' to create a new prompt.");
     } catch (error) {
       console.error("Failed to load image for regeneration:", error);
       toast.error("Failed to load image for regeneration");
     }
   }, []);
-
-  return (
-    <ToolAccessGate toolId="image-to-prompt">
-      <DashboardHeader
-        title="Image to Prompt"
-        description="Analyze images and generate AI prompts for Midjourney, DALL-E, and Stable Diffusion"
-      />
+  return <ToolAccessGate toolId="image-to-prompt">
+      <DashboardHeader title="Image to Prompt" description="Analyze images and generate AI prompts for Midjourney, DALL-E, and Stable Diffusion" />
 
       <main className="flex-1 space-y-6 p-4 md:p-6">
         <div className="max-w-7xl space-y-6">
@@ -824,73 +780,39 @@ export function ImageToPromptPage() {
           <div className="flex items-center gap-2">
             <DashboardBreadcrumb />
             {/* Training Mode Indicator */}
-            {activeTrainingMode !== "none" && (
-              <Badge 
-                variant={activeTrainingMode === "single" ? "default" : "secondary"}
-                className={cn(
-                  "text-xs",
-                  activeTrainingMode === "single" && "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                )}
-              >
+            {activeTrainingMode !== "none" && <Badge variant={activeTrainingMode === "single" ? "default" : "secondary"} className={cn("text-xs", activeTrainingMode === "single" && "bg-secondary hover:bg-secondary/90 text-secondary-foreground")}>
                 {activeTrainingMode === "single" ? "⚡ This Gen Active" : "🔄 Always Training"}
-              </Badge>
-            )}
+              </Badge>}
           </div>
           <div className="flex items-center gap-2">
             <PromptHistoryDrawer onRegenerate={handleRegenerateFromHistory} />
-            <SingleGenTraining
-              settings={singleGenSettings}
-              onChange={setSingleGenSettings}
-              onPromoteToPersistent={handlePromoteToPersistent}
-            />
+            <SingleGenTraining settings={singleGenSettings} onChange={setSingleGenSettings} onPromoteToPersistent={handlePromoteToPersistent} />
             <PromptTrainingPanel />
           </div>
         </div>
 
         {/* Upload Area - shown when no image selected for single mode */}
-        {!previewUrl && imageQueue.length === 0 && (
-          <AnimatedSection variant="fade-up">
+        {!previewUrl && imageQueue.length === 0 && <AnimatedSection variant="fade-up">
             <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
               <h2 className="text-lg font-semibold text-foreground">Upload Images</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Upload a single image or multiple images for batch processing. Supports JPG, PNG, WebP up to 10MB each.
+                Upload a single image or multiple images for batch processing. Supports JPG, PNG, WebP.
               </p>
               
               {/* Hidden file inputs */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleInputChange}
-                className="hidden"
-              />
-              <input
-                ref={folderInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleInputChange}
-                className="hidden"
-                {...{ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleInputChange} className="hidden" />
+              <input ref={folderInputRef} type="file" accept="image/*" onChange={handleInputChange} className="hidden" {...{
+              webkitdirectory: "",
+              directory: ""
+            } as React.InputHTMLAttributes<HTMLInputElement>} />
 
               {/* Upload Buttons */}
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 h-12 rounded-xl"
-                  onClick={handleFileButtonClick}
-                >
+                <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl" onClick={handleFileButtonClick}>
                   <Upload className="mr-2 h-4 w-4" />
                   Upload Files
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 h-12 rounded-xl"
-                  onClick={handleFolderButtonClick}
-                >
+                <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl" onClick={handleFolderButtonClick}>
                   <FolderOpen className="mr-2 h-4 w-4" />
                   Upload Folder
                 </Button>
@@ -898,18 +820,7 @@ export function ImageToPromptPage() {
 
               {/* Drop Zone */}
               <div className="mt-4">
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={cn(
-                    "border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer",
-                    isDragging
-                      ? "border-primary bg-primary/5"
-                      : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
-                  )}
-                  onClick={handleFileButtonClick}
-                >
+                <div onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={cn("border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer", isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50")} onClick={handleFileButtonClick}>
                   <Upload className="h-12 w-12 mx-auto text-primary mb-4" />
                   <p className="text-lg font-medium text-foreground mb-1">
                     Or drag and drop here
@@ -920,12 +831,10 @@ export function ImageToPromptPage() {
                 </div>
               </div>
             </div>
-          </AnimatedSection>
-        )}
+          </AnimatedSection>}
 
         {/* Batch Queue Section */}
-        {imageQueue.length > 0 && (
-          <AnimatedSection variant="fade-up">
+        {imageQueue.length > 0 && <AnimatedSection variant="fade-up">
             <div className="space-y-4">
               {/* Batch Controls */}
               <div className="flex items-center justify-between flex-wrap gap-3">
@@ -936,73 +845,36 @@ export function ImageToPromptPage() {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!isBatchProcessing ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleFileButtonClick}
-                      >
+                  {!isBatchProcessing ? <>
+                      <Button variant="outline" size="sm" onClick={handleFileButtonClick}>
                         <Upload className="h-4 w-4 mr-1.5" />
                         Add More
                       </Button>
-                      <Button
-                        onClick={processBatch}
-                        disabled={imageQueue.filter(q => q.status === "pending").length === 0 || !hasCredits}
-                        size="sm"
-                      >
+                      <Button onClick={processBatch} disabled={imageQueue.filter(q => q.status === "pending").length === 0 || !hasCredits} size="sm">
                         <Play className="h-4 w-4 mr-1.5" />
                         Process All ({imageQueue.filter(q => q.status === "pending").length} credits)
                       </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={stopBatch}
-                    >
+                    </> : <Button variant="destructive" size="sm" onClick={stopBatch}>
                       <StopCircle className="h-4 w-4 mr-1.5" />
                       Stop
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
               </div>
 
               {/* Hidden file inputs for adding more */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleInputChange}
-                className="hidden"
-              />
-              <input
-                ref={folderInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleInputChange}
-                className="hidden"
-                {...{ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleInputChange} className="hidden" />
+              <input ref={folderInputRef} type="file" accept="image/*" onChange={handleInputChange} className="hidden" {...{
+              webkitdirectory: "",
+              directory: ""
+            } as React.InputHTMLAttributes<HTMLInputElement>} />
 
               {/* Queue Component */}
-              <ImagePromptQueue
-                queue={imageQueue}
-                currentIndex={currentBatchIndex}
-                isProcessing={isBatchProcessing}
-                onRemove={handleRemoveFromQueue}
-                onClear={handleClearQueue}
-                onRetry={handleRetryItem}
-                onRetryAllFailed={handleRetryAllFailed}
-              />
+              <ImagePromptQueue queue={imageQueue} currentIndex={currentBatchIndex} isProcessing={isBatchProcessing} onRemove={handleRemoveFromQueue} onClear={handleClearQueue} onRetry={handleRetryItem} onRetryAllFailed={handleRetryAllFailed} />
             </div>
-          </AnimatedSection>
-        )}
+          </AnimatedSection>}
 
         {/* Preview Section - shown when image is loaded */}
-        {previewUrl && (
-          <div className="space-y-6">
+        {previewUrl && <div className="space-y-6">
             {/* Image and Result Grid */}
             <AnimatedSection variant="fade-up">
               <div className="grid md:grid-cols-2 gap-6">
@@ -1010,21 +882,12 @@ export function ImageToPromptPage() {
                 <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-semibold text-foreground">Image Preview</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleReset}
-                      className="h-8 w-8"
-                    >
+                    <Button variant="ghost" size="icon" onClick={handleReset} className="h-8 w-8">
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                   <AspectRatio ratio={4 / 3} className="bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-contain"
-                    />
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
                   </AspectRatio>
                 </div>
 
@@ -1032,112 +895,62 @@ export function ImageToPromptPage() {
                 <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-semibold text-foreground">Generated Prompt</h3>
-                    {result && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            "h-8 w-8",
-                            feedbackGiven === "up" && "bg-green-500/20 text-green-600"
-                          )}
-                          onClick={() => handleFeedback(1)}
-                          disabled={feedbackGiven !== null}
-                          title="Good prompt"
-                        >
+                    {result && <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className={cn("h-8 w-8", feedbackGiven === "up" && "bg-green-500/20 text-green-600")} onClick={() => handleFeedback(1)} disabled={feedbackGiven !== null} title="Good prompt">
                           <ThumbsUp className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            "h-8 w-8",
-                            feedbackGiven === "down" && "bg-red-500/20 text-red-600"
-                          )}
-                          onClick={() => handleFeedback(-1)}
-                          disabled={feedbackGiven !== null}
-                          title="Bad prompt"
-                        >
+                        <Button variant="ghost" size="icon" className={cn("h-8 w-8", feedbackGiven === "down" && "bg-red-500/20 text-red-600")} onClick={() => handleFeedback(-1)} disabled={feedbackGiven !== null} title="Bad prompt">
                           <ThumbsDown className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleSaveAsExample(true)}
-                          title="Save as example"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSaveAsExample(true)} title="Save as example">
                           <BookmarkPlus className="h-4 w-4" />
                         </Button>
-                      </div>
-                    )}
+                      </div>}
                   </div>
-                  <div
-                    className="rounded-lg overflow-hidden bg-muted min-h-[200px] max-h-[400px] overflow-y-auto"
-                  >
-                    {result ? (
-                      <Tabs value={activeVariationTab} onValueChange={setActiveVariationTab} className="w-full">
-                        {variations.length > 0 && (
-                          <div className="border-b border-border bg-background/50 sticky top-0 z-10">
+                  <div className="rounded-lg overflow-hidden bg-muted min-h-[200px] max-h-[400px] overflow-y-auto">
+                    {result ? <Tabs value={activeVariationTab} onValueChange={setActiveVariationTab} className="w-full">
+                        {variations.length > 0 && <div className="border-b border-border bg-background/50 sticky top-0 z-10">
                             <TabsList className="w-full justify-start h-auto p-1 bg-transparent">
                               <TabsTrigger value="main" className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                 Main
                               </TabsTrigger>
-                              {variations.map((v) => (
-                                <TabsTrigger key={v.type} value={v.type} className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                              {variations.map(v => <TabsTrigger key={v.type} value={v.type} className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                   {v.label}
-                                </TabsTrigger>
-                              ))}
+                                </TabsTrigger>)}
                             </TabsList>
-                          </div>
-                        )}
+                          </div>}
                         <TabsContent value="main" className="m-0">
                           <div className="p-4 space-y-4">
                             <div className="flex items-start justify-between gap-2">
                               <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground flex-1">
                                 {result.prompt}
                               </p>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 shrink-0"
-                                onClick={handleCopy}
-                                title="Copy prompt"
-                              >
+                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleCopy} title="Copy prompt">
                                 <Copy className="h-3.5 w-3.5" />
                               </Button>
                             </div>
-                            {result.negativePrompt && (
-                              <div className="pt-3 border-t border-border">
+                            {result.negativePrompt && <div className="pt-3 border-t border-border">
                                 <p className="text-xs font-medium text-muted-foreground mb-2">Negative Prompt</p>
                                 <p className="text-sm text-destructive/80">
                                   {result.negativePrompt}
                                 </p>
-                              </div>
-                            )}
+                              </div>}
                           </div>
                         </TabsContent>
-                        {variations.map((v) => (
-                          <TabsContent key={v.type} value={v.type} className="m-0">
+                        {variations.map(v => <TabsContent key={v.type} value={v.type} className="m-0">
                             <div className="p-4">
                               <div className="flex items-center justify-between gap-2 mb-3">
                                 <Badge variant="outline" className="text-xs">
                                   {v.label} Focus
                                 </Badge>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={async () => {
-                                    const success = await copyToClipboard(v.prompt);
-                                    if (success) {
-                                      toast.success(`${v.label} prompt copied!`);
-                                    } else {
-                                      toast.error("Failed to copy");
-                                    }
-                                  }}
-                                  title={`Copy ${v.label} prompt`}
-                                >
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            const success = await copyToClipboard(v.prompt);
+                            if (success) {
+                              toast.success(`${v.label} prompt copied!`);
+                            } else {
+                              toast.error("Failed to copy");
+                            }
+                          }} title={`Copy ${v.label} prompt`}>
                                   <Copy className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
@@ -1145,21 +958,13 @@ export function ImageToPromptPage() {
                                 {v.prompt}
                               </p>
                             </div>
-                          </TabsContent>
-                        ))}
-                      </Tabs>
-                    ) : (
-                      <div className="w-full h-full min-h-[200px] flex items-center justify-center text-muted-foreground">
-                        {isGenerating ? (
-                          <Loader2 className="h-8 w-8 animate-spin" />
-                        ) : (
-                          <div className="text-center">
+                          </TabsContent>)}
+                      </Tabs> : <div className="w-full h-full min-h-[200px] flex items-center justify-center text-muted-foreground">
+                        {isGenerating ? <Loader2 className="h-8 w-8 animate-spin" /> : <div className="text-center">
                             <Wand2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">Result will appear here</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          </div>}
+                      </div>}
                   </div>
                 </div>
               </div>
@@ -1174,19 +979,17 @@ export function ImageToPromptPage() {
                   {/* Prompt Style */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Prompt Style</label>
-                    <Select value={style} onValueChange={(v) => setStyle(v as PromptStyle)}>
+                    <Select value={style} onValueChange={v => setStyle(v as PromptStyle)}>
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select style" />
                       </SelectTrigger>
                       <SelectContent className="z-50 bg-popover">
-                        {PROMPT_STYLES.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>
+                        {PROMPT_STYLES.map(s => <SelectItem key={s.value} value={s.value}>
                             <div className="flex flex-col">
                               <span className="font-medium">{s.label}</span>
                               <span className="text-xs text-muted-foreground">{s.description}</span>
                             </div>
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1194,19 +997,17 @@ export function ImageToPromptPage() {
                   {/* Detail Level */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Detail Level</label>
-                    <Select value={detailLevel} onValueChange={(v) => setDetailLevel(v as DetailLevel)}>
+                    <Select value={detailLevel} onValueChange={v => setDetailLevel(v as DetailLevel)}>
                       <SelectTrigger className="w-full bg-background">
                         <SelectValue placeholder="Select detail level" />
                       </SelectTrigger>
                       <SelectContent className="z-50 bg-popover">
-                        {DETAIL_LEVELS.map((d) => (
-                          <SelectItem key={d.value} value={d.value}>
+                        {DETAIL_LEVELS.map(d => <SelectItem key={d.value} value={d.value}>
                             <div className="flex flex-col">
                               <span className="font-medium">{d.label}</span>
                               <span className="text-xs text-muted-foreground">{d.description}</span>
                             </div>
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1215,8 +1016,7 @@ export function ImageToPromptPage() {
             </AnimatedSection>
 
             {/* Progress Bar */}
-            {isGenerating && (
-              <AnimatedSection variant="fade-up" delay={150}>
+            {isGenerating && <AnimatedSection variant="fade-up" delay={150}>
                 <Card className="rounded-2xl border-border/60 card-elevated">
                   <CardContent className="pt-6">
                     <div className="space-y-2">
@@ -1228,33 +1028,20 @@ export function ImageToPromptPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </AnimatedSection>
-            )}
+              </AnimatedSection>}
 
             {/* Action Buttons */}
             <AnimatedSection variant="fade-up" delay={200}>
               <div className="flex flex-wrap gap-3">
-                {!result ? (
-                  <Button
-                    onClick={generatePrompt}
-                    disabled={!selectedFile || isGenerating || !hasCredits}
-                    size="lg"
-                    className="rounded-full"
-                  >
-                    {isGenerating ? (
-                      <>
+                {!result ? <Button onClick={generatePrompt} disabled={!selectedFile || isGenerating || !hasCredits} size="lg" className="rounded-full">
+                    {isGenerating ? <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Generating...
-                      </>
-                    ) : (
-                      <>
+                      </> : <>
                         <Wand2 className="h-4 w-4" />
                         Generate Prompt (1 Credit)
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <>
+                      </>}
+                  </Button> : <>
                     <Button onClick={handleCopy} size="lg" className="rounded-full">
                       <Copy className="h-4 w-4" />
                       Copy Prompt
@@ -1263,32 +1050,16 @@ export function ImageToPromptPage() {
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
-                    <Button
-                      onClick={generateVariations}
-                      variant="secondary"
-                      size="lg"
-                      className="rounded-full"
-                      disabled={isGeneratingVariations || !hasCredits}
-                    >
-                      {isGeneratingVariations ? (
-                        <>
+                    <Button onClick={generateVariations} variant="secondary" size="lg" className="rounded-full" disabled={isGeneratingVariations || !hasCredits}>
+                      {isGeneratingVariations ? <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Generating...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Sparkles className="h-4 w-4" />
                           Variations (3 Credits)
-                        </>
-                      )}
+                        </>}
                     </Button>
-                    <Button
-                      onClick={generatePrompt}
-                      variant="outline"
-                      size="lg"
-                      className="rounded-full"
-                      disabled={isGenerating || !hasCredits}
-                    >
+                    <Button onClick={generatePrompt} variant="outline" size="lg" className="rounded-full" disabled={isGenerating || !hasCredits}>
                       <RefreshCw className={cn("h-4 w-4", isGenerating && "animate-spin")} />
                       Regenerate
                     </Button>
@@ -1296,21 +1067,16 @@ export function ImageToPromptPage() {
                       <Upload className="h-4 w-4" />
                       New Image
                     </Button>
-                  </>
-                )}
+                  </>}
               </div>
 
               {/* Credits Info */}
               <p className="text-xs text-muted-foreground mt-4">
-                {isAdmin || user.hasUnlimitedCredits 
-                  ? "💡 You have unlimited credits" 
-                  : `💡 You have ${user.credits} credits remaining`}
+                {isAdmin || user.hasUnlimitedCredits ? "💡 You have unlimited credits" : `💡 You have ${user.credits} credits remaining`}
               </p>
             </AnimatedSection>
-          </div>
-        )}
+          </div>}
         </div>
       </main>
-    </ToolAccessGate>
-  );
+    </ToolAccessGate>;
 }
