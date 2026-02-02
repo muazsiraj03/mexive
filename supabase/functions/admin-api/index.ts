@@ -259,6 +259,19 @@ Deno.serve(async (req) => {
           .from("pricing_config")
           .select("plan_name, is_unlimited, credits");
 
+        // Fetch auth users to get emails
+        const emailMap = new Map<string, string>();
+        try {
+          const { data: authUsersData } = await adminClient.auth.admin.listUsers();
+          authUsersData?.users?.forEach(u => {
+            if (u.email) {
+              emailMap.set(u.id, u.email);
+            }
+          });
+        } catch (authError) {
+          console.error("Failed to fetch auth users:", authError);
+        }
+
         // Build unlimited plans set and plan credits map
         const unlimitedPlans = new Set(
           (pricingConfig || []).filter(p => p.is_unlimited).map(p => p.plan_name)
@@ -289,6 +302,7 @@ Deno.serve(async (req) => {
             id: profile.user_id || profile.id,
             full_name: profile.full_name,
             avatar_url: profile.avatar_url,
+            email: emailMap.get(profile.user_id) || null,
             plan: plan,
             credits: sub.credits_remaining || 0,
             plan_credits: planCredits,
