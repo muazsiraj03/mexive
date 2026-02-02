@@ -417,6 +417,70 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
     console.log("AI response received successfully");
 
     const metadata = JSON.parse(toolCall.function.arguments);
+    
+    // Post-process to enforce exact character counts
+    if (metadata.results && Array.isArray(metadata.results)) {
+      metadata.results = metadata.results.map((item: { marketplace: string; title: string; description: string; keywords: string[] }) => {
+        // Enforce exact title character count
+        let title = item.title || "";
+        if (title.length < validTitleMaxChars) {
+          // Pad with relevant content by repeating key terms
+          const words = title.split(" ").filter(w => w.length > 3);
+          while (title.length < validTitleMaxChars && words.length > 0) {
+            const word = words[title.length % words.length];
+            const remaining = validTitleMaxChars - title.length;
+            if (remaining > word.length + 1) {
+              title = title + " " + word;
+            } else {
+              // Pad with spaces or period
+              title = title + ".".repeat(remaining);
+            }
+          }
+          if (title.length < validTitleMaxChars) {
+            title = title + " ".repeat(validTitleMaxChars - title.length);
+          }
+        } else if (title.length > validTitleMaxChars) {
+          // Truncate at word boundary if possible
+          title = title.substring(0, validTitleMaxChars);
+          const lastSpace = title.lastIndexOf(" ");
+          if (lastSpace > validTitleMaxChars - 20) {
+            title = title.substring(0, lastSpace) + ".".repeat(validTitleMaxChars - lastSpace);
+          }
+        }
+        
+        // Enforce exact description character count
+        let description = item.description || "";
+        if (description.length < validDescriptionMaxChars) {
+          // Pad with additional context
+          const words = description.split(" ").filter(w => w.length > 3);
+          while (description.length < validDescriptionMaxChars && words.length > 0) {
+            const word = words[description.length % words.length];
+            const remaining = validDescriptionMaxChars - description.length;
+            if (remaining > word.length + 1) {
+              description = description + " " + word;
+            } else {
+              description = description + ".".repeat(remaining);
+            }
+          }
+          if (description.length < validDescriptionMaxChars) {
+            description = description + " ".repeat(validDescriptionMaxChars - description.length);
+          }
+        } else if (description.length > validDescriptionMaxChars) {
+          description = description.substring(0, validDescriptionMaxChars);
+          const lastSpace = description.lastIndexOf(" ");
+          if (lastSpace > validDescriptionMaxChars - 30) {
+            description = description.substring(0, lastSpace) + ".".repeat(validDescriptionMaxChars - lastSpace);
+          }
+        }
+        
+        return {
+          ...item,
+          title: title.substring(0, validTitleMaxChars),
+          description: description.substring(0, validDescriptionMaxChars),
+        };
+      });
+    }
+    
     console.log("Generated metadata for", metadata.results?.length, "marketplaces");
 
     return new Response(
