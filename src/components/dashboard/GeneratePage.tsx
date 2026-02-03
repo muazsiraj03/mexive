@@ -755,17 +755,10 @@ export function GeneratePage() {
                     <h2 className="text-lg font-semibold text-foreground">
                       Results
                     </h2>
-                    <Button
-                      variant="ghost"
-                      className="rounded-full"
-                      onClick={handleClearResults}
-                    >
-                      Clear
-                    </Button>
                   </div>
 
                   {/* Filter Tabs and Controls */}
-                  <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <Tabs value={resultsFilter} onValueChange={(v) => setResultsFilter(v as ResultsFilter)}>
                       <TabsList className="h-9">
                         <TabsTrigger value="all" className="text-xs px-3 gap-1.5">
@@ -792,6 +785,16 @@ export function GeneratePage() {
                     </Tabs>
 
                     <div className="flex items-center gap-2">
+                      {/* Clear All Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0"
+                        onClick={handleClearResults}
+                      >
+                        Clear All
+                      </Button>
+
                       {/* View Toggle */}
                       <div className="flex items-center border rounded-md">
                         <Button
