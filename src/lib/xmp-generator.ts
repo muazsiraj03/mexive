@@ -112,12 +112,13 @@ export function getXMPFilename(imageFilename: string): string {
 }
 
 /**
- * Check if a file needs an XMP sidecar (non-JPEG/PNG files)
- * JPEG and PNG get metadata embedded directly, others need XMP sidecar
+ * Check if a file needs an XMP sidecar
+ * JPEG, PNG, and WebP get metadata embedded directly, others need XMP sidecar
  */
 export function needsXMPSidecar(filename: string): boolean {
   const ext = filename.toLowerCase().split(".").pop();
   // JPEG files get EXIF/XMP embedded, PNG files get iTXt XMP embedded
-  // Other formats (WebP, etc.) need XMP sidecar files
-  return ext !== "jpg" && ext !== "jpeg" && ext !== "png";
+  // WebP files get RIFF XMP chunk embedded
+  // Other formats need XMP sidecar files
+  return ext !== "jpg" && ext !== "jpeg" && ext !== "png" && ext !== "webp";
 }
