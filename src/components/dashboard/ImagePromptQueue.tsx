@@ -112,8 +112,8 @@ export function ImagePromptQueue({
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header Row 1: Title, Badge, Retry All, Clear All */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <h3 className="text-base font-semibold text-foreground">Image Queue</h3>
           <Badge variant="secondary" className="text-xs">
@@ -138,41 +138,41 @@ export function ImagePromptQueue({
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {completedCount > 0 && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopyAll}
-                className="h-8"
-              >
-                <Copy className="h-3.5 w-3.5 mr-1.5" />
-                Copy All
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDownloadAll}
-                className="h-8"
-              >
-                <Download className="h-3.5 w-3.5 mr-1.5" />
-                Download All
-              </Button>
-            </>
-          )}
-          {!isProcessing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClear}
-              className="h-8 text-muted-foreground hover:text-destructive"
-            >
-              Clear All
-            </Button>
-          )}
-        </div>
+        {!isProcessing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClear}
+            className="h-8 text-muted-foreground hover:text-destructive"
+          >
+            Clear All
+          </Button>
+        )}
       </div>
+
+      {/* Header Row 2: Copy All, Download All */}
+      {completedCount > 0 && (
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyAll}
+            className="h-8"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1.5" />
+            Copy All
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownloadAll}
+            className="h-8"
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Download All
+          </Button>
+        </div>
+      )}
 
       {/* Overall Progress */}
       {isProcessing && (
