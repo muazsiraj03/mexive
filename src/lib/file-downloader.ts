@@ -5,8 +5,8 @@
  */
 
 import JSZip from "jszip";
-import { ImageMetadata, processImageWithMetadata } from "./metadata-embedder";
-import { createXMPBlob, getXMPFilename, needsXMPSidecar } from "./xmp-generator";
+import { ImageMetadata } from "./metadata-embedder";
+import { getXMPFilename, needsXMPSidecar } from "./xmp-generator";
 
 const DOWNLOAD_FUNCTION_URL = "https://qwnrymtaokajuqtgdaex.supabase.co/functions/v1/download-image";
 
@@ -160,6 +160,38 @@ export async function downloadSingleImage(
 }
 
 /**
+ * Fetch processed image from edge function with embedded metadata
+ */
+async function fetchProcessedImage(
+  imageUrl: string,
+  filename: string,
+  metadata?: ImageMetadata
+): Promise<Blob> {
+  const downloadUrl = buildDownloadUrl(imageUrl, filename, metadata, "image");
+  const response = await fetch(downloadUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch processed image: ${response.statusText}`);
+  }
+  return response.blob();
+}
+
+/**
+ * Fetch XMP sidecar from edge function
+ */
+async function fetchXMPSidecar(
+  imageUrl: string,
+  filename: string,
+  metadata: ImageMetadata
+): Promise<Blob> {
+  const xmpUrl = buildDownloadUrl(imageUrl, filename, metadata, "xmp");
+  const response = await fetch(xmpUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch XMP sidecar: ${response.statusText}`);
+  }
+  return response.blob();
+}
+
+/**
  * Download all marketplace versions as a ZIP file
  * Each file has embedded metadata for its marketplace (JPEG) or XMP sidecar (other formats)
  */
@@ -174,26 +206,21 @@ export async function downloadAllAsZip(
 ): Promise<void> {
   const zip = new JSZip();
 
-  // Fetch the image once
-  const imageBlob = await fetchImageAsBlob(imageUrl);
-
-  // Add each marketplace version to the ZIP (with embedded metadata if provided)
+  // Add each marketplace version to the ZIP (with embedded metadata via edge function)
   for (const { filename, metadata } of marketplaceFilenames) {
-    let processedBlob = imageBlob;
-    
-    // Embed metadata if provided
-    if (metadata) {
-      processedBlob = await processImageWithMetadata(imageBlob, metadata, filename);
-      
-      // For non-JPEG files, add XMP sidecar to ZIP
-      if (needsXMPSidecar(filename)) {
-        const xmpBlob = createXMPBlob(metadata);
-        const xmpFilename = getXMPFilename(filename);
-        zip.file(xmpFilename, xmpBlob);
-      }
-    }
+    // Use edge function to get properly processed image with metadata
+    const processedBlob = metadata 
+      ? await fetchProcessedImage(imageUrl, filename, metadata)
+      : await fetchImageAsBlob(imageUrl);
     
     zip.file(filename, processedBlob);
+    
+    // For non-JPEG files, add XMP sidecar to ZIP
+    if (metadata && needsXMPSidecar(filename)) {
+      const xmpBlob = await fetchXMPSidecar(imageUrl, filename, metadata);
+      const xmpFilename = getXMPFilename(filename);
+      zip.file(xmpFilename, xmpBlob);
+    }
   }
 
   // Generate and download the ZIP
@@ -222,26 +249,21 @@ const zip = new JSZip();
 
   // Process each file
   for (const file of files) {
-    // Fetch the image
-    const imageBlob = await fetchImageAsBlob(file.imageUrl);
-
-    // Add each marketplace version directly to root
+    // Add each marketplace version directly to root (use edge function for metadata)
     for (const { filename, metadata } of file.marketplaces) {
-      let processedBlob = imageBlob;
-
-      // Embed metadata if provided
-      if (metadata) {
-        processedBlob = await processImageWithMetadata(imageBlob, metadata, filename);
-
-        // For non-JPEG files, add XMP sidecar
-        if (needsXMPSidecar(filename)) {
-          const xmpBlob = createXMPBlob(metadata);
-          const xmpFilename = getXMPFilename(filename);
-          zip.file(xmpFilename, xmpBlob);
-        }
-      }
-
+      // Use edge function to get properly processed image with metadata
+      const processedBlob = metadata 
+        ? await fetchProcessedImage(file.imageUrl, filename, metadata)
+        : await fetchImageAsBlob(file.imageUrl);
+      
       zip.file(filename, processedBlob);
+      
+      // For non-JPEG files, add XMP sidecar
+      if (metadata && needsXMPSidecar(filename)) {
+        const xmpBlob = await fetchXMPSidecar(file.imageUrl, filename, metadata);
+        const xmpFilename = getXMPFilename(filename);
+        zip.file(xmpFilename, xmpBlob);
+      }
     }
   }
 
