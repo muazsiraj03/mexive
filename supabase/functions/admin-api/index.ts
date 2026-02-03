@@ -226,13 +226,54 @@ Deno.serve(async (req) => {
         const planFilter = url.searchParams.get("plan") || "";
         const offset = (page - 1) * limit;
 
-        // Fetch profiles separately (no FK relationship exists)
+        // If plan filter is set, we need to filter by subscription first
+        let userIdsWithPlan: string[] | null = null;
+        let filteredCount = 0;
+
+        if (planFilter) {
+          // Get all user_ids with the specified plan
+          const { data: filteredSubs, error: filterError } = await adminClient
+            .from("subscriptions")
+            .select("user_id")
+            .eq("plan", planFilter);
+
+          if (filterError) {
+            console.error("Plan filter error:", filterError);
+            return new Response(
+              JSON.stringify({ error: "Failed to filter by plan" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          userIdsWithPlan = (filteredSubs || []).map(s => s.user_id);
+          
+          // If no users match the plan filter, return empty result
+          if (userIdsWithPlan.length === 0) {
+            return new Response(
+              JSON.stringify({
+                users: [],
+                total: 0,
+                page,
+                limit,
+                totalPages: 0,
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
+        // Fetch profiles - apply plan filter if specified
         let profileQuery = adminClient
           .from("profiles")
           .select("id, user_id, full_name, avatar_url, created_at, updated_at", { count: "exact" });
 
         if (search) {
           profileQuery = profileQuery.ilike("full_name", `%${search}%`);
+        }
+
+        // Filter by user_ids if plan filter is active
+        if (userIdsWithPlan) {
+          profileQuery = profileQuery.in("user_id", userIdsWithPlan);
         }
 
         const { data: profiles, count, error: profileError } = await profileQuery
@@ -288,7 +329,7 @@ Deno.serve(async (req) => {
         });
 
         // Combine profile and subscription data
-        let users = (profiles || []).map((profile: any) => {
+        const users = (profiles || []).map((profile: any) => {
           const sub = subscriptionMap.get(profile.user_id) || {};
           const plan = sub.plan || "free";
           const isUnlimited = unlimitedPlans.has(plan);
@@ -314,18 +355,13 @@ Deno.serve(async (req) => {
           };
         });
 
-        // Apply plan filter if specified
-        if (planFilter) {
-          users = users.filter(u => u.plan === planFilter);
-        }
-
         return new Response(
           JSON.stringify({
             users,
-            total: planFilter ? users.length : count,
+            total: count || 0,
             page,
             limit,
-            totalPages: Math.ceil((planFilter ? users.length : count || 0) / limit),
+            totalPages: Math.ceil((count || 0) / limit),
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
