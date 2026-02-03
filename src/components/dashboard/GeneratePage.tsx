@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { processFileForAnalysis } from "@/lib/file-processor";
 import { generateSEOFilename } from "@/lib/seo-filename";
-import { downloadAllAsZip, downloadSingleImage, getFileExtension } from "@/lib/file-downloader";
+import { downloadAllAsZip, downloadBatchAsZip, downloadSingleImage, getFileExtension } from "@/lib/file-downloader";
 import { cn } from "@/lib/utils";
 import JSZip from "jszip";
 import {
@@ -402,36 +402,8 @@ export function GeneratePage() {
 
     setIsDownloading(true);
     try {
-      // For each successful file, create entries for all marketplaces
-      const allEntries: Array<{
-        marketplace: string;
-        filename: string;
-        metadata: { title: string; description: string; keywords: string[] };
-        imageUrl: string;
-      }> = [];
-
-      successfulResults.forEach((batch) => {
-        batch.results.forEach((result) => {
-          allEntries.push({
-            imageUrl: batch.imageUrl,
-            marketplace: result.marketplace,
-            filename: generateSEOFilename({
-              title: result.title,
-              keywords: result.keywords,
-              marketplace: result.marketplace,
-              originalExtension: getFileExtension(batch.fileName),
-            }),
-            metadata: {
-              title: result.title,
-              description: result.description || "",
-              keywords: result.keywords,
-            },
-          });
-        });
-      });
-
-      // Use first file's results for a single ZIP with all
       if (successfulResults.length === 1) {
+        // Single file - use downloadAllAsZip for all marketplaces
         const batch = successfulResults[0];
         const marketplaceFilenames = batch.results.map((r) => ({
           marketplace: r.marketplace,
@@ -451,30 +423,38 @@ export function GeneratePage() {
         const baseFilename = batch.fileName.replace(/\.[^.]+$/, "");
         await downloadAllAsZip(batch.imageUrl, marketplaceFilenames, `${baseFilename}-seo-optimized.zip`);
       } else {
-        // Multiple files - create separate ZIPs or a mega ZIP
-        const batch = successfulResults[0];
-        const marketplaceFilenames = batch.results.map((r) => ({
-          marketplace: r.marketplace,
-          filename: generateSEOFilename({
-            title: r.title,
-            keywords: r.keywords,
+        // Multiple files - use downloadBatchAsZip for ALL files with embedded metadata
+        const files = successfulResults.map((batch) => ({
+          imageUrl: batch.imageUrl,
+          baseName: batch.fileName.replace(/\.[^.]+$/, ""),
+          marketplaces: batch.results.map((r) => ({
             marketplace: r.marketplace,
-            originalExtension: getFileExtension(batch.fileName),
-          }),
-          metadata: {
-            title: r.title,
-            description: r.description || "",
-            keywords: r.keywords,
-          },
+            filename: generateSEOFilename({
+              title: r.title,
+              keywords: r.keywords,
+              marketplace: r.marketplace,
+              originalExtension: getFileExtension(batch.fileName),
+            }),
+            metadata: {
+              title: r.title,
+              description: r.description || "",
+              keywords: r.keywords,
+            },
+          })),
         }));
         
-        await downloadAllAsZip(batch.imageUrl, marketplaceFilenames, `batch-${successfulResults.length}-files-seo-optimized.zip`);
-        toast.info("Downloaded first file. For multiple files, check History for individual downloads.");
+        const totalMarketplaceFiles = files.reduce((sum, f) => sum + f.marketplaces.length, 0);
+        toast.loading(`Preparing ${successfulResults.length} files (${totalMarketplaceFiles} marketplace versions)...`, { id: "batch-download" });
+        
+        await downloadBatchAsZip(files, `batch-${successfulResults.length}-files-seo-optimized.zip`);
+        
+        toast.dismiss("batch-download");
       }
 
       toast.success("Downloaded ZIP with embedded metadata");
     } catch (error) {
       console.error("Download error:", error);
+      toast.dismiss("batch-download");
       toast.error("Failed to download ZIP");
     } finally {
       setIsDownloading(false);
