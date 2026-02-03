@@ -419,57 +419,87 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
     const metadata = JSON.parse(toolCall.function.arguments);
     
     // Post-process to enforce exact character counts
+    // Filler words for natural padding
+    const fillerWords = ["professional", "quality", "design", "creative", "modern", "style", "concept", "visual", "artistic", "elegant", "unique", "versatile", "stunning", "beautiful", "perfect"];
+    
     if (metadata.results && Array.isArray(metadata.results)) {
       metadata.results = metadata.results.map((item: { marketplace: string; title: string; description: string; keywords: string[] }) => {
         // Enforce exact title character count
-        let title = item.title || "";
+        let title = (item.title || "").trim();
         if (title.length < validTitleMaxChars) {
-          // Pad with relevant content by repeating key terms
-          const words = title.split(" ").filter(w => w.length > 3);
-          while (title.length < validTitleMaxChars && words.length > 0) {
-            const word = words[title.length % words.length];
+          // Pad with relevant content words, not dots
+          const contentWords = title.split(" ").filter(w => w.length > 3);
+          const allWords = [...contentWords, ...fillerWords];
+          let wordIndex = 0;
+          while (title.length < validTitleMaxChars) {
+            const word = allWords[wordIndex % allWords.length];
             const remaining = validTitleMaxChars - title.length;
             if (remaining > word.length + 1) {
               title = title + " " + word;
+            } else if (remaining > 1) {
+              // Add shorter filler words
+              const shortWords = ["art", "for", "and", "use", "new"];
+              const shortWord = shortWords.find(w => w.length === remaining - 1);
+              if (shortWord) {
+                title = title + " " + shortWord;
+              } else {
+                title = title.padEnd(validTitleMaxChars);
+              }
             } else {
-              // Pad with spaces or period
-              title = title + ".".repeat(remaining);
+              title = title.padEnd(validTitleMaxChars);
             }
-          }
-          if (title.length < validTitleMaxChars) {
-            title = title + " ".repeat(validTitleMaxChars - title.length);
+            wordIndex++;
+            if (wordIndex > 50) break; // Safety limit
           }
         } else if (title.length > validTitleMaxChars) {
-          // Truncate at word boundary if possible
+          // Truncate cleanly at word boundary without adding dots
           title = title.substring(0, validTitleMaxChars);
+          // Find last complete word
           const lastSpace = title.lastIndexOf(" ");
-          if (lastSpace > validTitleMaxChars - 20) {
-            title = title.substring(0, lastSpace) + ".".repeat(validTitleMaxChars - lastSpace);
+          if (lastSpace > validTitleMaxChars - 15 && lastSpace > 0) {
+            // Truncate at word boundary and pad with spaces
+            title = title.substring(0, lastSpace).padEnd(validTitleMaxChars);
           }
         }
         
         // Enforce exact description character count
-        let description = item.description || "";
+        let description = (item.description || "").trim();
         if (description.length < validDescriptionMaxChars) {
-          // Pad with additional context
-          const words = description.split(" ").filter(w => w.length > 3);
-          while (description.length < validDescriptionMaxChars && words.length > 0) {
-            const word = words[description.length % words.length];
+          // Pad with relevant content words
+          const contentWords = description.split(" ").filter(w => w.length > 3);
+          const descFillers = ["This image is perfect for various creative projects.", "Ideal for commercial and editorial use.", "High quality visual content for modern designs."];
+          let fillerIndex = 0;
+          
+          // First try adding filler sentences
+          while (description.length < validDescriptionMaxChars && fillerIndex < descFillers.length) {
+            const remaining = validDescriptionMaxChars - description.length;
+            const filler = descFillers[fillerIndex];
+            if (remaining > filler.length + 1) {
+              description = description + " " + filler;
+            }
+            fillerIndex++;
+          }
+          
+          // Then add individual words if still short
+          const allWords = [...contentWords, ...fillerWords];
+          let wordIndex = 0;
+          while (description.length < validDescriptionMaxChars) {
+            const word = allWords[wordIndex % allWords.length];
             const remaining = validDescriptionMaxChars - description.length;
             if (remaining > word.length + 1) {
               description = description + " " + word;
             } else {
-              description = description + ".".repeat(remaining);
+              description = description.padEnd(validDescriptionMaxChars);
             }
-          }
-          if (description.length < validDescriptionMaxChars) {
-            description = description + " ".repeat(validDescriptionMaxChars - description.length);
+            wordIndex++;
+            if (wordIndex > 100) break; // Safety limit
           }
         } else if (description.length > validDescriptionMaxChars) {
+          // Truncate cleanly at word boundary without adding dots
           description = description.substring(0, validDescriptionMaxChars);
           const lastSpace = description.lastIndexOf(" ");
-          if (lastSpace > validDescriptionMaxChars - 30) {
-            description = description.substring(0, lastSpace) + ".".repeat(validDescriptionMaxChars - lastSpace);
+          if (lastSpace > validDescriptionMaxChars - 20 && lastSpace > 0) {
+            description = description.substring(0, lastSpace).padEnd(validDescriptionMaxChars);
           }
         }
         
