@@ -338,6 +338,209 @@ function embedMetadataIntoJpeg(
   return result;
 }
 
+/**
+ * Build PNG iTXt chunk with XMP metadata
+ * PNG supports XMP via iTXt (international text) chunks
+ */
+function buildPngXmpChunk(metadata: ImageMetadata): Uint8Array {
+  const hasTitle = metadata.title && metadata.title.trim().length > 0;
+  const hasDescription = metadata.description && metadata.description.trim().length > 0;
+  const hasKeywords = metadata.keywords && metadata.keywords.length > 0;
+
+  if (!hasTitle && !hasDescription && !hasKeywords) {
+    return new Uint8Array(0);
+  }
+
+  const safeTitle = escapeXml(metadata.title || "");
+  const safeDescription = escapeXml(metadata.description || "");
+  const keywordItems = metadata.keywords
+    .filter((k) => k && k.trim())
+    .map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`)
+    .join("\n");
+
+  const xmpContent = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="MetaGen by Lovable">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/"
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+        xmlns:Iptc4xmpCore="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/">
+      <dc:title>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${safeTitle}</rdf:li>
+        </rdf:Alt>
+      </dc:title>
+      <dc:description>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${safeDescription}</rdf:li>
+        </rdf:Alt>
+      </dc:description>
+      <dc:subject>
+        <rdf:Bag>
+${keywordItems}
+        </rdf:Bag>
+      </dc:subject>
+      <photoshop:Headline>${safeTitle}</photoshop:Headline>
+      <xmp:CreatorTool>MetaGen by Lovable</xmp:CreatorTool>
+      <xmp:CreateDate>${new Date().toISOString()}</xmp:CreateDate>
+      <Iptc4xmpCore:IntellectualGenre>Stock Photography</Iptc4xmpCore:IntellectualGenre>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+
+  // PNG iTXt chunk structure for XMP:
+  // Keyword: "XML:com.adobe.xmp" (null terminated)
+  // Compression flag: 0 (no compression)
+  // Compression method: 0
+  // Language tag: empty (null terminated)
+  // Translated keyword: empty (null terminated)
+  // Text: XMP content
+
+  const keyword = "XML:com.adobe.xmp";
+  const keywordBytes = new TextEncoder().encode(keyword);
+  const xmpBytes = new TextEncoder().encode(xmpContent);
+
+  // Calculate chunk data size
+  const dataSize = keywordBytes.length + 1 + 1 + 1 + 1 + 1 + xmpBytes.length;
+  // keyword + null + compression flag + compression method + lang null + translated null + xmp
+
+  const chunkData = new Uint8Array(dataSize);
+  let pos = 0;
+
+  // Keyword
+  chunkData.set(keywordBytes, pos);
+  pos += keywordBytes.length;
+  chunkData[pos++] = 0; // null terminator
+
+  // Compression flag (0 = uncompressed)
+  chunkData[pos++] = 0;
+
+  // Compression method (0)
+  chunkData[pos++] = 0;
+
+  // Language tag (empty, null terminated)
+  chunkData[pos++] = 0;
+
+  // Translated keyword (empty, null terminated)
+  chunkData[pos++] = 0;
+
+  // XMP content
+  chunkData.set(xmpBytes, pos);
+
+  return chunkData;
+}
+
+/**
+ * Calculate CRC32 for PNG chunk
+ */
+function crc32(data: Uint8Array): number {
+  let crc = 0xffffffff;
+  const table = new Uint32Array(256);
+
+  // Generate CRC table
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[i] = c;
+  }
+
+  // Calculate CRC
+  for (let i = 0; i < data.length; i++) {
+    crc = table[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
+  }
+
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/**
+ * Embed XMP metadata into PNG using iTXt chunk
+ */
+function embedMetadataIntoPng(
+  pngBuffer: Uint8Array,
+  metadata: ImageMetadata
+): Uint8Array {
+  const hasTitle = metadata.title && metadata.title.trim().length > 0;
+  const hasDescription = metadata.description && metadata.description.trim().length > 0;
+  const hasKeywords = metadata.keywords && metadata.keywords.length > 0;
+
+  if (!hasTitle && !hasDescription && !hasKeywords) {
+    console.log("No metadata to embed in PNG, returning original");
+    return pngBuffer;
+  }
+
+  // Validate PNG signature
+  const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  for (let i = 0; i < 8; i++) {
+    if (pngBuffer[i] !== pngSignature[i]) {
+      console.log("Not a valid PNG, returning original");
+      return pngBuffer;
+    }
+  }
+
+  // Build iTXt chunk data
+  const chunkData = buildPngXmpChunk(metadata);
+  if (chunkData.length === 0) {
+    return pngBuffer;
+  }
+
+  // Build complete iTXt chunk
+  const chunkType = new TextEncoder().encode("iTXt");
+  const chunkLength = chunkData.length;
+
+  // Create buffer for length(4) + type(4) + data + crc(4)
+  const fullChunk = new Uint8Array(4 + 4 + chunkLength + 4);
+
+  // Length (big-endian)
+  fullChunk[0] = (chunkLength >> 24) & 0xff;
+  fullChunk[1] = (chunkLength >> 16) & 0xff;
+  fullChunk[2] = (chunkLength >> 8) & 0xff;
+  fullChunk[3] = chunkLength & 0xff;
+
+  // Type
+  fullChunk.set(chunkType, 4);
+
+  // Data
+  fullChunk.set(chunkData, 8);
+
+  // CRC (over type + data)
+  const crcData = new Uint8Array(4 + chunkLength);
+  crcData.set(chunkType, 0);
+  crcData.set(chunkData, 4);
+  const crc = crc32(crcData);
+  fullChunk[8 + chunkLength] = (crc >> 24) & 0xff;
+  fullChunk[8 + chunkLength + 1] = (crc >> 16) & 0xff;
+  fullChunk[8 + chunkLength + 2] = (crc >> 8) & 0xff;
+  fullChunk[8 + chunkLength + 3] = crc & 0xff;
+
+  console.log("Built PNG iTXt chunk:", fullChunk.length, "bytes");
+
+  // Find position after IHDR chunk to insert iTXt
+  // PNG structure: signature (8) + chunks
+  // Each chunk: length(4) + type(4) + data(length) + crc(4)
+  let insertPos = 8; // After signature
+
+  // Read first chunk (should be IHDR)
+  const firstChunkLen =
+    (pngBuffer[8] << 24) |
+    (pngBuffer[9] << 16) |
+    (pngBuffer[10] << 8) |
+    pngBuffer[11];
+  insertPos += 4 + 4 + firstChunkLen + 4; // Skip IHDR chunk
+
+  // Create new PNG with iTXt chunk inserted after IHDR
+  const result = new Uint8Array(pngBuffer.length + fullChunk.length);
+  result.set(pngBuffer.subarray(0, insertPos), 0);
+  result.set(fullChunk, insertPos);
+  result.set(pngBuffer.subarray(insertPos), insertPos + fullChunk.length);
+
+  console.log("Successfully embedded XMP into PNG, new size:", result.length);
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -393,21 +596,35 @@ Deno.serve(async (req) => {
 
     const arrayBuffer = await imageResponse.arrayBuffer();
     const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+    
     const isJpeg =
       contentType.includes("jpeg") ||
       contentType.includes("jpg") ||
       filename.toLowerCase().endsWith(".jpg") ||
       filename.toLowerCase().endsWith(".jpeg");
+    
+    const isPng =
+      contentType.includes("png") ||
+      filename.toLowerCase().endsWith(".png");
 
     let responseBody: ArrayBuffer = arrayBuffer;
+    let responseContentType = contentType;
 
-    // Embed metadata if JPEG and metadata provided
-    if (isJpeg && (title || description || keywords)) {
-      console.log("Embedding EXIF + XMP metadata into JPEG");
-      console.log("Metadata:", { title, description, keywordsCount: metadata.keywords.length });
-      const imageBuffer = new Uint8Array(arrayBuffer);
-      const processedBuffer = embedMetadataIntoJpeg(imageBuffer, metadata);
-      responseBody = processedBuffer.buffer as ArrayBuffer;
+    // Embed metadata based on format
+    if (title || description || keywords) {
+      if (isJpeg) {
+        console.log("Embedding EXIF + XMP metadata into JPEG");
+        const imageBuffer = new Uint8Array(arrayBuffer);
+        const processedBuffer = embedMetadataIntoJpeg(imageBuffer, metadata);
+        responseBody = processedBuffer.buffer as ArrayBuffer;
+        responseContentType = "image/jpeg";
+      } else if (isPng) {
+        console.log("Embedding XMP metadata into PNG");
+        const imageBuffer = new Uint8Array(arrayBuffer);
+        const processedBuffer = embedMetadataIntoPng(imageBuffer, metadata);
+        responseBody = processedBuffer.buffer as ArrayBuffer;
+        responseContentType = "image/png";
+      }
       console.log("Original size:", arrayBuffer.byteLength, "New size:", responseBody.byteLength);
     }
 
@@ -418,7 +635,7 @@ Deno.serve(async (req) => {
     return new Response(responseBody, {
       headers: {
         ...corsHeaders,
-        "Content-Type": isJpeg ? "image/jpeg" : contentType,
+        "Content-Type": responseContentType,
         "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${safeFilename}`,
         "Content-Length": responseBody.byteLength.toString(),
         "Cache-Control": "no-cache",
