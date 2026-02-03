@@ -171,19 +171,34 @@ async function fetchProcessedImage(
   filename: string,
   metadata?: ImageMetadata
 ): Promise<Blob> {
+  // Debug: Log all inputs
+  console.log("=== fetchProcessedImage START ===");
+  console.log("imageUrl:", imageUrl);
+  console.log("filename:", filename);
+  console.log("metadata object:", JSON.stringify(metadata, null, 2));
+  
   const downloadUrl = buildDownloadUrl(imageUrl, filename, metadata, "image");
   
-  console.log("fetchProcessedImage - URL:", downloadUrl);
-  console.log("fetchProcessedImage - Metadata:", metadata);
+  console.log("Full download URL:", downloadUrl);
+  
+  // Parse URL to verify parameters
+  const urlObj = new URL(downloadUrl);
+  console.log("URL params - title:", urlObj.searchParams.get("title"));
+  console.log("URL params - description:", urlObj.searchParams.get("description"));
+  console.log("URL params - keywords:", urlObj.searchParams.get("keywords"));
   
   const response = await fetch(downloadUrl);
+  console.log("Response status:", response.status, response.statusText);
+  
   if (!response.ok) {
-    console.error("Failed to fetch processed image:", response.status, response.statusText);
+    const errorText = await response.text();
+    console.error("Error response body:", errorText);
     throw new Error(`Failed to fetch processed image: ${response.statusText}`);
   }
   
   const blob = await response.blob();
-  console.log("fetchProcessedImage - Got blob, size:", blob.size);
+  console.log("Got blob, size:", blob.size, "type:", blob.type);
+  console.log("=== fetchProcessedImage END ===");
   return blob;
 }
 
