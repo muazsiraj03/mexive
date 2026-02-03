@@ -150,9 +150,9 @@ export function ImagePromptQueue({
         )}
       </div>
 
-      {/* Header Row 2: Copy All, Download All */}
+      {/* Header Row 2: Copy All, Download All - aligned right */}
       {completedCount > 0 && (
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center justify-end gap-2 mb-4">
           <Button
             variant="ghost"
             size="sm"
