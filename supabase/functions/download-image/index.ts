@@ -541,6 +541,152 @@ function embedMetadataIntoPng(
   return result;
 }
 
+/**
+ * Build XMP content for WebP (reusable for RIFF container)
+ */
+function buildWebpXmpContent(metadata: ImageMetadata): Uint8Array {
+  const hasTitle = metadata.title && metadata.title.trim().length > 0;
+  const hasDescription = metadata.description && metadata.description.trim().length > 0;
+  const hasKeywords = metadata.keywords && metadata.keywords.length > 0;
+
+  if (!hasTitle && !hasDescription && !hasKeywords) {
+    return new Uint8Array(0);
+  }
+
+  const safeTitle = escapeXml(metadata.title || "");
+  const safeDescription = escapeXml(metadata.description || "");
+  const keywordItems = metadata.keywords
+    .filter((k) => k && k.trim())
+    .map((k) => `          <rdf:li>${escapeXml(k)}</rdf:li>`)
+    .join("\n");
+
+  const xmpContent = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="MetaGen by Lovable">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/"
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+        xmlns:Iptc4xmpCore="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/">
+      <dc:title>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${safeTitle}</rdf:li>
+        </rdf:Alt>
+      </dc:title>
+      <dc:description>
+        <rdf:Alt>
+          <rdf:li xml:lang="x-default">${safeDescription}</rdf:li>
+        </rdf:Alt>
+      </dc:description>
+      <dc:subject>
+        <rdf:Bag>
+${keywordItems}
+        </rdf:Bag>
+      </dc:subject>
+      <photoshop:Headline>${safeTitle}</photoshop:Headline>
+      <xmp:CreatorTool>MetaGen by Lovable</xmp:CreatorTool>
+      <xmp:CreateDate>${new Date().toISOString()}</xmp:CreateDate>
+      <Iptc4xmpCore:IntellectualGenre>Stock Photography</Iptc4xmpCore:IntellectualGenre>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+
+  return new TextEncoder().encode(xmpContent);
+}
+
+/**
+ * Embed XMP metadata into WebP using RIFF XMP chunk
+ * WebP uses RIFF container format with "XMP " chunk for XMP metadata
+ */
+function embedMetadataIntoWebp(
+  webpBuffer: Uint8Array,
+  metadata: ImageMetadata
+): Uint8Array {
+  const hasTitle = metadata.title && metadata.title.trim().length > 0;
+  const hasDescription = metadata.description && metadata.description.trim().length > 0;
+  const hasKeywords = metadata.keywords && metadata.keywords.length > 0;
+
+  if (!hasTitle && !hasDescription && !hasKeywords) {
+    console.log("No metadata to embed in WebP, returning original");
+    return webpBuffer;
+  }
+
+  // Validate RIFF/WEBP signature
+  // RIFF header: "RIFF" (4 bytes) + file size (4 bytes) + "WEBP" (4 bytes)
+  const riffSignature = new TextDecoder().decode(webpBuffer.subarray(0, 4));
+  const webpSignature = new TextDecoder().decode(webpBuffer.subarray(8, 12));
+  
+  if (riffSignature !== "RIFF" || webpSignature !== "WEBP") {
+    console.log("Not a valid WebP file, returning original");
+    return webpBuffer;
+  }
+
+  // Build XMP content
+  const xmpBytes = buildWebpXmpContent(metadata);
+  if (xmpBytes.length === 0) {
+    return webpBuffer;
+  }
+
+  // Build XMP chunk for RIFF container
+  // Chunk format: "XMP " (4 bytes) + chunk size (4 bytes, little-endian) + data
+  const chunkId = new TextEncoder().encode("XMP ");
+  const chunkSize = xmpBytes.length;
+  
+  // RIFF chunks must be word-aligned (even size), add padding byte if needed
+  const paddingNeeded = chunkSize % 2 !== 0;
+  const totalChunkSize = 4 + 4 + chunkSize + (paddingNeeded ? 1 : 0);
+
+  const xmpChunk = new Uint8Array(totalChunkSize);
+  let pos = 0;
+
+  // Chunk ID: "XMP "
+  xmpChunk.set(chunkId, pos);
+  pos += 4;
+
+  // Chunk size (little-endian)
+  xmpChunk[pos++] = chunkSize & 0xff;
+  xmpChunk[pos++] = (chunkSize >> 8) & 0xff;
+  xmpChunk[pos++] = (chunkSize >> 16) & 0xff;
+  xmpChunk[pos++] = (chunkSize >> 24) & 0xff;
+
+  // XMP data
+  xmpChunk.set(xmpBytes, pos);
+  pos += xmpBytes.length;
+
+  // Padding byte if needed
+  if (paddingNeeded) {
+    xmpChunk[pos] = 0;
+  }
+
+  console.log("Built WebP XMP chunk:", xmpChunk.length, "bytes");
+
+  // Calculate new file size
+  const originalFileSize = webpBuffer.length;
+  const newFileSize = originalFileSize + xmpChunk.length;
+
+  // Create new WebP with XMP chunk appended before the end
+  // Insert after the initial WEBP chunks (we'll append at the end of RIFF container)
+  const result = new Uint8Array(newFileSize);
+  
+  // Copy original WebP data
+  result.set(webpBuffer, 0);
+  
+  // Append XMP chunk at the end
+  result.set(xmpChunk, originalFileSize);
+
+  // Update RIFF file size (bytes 4-7, little-endian)
+  // RIFF size = total file size - 8 (excludes "RIFF" and size field itself)
+  const riffSize = newFileSize - 8;
+  result[4] = riffSize & 0xff;
+  result[5] = (riffSize >> 8) & 0xff;
+  result[6] = (riffSize >> 16) & 0xff;
+  result[7] = (riffSize >> 24) & 0xff;
+
+  console.log("Successfully embedded XMP into WebP, new size:", result.length);
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -606,6 +752,10 @@ Deno.serve(async (req) => {
     const isPng =
       contentType.includes("png") ||
       filename.toLowerCase().endsWith(".png");
+    
+    const isWebp =
+      contentType.includes("webp") ||
+      filename.toLowerCase().endsWith(".webp");
 
     let responseBody: ArrayBuffer = arrayBuffer;
     let responseContentType = contentType;
@@ -624,6 +774,12 @@ Deno.serve(async (req) => {
         const processedBuffer = embedMetadataIntoPng(imageBuffer, metadata);
         responseBody = processedBuffer.buffer as ArrayBuffer;
         responseContentType = "image/png";
+      } else if (isWebp) {
+        console.log("Embedding XMP metadata into WebP");
+        const imageBuffer = new Uint8Array(arrayBuffer);
+        const processedBuffer = embedMetadataIntoWebp(imageBuffer, metadata);
+        responseBody = processedBuffer.buffer as ArrayBuffer;
+        responseContentType = "image/webp";
       }
       console.log("Original size:", arrayBuffer.byteLength, "New size:", responseBody.byteLength);
     }
