@@ -106,9 +106,13 @@ function buildDownloadUrl(
   });
   
   if (metadata) {
-    params.set("title", metadata.title || "");
-    params.set("description", metadata.description || "");
-    params.set("keywords", metadata.keywords.join(","));
+    const title = metadata.title || "";
+    const description = metadata.description || "";
+    const keywords = Array.isArray(metadata.keywords) ? metadata.keywords.join(",") : "";
+    
+    params.set("title", title);
+    params.set("description", description);
+    params.set("keywords", keywords);
   }
   
   return `${DOWNLOAD_FUNCTION_URL}?${params.toString()}`;
@@ -168,10 +172,13 @@ async function fetchProcessedImage(
   metadata?: ImageMetadata
 ): Promise<Blob> {
   const downloadUrl = buildDownloadUrl(imageUrl, filename, metadata, "image");
+  
   const response = await fetch(downloadUrl);
   if (!response.ok) {
+    console.error("Failed to fetch processed image:", response.status, response.statusText);
     throw new Error(`Failed to fetch processed image: ${response.statusText}`);
   }
+  
   return response.blob();
 }
 
@@ -213,13 +220,16 @@ export async function downloadAllAsZip(
       ? await fetchProcessedImage(imageUrl, filename, metadata)
       : await fetchImageAsBlob(imageUrl);
     
-    zip.file(filename, processedBlob);
+    // Convert blob to ArrayBuffer for reliable binary handling in JSZip
+    const arrayBuffer = await processedBlob.arrayBuffer();
+    zip.file(filename, arrayBuffer, { binary: true });
     
     // For non-JPEG files, add XMP sidecar to ZIP
     if (metadata && needsXMPSidecar(filename)) {
       const xmpBlob = await fetchXMPSidecar(imageUrl, filename, metadata);
+      const xmpArrayBuffer = await xmpBlob.arrayBuffer();
       const xmpFilename = getXMPFilename(filename);
-      zip.file(xmpFilename, xmpBlob);
+      zip.file(xmpFilename, xmpArrayBuffer, { binary: true });
     }
   }
 
@@ -245,7 +255,7 @@ export async function downloadBatchAsZip(
   }>,
   zipFilename: string
 ): Promise<void> {
-const zip = new JSZip();
+  const zip = new JSZip();
 
   // Process each file
   for (const file of files) {
@@ -256,13 +266,16 @@ const zip = new JSZip();
         ? await fetchProcessedImage(file.imageUrl, filename, metadata)
         : await fetchImageAsBlob(file.imageUrl);
       
-      zip.file(filename, processedBlob);
+      // Convert blob to ArrayBuffer for reliable binary handling in JSZip
+      const arrayBuffer = await processedBlob.arrayBuffer();
+      zip.file(filename, arrayBuffer, { binary: true });
       
       // For non-JPEG files, add XMP sidecar
       if (metadata && needsXMPSidecar(filename)) {
         const xmpBlob = await fetchXMPSidecar(file.imageUrl, filename, metadata);
+        const xmpArrayBuffer = await xmpBlob.arrayBuffer();
         const xmpFilename = getXMPFilename(filename);
-        zip.file(xmpFilename, xmpBlob);
+        zip.file(xmpFilename, xmpArrayBuffer, { binary: true });
       }
     }
   }
