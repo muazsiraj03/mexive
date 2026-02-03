@@ -22,7 +22,7 @@ import { processFileForAnalysis } from "@/lib/file-processor";
 import { generateSEOFilename } from "@/lib/seo-filename";
 import { downloadAllAsZip, downloadBatchAsZip, downloadSingleImage, getFileExtension } from "@/lib/file-downloader";
 import { cn } from "@/lib/utils";
-import JSZip from "jszip";
+
 import {
   Tooltip,
   TooltipContent,
@@ -160,7 +160,7 @@ export function GeneratePage() {
     return pages;
   };
 
-  // Download filtered results as ZIP
+  // Download filtered results as ZIP with embedded metadata
   const handleDownloadFiltered = async () => {
     const toDownload = filteredResults.filter((r) => r.status === "success");
     if (toDownload.length === 0) {
@@ -169,41 +169,33 @@ export function GeneratePage() {
     }
 
     setIsDownloadingFiltered(true);
-    const toastId = toast.loading(`Preparing ${toDownload.length} file(s) for download...`);
+    const toastId = toast.loading(`Preparing ${toDownload.length} file(s) with embedded metadata...`);
 
     try {
-      const zip = new JSZip();
+      // Build file entries with metadata for batch download
+      const files = toDownload.map((batch) => ({
+        imageUrl: batch.imageUrl,
+        baseName: batch.fileName.replace(/\.[^.]+$/, ""),
+        marketplaces: batch.results.map((r) => ({
+          marketplace: r.marketplace,
+          filename: generateSEOFilename({
+            title: r.title,
+            keywords: r.keywords,
+            marketplace: r.marketplace,
+            originalExtension: getFileExtension(batch.fileName),
+          }),
+          metadata: {
+            title: r.title,
+            description: r.description || "",
+            keywords: r.keywords,
+          },
+        })),
+      }));
 
-      for (const batch of toDownload) {
-        for (const result of batch.results) {
-          try {
-            const response = await fetch(batch.imageUrl);
-            if (!response.ok) continue;
-            const blob = await response.blob();
-            const filename = generateSEOFilename({
-              title: result.title,
-              keywords: result.keywords,
-              marketplace: result.marketplace,
-              originalExtension: getFileExtension(batch.fileName),
-            });
-            zip.file(`${result.marketplace}/${filename}`, blob);
-          } catch (error) {
-            console.error(`Failed to add ${batch.fileName}:`, error);
-          }
-        }
-      }
+      // Use downloadBatchAsZip which embeds metadata via edge function
+      await downloadBatchAsZip(files, `metadata-${resultsFilter}-${Date.now()}.zip`);
 
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `metadata-${resultsFilter}-${Date.now()}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast.success(`Downloaded ${toDownload.length} file(s)`, { id: toastId });
+      toast.success(`Downloaded ${toDownload.length} file(s) with embedded metadata`, { id: toastId });
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to create download", { id: toastId });
