@@ -173,13 +173,18 @@ async function fetchProcessedImage(
 ): Promise<Blob> {
   const downloadUrl = buildDownloadUrl(imageUrl, filename, metadata, "image");
   
+  console.log("fetchProcessedImage - URL:", downloadUrl);
+  console.log("fetchProcessedImage - Metadata:", metadata);
+  
   const response = await fetch(downloadUrl);
   if (!response.ok) {
     console.error("Failed to fetch processed image:", response.status, response.statusText);
     throw new Error(`Failed to fetch processed image: ${response.statusText}`);
   }
   
-  return response.blob();
+  const blob = await response.blob();
+  console.log("fetchProcessedImage - Got blob, size:", blob.size);
+  return blob;
 }
 
 /**
@@ -255,12 +260,18 @@ export async function downloadBatchAsZip(
   }>,
   zipFilename: string
 ): Promise<void> {
+  console.log("downloadBatchAsZip called with", files.length, "files");
+  
   const zip = new JSZip();
 
   // Process each file
   for (const file of files) {
+    console.log("Processing file:", file.baseName, "with", file.marketplaces.length, "marketplaces");
+    
     // Add each marketplace version directly to root (use edge function for metadata)
     for (const { filename, metadata } of file.marketplaces) {
+      console.log("Processing marketplace file:", filename, "metadata:", metadata);
+      
       // Use edge function to get properly processed image with metadata
       const processedBlob = metadata 
         ? await fetchProcessedImage(file.imageUrl, filename, metadata)
@@ -268,6 +279,7 @@ export async function downloadBatchAsZip(
       
       // Convert blob to ArrayBuffer for reliable binary handling in JSZip
       const arrayBuffer = await processedBlob.arrayBuffer();
+      console.log("Adding to ZIP:", filename, "size:", arrayBuffer.byteLength);
       zip.file(filename, arrayBuffer, { binary: true });
       
       // For non-JPEG files, add XMP sidecar
@@ -281,7 +293,9 @@ export async function downloadBatchAsZip(
   }
 
   // Generate and download the ZIP
+  console.log("Generating ZIP file...");
   const zipBlob = await zip.generateAsync({ type: "blob" });
+  console.log("ZIP blob size:", zipBlob.size);
   downloadBlob(zipBlob, zipFilename);
 }
 
