@@ -225,21 +225,26 @@ export async function downloadAllAsZip(
       ? await fetchProcessedImage(imageUrl, filename, metadata)
       : await fetchImageAsBlob(imageUrl);
     
-    // Convert blob to ArrayBuffer for reliable binary handling in JSZip
+    // Convert blob to Uint8Array for reliable binary handling in JSZip
     const arrayBuffer = await processedBlob.arrayBuffer();
-    zip.file(filename, arrayBuffer, { binary: true });
+    const uint8Array = new Uint8Array(arrayBuffer);
+    zip.file(filename, uint8Array, { binary: true });
     
     // For non-JPEG files, add XMP sidecar to ZIP
     if (metadata && needsXMPSidecar(filename)) {
       const xmpBlob = await fetchXMPSidecar(imageUrl, filename, metadata);
       const xmpArrayBuffer = await xmpBlob.arrayBuffer();
+      const xmpUint8Array = new Uint8Array(xmpArrayBuffer);
       const xmpFilename = getXMPFilename(filename);
-      zip.file(xmpFilename, xmpArrayBuffer, { binary: true });
+      zip.file(xmpFilename, xmpUint8Array, { binary: true });
     }
   }
 
-  // Generate and download the ZIP
-  const zipBlob = await zip.generateAsync({ type: "blob" });
+  // Generate and download the ZIP with STORE compression to preserve metadata
+  const zipBlob = await zip.generateAsync({ 
+    type: "blob",
+    compression: "STORE" // No compression to preserve EXIF/XMP metadata integrity
+  });
   const finalZipName = zipFilename || `seo-images-${Date.now()}.zip`;
   downloadBlob(zipBlob, finalZipName);
 }
@@ -277,24 +282,29 @@ export async function downloadBatchAsZip(
         ? await fetchProcessedImage(file.imageUrl, filename, metadata)
         : await fetchImageAsBlob(file.imageUrl);
       
-      // Convert blob to ArrayBuffer for reliable binary handling in JSZip
+      // Convert blob to Uint8Array for reliable binary handling in JSZip
       const arrayBuffer = await processedBlob.arrayBuffer();
-      console.log("Adding to ZIP:", filename, "size:", arrayBuffer.byteLength);
-      zip.file(filename, arrayBuffer, { binary: true });
+      const uint8Array = new Uint8Array(arrayBuffer);
+      console.log("Adding to ZIP:", filename, "size:", uint8Array.length, "first bytes:", uint8Array.slice(0, 20));
+      zip.file(filename, uint8Array, { binary: true });
       
       // For non-JPEG files, add XMP sidecar
       if (metadata && needsXMPSidecar(filename)) {
         const xmpBlob = await fetchXMPSidecar(file.imageUrl, filename, metadata);
         const xmpArrayBuffer = await xmpBlob.arrayBuffer();
+        const xmpUint8Array = new Uint8Array(xmpArrayBuffer);
         const xmpFilename = getXMPFilename(filename);
-        zip.file(xmpFilename, xmpArrayBuffer, { binary: true });
+        zip.file(xmpFilename, xmpUint8Array, { binary: true });
       }
     }
   }
 
-  // Generate and download the ZIP
-  console.log("Generating ZIP file...");
-  const zipBlob = await zip.generateAsync({ type: "blob" });
+  // Generate and download the ZIP with STORE compression to preserve metadata
+  console.log("Generating ZIP file with STORE compression...");
+  const zipBlob = await zip.generateAsync({ 
+    type: "blob",
+    compression: "STORE" // No compression to preserve EXIF/XMP metadata integrity
+  });
   console.log("ZIP blob size:", zipBlob.size);
   downloadBlob(zipBlob, zipFilename);
 }
