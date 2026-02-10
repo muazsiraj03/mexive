@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Wand2, Copy, Download, X, Loader2, ThumbsUp, ThumbsDown, BookmarkPlus, Sparkles, FolderOpen, Play, StopCircle, RefreshCw, FileText, History } from "lucide-react";
+import { Upload, Wand2, Copy, Download, X, Loader2, ThumbsUp, ThumbsDown, BookmarkPlus, Sparkles, FolderOpen, Play, StopCircle, RefreshCw, FileText, History, Search, Eye, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DashboardHeader, DashboardBreadcrumb } from "./DashboardHeader";
 import { AnimatedSection } from "@/components/ui/animated-section";
 import { ToolStatsBar } from "./ToolStatsBar";
@@ -20,9 +22,10 @@ import { processFileForAnalysis } from "@/lib/file-processor";
 import { PromptStyle, DetailLevel, PromptResult, PROMPT_STYLES, DETAIL_LEVELS, downloadPromptAsText, copyToClipboard } from "@/lib/image-to-prompt";
 import { usePromptTraining, PromptTrainingPreferences } from "@/hooks/use-prompt-training";
 import { PromptTrainingPanel } from "./PromptTrainingPanel";
-import { PromptHistoryDrawer, PromptHistoryItem } from "./PromptHistoryDrawer";
+import { PromptHistoryItem } from "./PromptHistoryDrawer";
 import { SingleGenTraining, SingleGenTrainingSettings, DEFAULT_SINGLE_GEN_SETTINGS } from "./SingleGenTraining";
 import { ImagePromptQueue, QueuedImage } from "./ImagePromptQueue";
+import { formatDistanceToNow } from "date-fns";
 interface PromptVariation {
   type: "composition" | "color" | "mood";
   label: string;
@@ -168,6 +171,15 @@ export function ImageToPromptPage() {
   // Total prompts generated (from database)
   const [totalPromptsGenerated, setTotalPromptsGenerated] = useState(0);
 
+  // Main tab state (generate vs history)
+  const [mainTab, setMainTab] = useState<"generate" | "history">("generate");
+
+  // History state
+  const [historyItems, setHistoryItems] = useState<PromptHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<PromptHistoryItem | null>(null);
+
   // File input refs for folder/file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -192,6 +204,41 @@ export function ImageToPromptPage() {
   useEffect(() => {
     fetchPromptsCount();
   }, [fetchPromptsCount]);
+
+  // Fetch history items
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        setHistoryLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("prompt_history")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error("Error fetching history:", error);
+        toast.error("Failed to load prompt history");
+      } else {
+        setHistoryItems(data || []);
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  // Fetch history when tab opens
+  useEffect(() => {
+    if (mainTab === "history") {
+      fetchHistory();
+    }
+  }, [mainTab, fetchHistory]);
 
   const toolStats = [{
     label: "Prompts Generated",
@@ -801,13 +848,31 @@ export function ImageToPromptPage() {
               </Badge>}
           </div>
           <div className="flex items-center gap-2">
-            <PromptHistoryDrawer onRegenerate={handleRegenerateFromHistory} />
             <SingleGenTraining settings={singleGenSettings} onChange={setSingleGenSettings} onPromoteToPersistent={handlePromoteToPersistent} />
             <PromptTrainingPanel />
           </div>
         </div>
 
-        {/* Upload Area - shown when no image selected for single mode */}
+        {/* Main Tabs */}
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as "generate" | "history")} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="generate" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              Generate
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="h-4 w-4" />
+              History
+              {totalPromptsGenerated > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {totalPromptsGenerated}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Generate Tab */}
+          <TabsContent value="generate" className="mt-6 space-y-6">
         {!previewUrl && imageQueue.length === 0 && <AnimatedSection variant="fade-up">
             <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
               <h2 className="text-lg font-semibold text-foreground">Upload Images</h2>
@@ -1092,6 +1157,143 @@ export function ImageToPromptPage() {
               </p>
             </AnimatedSection>
           </div>}
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="mt-6 space-y-6">
+            <AnimatedSection variant="fade-up">
+              <div className="rounded-2xl border border-border/60 bg-card p-6 card-elevated">
+                <h2 className="text-lg font-semibold text-foreground">Prompt History</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  View and reuse your previously generated prompts
+                </p>
+
+                {/* Search */}
+                <div className="mt-4 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Search prompts..."
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* History Items */}
+                <ScrollArea className="h-[calc(100vh-300px)] mt-4">
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : historyItems.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No prompt history yet
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pr-4">
+                      {historyItems
+                        .filter((item) =>
+                          item.prompt.toLowerCase().includes(historySearch.toLowerCase()) ||
+                          item.style.toLowerCase().includes(historySearch.toLowerCase())
+                        )
+                        .map((item) => (
+                          <div key={item.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
+                            {/* Image and Prompt */}
+                            <div className="flex gap-3">
+                              <div className="w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0">
+                                <img
+                                  src={item.image_url}
+                                  alt="Source"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm line-clamp-3">{item.prompt}</p>
+                              </div>
+                            </div>
+
+                            {/* Metadata */}
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {item.style}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {item.detail_level}
+                              </Badge>
+                              {item.art_style && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {item.art_style}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-between pt-2 border-t border-border">
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => copyToClipboard(item.prompt)}
+                                  title="Copy prompt"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => window.open(item.image_url, "_blank")}
+                                  title="View image"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleRegenerateFromHistory(item)}
+                                  title="Regenerate"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={async () => {
+                                    const { error } = await supabase
+                                      .from("prompt_history")
+                                      .delete()
+                                      .eq("id", item.id);
+                                    if (error) {
+                                      toast.error("Failed to delete");
+                                    } else {
+                                      setHistoryItems((prev) => prev.filter((i) => i.id !== item.id));
+                                      toast.success("Deleted from history");
+                                    }
+                                  }}
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            </AnimatedSection>
+          </TabsContent>
+        </Tabs>
         </div>
       </main>
     </ToolAccessGate>;
