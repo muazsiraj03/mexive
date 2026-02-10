@@ -274,11 +274,17 @@ export function AdminUsers() {
     if (!editingUser) return;
     
     setSaving(true);
-    const success = await updateUser(editingUser.id, {
+    const updates: any = {
       plan: editForm.plan,
-      credits: editForm.credits,
       has_unlimited_credits: editForm.has_unlimited_credits,
-    });
+    };
+    
+    // Only include credits if explicitly set (non-zero), otherwise let backend use plan default
+    if (editForm.credits > 0) {
+      updates.credits = editForm.credits;
+    }
+    
+    const success = await updateUser(editingUser.id, updates);
     setSaving(false);
 
     if (success) {
@@ -551,7 +557,7 @@ export function AdminUsers() {
                                           <DialogHeader>
                                             <DialogTitle>Edit User</DialogTitle>
                                             <DialogDescription>
-                                              Update user plan and credits
+                                              Update user plan and credits. Changing the plan will automatically assign its default credits.
                                             </DialogDescription>
                                           </DialogHeader>
                                           <div className="grid gap-4 py-4">
@@ -576,10 +582,11 @@ export function AdminUsers() {
                                               </Select>
                                             </div>
                                             <div className="grid gap-2">
-                                              <Label htmlFor="credits">Credits</Label>
+                                              <Label htmlFor="credits">Credits <span className="text-xs text-muted-foreground">(optional - uses plan default)</span></Label>
                                               <Input
                                                 id="credits"
                                                 type="number"
+                                                placeholder="Leave empty to use plan default"
                                                 value={editForm.credits}
                                                 onChange={(e) =>
                                                   setEditForm({
@@ -589,6 +596,9 @@ export function AdminUsers() {
                                                 }
                                                 disabled={editForm.has_unlimited_credits}
                                               />
+                                              <p className="text-xs text-muted-foreground">
+                                                Override the default credits from the plan (leave at 0 to use plan default)
+                                              </p>
                                             </div>
                                             <div className="flex items-center justify-between rounded-lg border border-border p-4">
                                               <div className="space-y-0.5">

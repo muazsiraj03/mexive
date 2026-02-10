@@ -387,6 +387,7 @@ Deno.serve(async (req) => {
         const subUpdates: Record<string, unknown> = {};
         
         // When plan changes, update status to active and set expiration
+        // Also automatically assign credits from the plan configuration
         if (body.plan !== undefined) {
           subUpdates.plan = body.plan;
           subUpdates.status = "active";
@@ -394,10 +395,32 @@ Deno.serve(async (req) => {
           expiresAt.setMonth(expiresAt.getMonth() + 1);
           subUpdates.expires_at = expiresAt.toISOString();
           subUpdates.started_at = new Date().toISOString();
+          
+          // Fetch plan configuration to get default credits
+          const { data: planConfig } = await adminClient
+            .from("pricing_config")
+            .select("credits, is_unlimited")
+            .eq("plan_name", body.plan)
+            .single();
+          
+          if (planConfig) {
+            if (planConfig.is_unlimited) {
+              subUpdates.has_unlimited_credits = true;
+              subUpdates.credits_remaining = 0;
+              subUpdates.credits_total = 0;
+            } else {
+              subUpdates.has_unlimited_credits = false;
+              // If credits weren't explicitly provided, use plan's default
+              if (body.credits === undefined) {
+                subUpdates.credits_remaining = planConfig.credits;
+                subUpdates.credits_total = planConfig.credits;
+              }
+            }
+          }
         }
         
-        // When credits are updated, also update credits_total
-        if (body.credits !== undefined) {
+        // When credits are updated explicitly, also update credits_total
+        if (body.credits !== undefined && body.plan === undefined) {
           subUpdates.credits_remaining = body.credits;
           subUpdates.credits_total = body.credits;
         }
