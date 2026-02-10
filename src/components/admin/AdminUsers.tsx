@@ -276,7 +276,6 @@ export function AdminUsers() {
     setSaving(true);
     const updates: any = {
       plan: editForm.plan,
-      has_unlimited_credits: editForm.has_unlimited_credits,
     };
     
     // Only include credits if explicitly set (non-zero), otherwise let backend use plan default

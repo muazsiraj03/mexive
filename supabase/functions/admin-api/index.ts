@@ -413,30 +413,22 @@ Deno.serve(async (req) => {
           
           if (planConfig) {
             if (planConfig.is_unlimited) {
-              subUpdates.has_unlimited_credits = true;
+              // For unlimited plans, set credits to 0 (unlimited is indicated by plan name)
               subUpdates.credits_remaining = 0;
               subUpdates.credits_total = 0;
             } else {
-              subUpdates.has_unlimited_credits = false;
-              // If credits weren't explicitly provided, use plan's default
-              if (body.credits === undefined || body.credits === 0) {
-                subUpdates.credits_remaining = planConfig.credits;
-                subUpdates.credits_total = planConfig.credits;
-              } else {
-                // Use custom credits if provided
+              // For regular plans, use custom credits if provided, otherwise use plan default
+              if (body.credits !== undefined && body.credits > 0) {
                 subUpdates.credits_remaining = body.credits;
                 subUpdates.credits_total = body.credits;
+              } else {
+                // Use plan default credits
+                subUpdates.credits_remaining = planConfig.credits;
+                subUpdates.credits_total = planConfig.credits;
               }
             }
           }
-        } else if (body.has_unlimited_credits !== undefined) {
-          // Handle unlimited credits toggle without plan change
-          subUpdates.has_unlimited_credits = body.has_unlimited_credits;
-          if (body.has_unlimited_credits) {
-            subUpdates.credits_remaining = 0;
-            subUpdates.credits_total = 0;
-          }
-        } else if (body.credits !== undefined) {
+        } else if (body.credits !== undefined && body.credits > 0) {
           // Handle explicit credits update without plan change
           subUpdates.credits_remaining = body.credits;
           subUpdates.credits_total = body.credits;
@@ -465,36 +457,15 @@ Deno.serve(async (req) => {
         if (Object.keys(subUpdates).length > 0) {
           console.log("Updating subscription for user:", targetUserId, "with:", subUpdates);
           
-          // First check if subscription exists
-          const { data: existingSubscription, error: fetchError } = await adminClient
+          // Try to update existing subscription first
+          const { error: subError } = await adminClient
             .from("subscriptions")
-            .select("id")
-            .eq("user_id", targetUserId)
-            .eq("status", "active")
-            .single();
-          
-          if (fetchError && fetchError.code !== "PGRST116") {
-            // PGRST116 = no rows returned, which is fine
-            console.error("Error checking subscription:", fetchError);
-          }
-          
-          if (existingSubscription) {
-            // Update existing subscription
-            const { error: subError } = await adminClient
-              .from("subscriptions")
-              .update(subUpdates)
-              .eq("user_id", targetUserId)
-              .eq("status", "active");
+            .update(subUpdates)
+            .eq("user_id", targetUserId);
 
-            if (subError) {
-              console.error("Subscription update error:", subError);
-              return new Response(
-                JSON.stringify({ error: "Failed to update subscription" }),
-                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-              );
-            }
-          } else {
-            // Create new subscription if none exists
+          // If no rows were updated, try to create a new subscription
+          if (subError && subError.code === "PGRST116") {
+            // No subscription exists, create one
             if (body.plan === undefined) {
               return new Response(
                 JSON.stringify({ error: "Cannot create subscription without a plan" }),
@@ -514,10 +485,16 @@ Deno.serve(async (req) => {
             if (createError) {
               console.error("Subscription creation error:", createError);
               return new Response(
-                JSON.stringify({ error: "Failed to create subscription" }),
+                JSON.stringify({ error: "Failed to create subscription: " + createError.message }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
               );
             }
+          } else if (subError) {
+            console.error("Subscription update error:", subError);
+            return new Response(
+              JSON.stringify({ error: "Failed to update subscription: " + subError.message }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
         }
 
