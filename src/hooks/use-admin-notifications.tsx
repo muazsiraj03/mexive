@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface AdminNotification {
@@ -51,6 +52,7 @@ const AdminNotificationsContext = createContext<AdminNotificationsContextType | 
 
 export function AdminNotificationsProvider({ children }: { children: ReactNode }) {
   const { user, session } = useAuth();
+  const isVisible = usePageVisibility();
   const [pendingItems, setPendingItems] = useState<AdminPendingItem[]>([]);
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
   const [sentNotifications, setSentNotifications] = useState<AdminNotification[]>([]);
@@ -177,9 +179,9 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
     setLoading(false);
   }, [fetchPendingItems, fetchAdminNotifications, fetchSentNotifications]);
 
-  // Real-time subscription for pending items
+  // Real-time subscription for pending items - only setup when page is visible
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isVisible) return;
 
     let upgradeChannel: RealtimeChannel;
     let creditChannel: RealtimeChannel;
@@ -210,7 +212,7 @@ export function AdminNotificationsProvider({ children }: { children: ReactNode }
       if (upgradeChannel) supabase.removeChannel(upgradeChannel);
       if (creditChannel) supabase.removeChannel(creditChannel);
     };
-  }, [user, fetchPendingItems]);
+  }, [user, fetchPendingItems, isVisible]);
 
   useEffect(() => {
     refreshAll();

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { toast } from "sonner";
 import { usePricing } from "@/hooks/use-pricing";
 
@@ -25,6 +26,7 @@ export interface PlanInfo {
 
 export function useSubscription() {
   const { plans: pricingPlans, loading: pricingLoading } = usePricing();
+  const isVisible = usePageVisibility();
   
   // Convert to PlanInfo format for backward compatibility
   const plans: PlanInfo[] = pricingPlans.map(plan => ({
@@ -109,8 +111,8 @@ export function useSubscription() {
   useEffect(() => {
     fetchSubscription();
 
-    // Subscribe to real-time updates for subscriptions
-    if (user) {
+    // Subscribe to real-time updates for subscriptions - only when page is visible
+    if (user && isVisible) {
       const channel = supabase
         .channel("subscription_changes")
         .on(
@@ -126,7 +128,7 @@ export function useSubscription() {
         supabase.removeChannel(channel);
       };
     }
-  }, [fetchSubscription, user]);
+  }, [fetchSubscription, user, isVisible]);
 
   const subscribe = async (plan: string, requestedCredits?: number, requestedPrice?: number) => {
     if (!user) {

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface Notification {
@@ -29,6 +30,7 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const isVisible = usePageVisibility();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readGlobalIds, setReadGlobalIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -78,9 +80,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Real-time subscription
+  // Real-time subscription - only setup when page is visible
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isVisible) return;
 
     let channel: RealtimeChannel;
 
@@ -127,7 +129,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         supabase.removeChannel(channel);
       }
     };
-  }, [user]);
+  }, [user, isVisible]);
 
   useEffect(() => {
     fetchNotifications();

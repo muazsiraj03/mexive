@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { toast } from "sonner";
 
 export interface UpgradeRequest {
@@ -27,6 +28,7 @@ export interface UpgradeRequest {
 
 export function useUpgradeRequests() {
   const { user } = useAuth();
+  const isVisible = usePageVisibility();
   const [requests, setRequests] = useState<UpgradeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -79,7 +81,7 @@ export function useUpgradeRequests() {
   useEffect(() => {
     fetchRequests();
 
-    if (user) {
+    if (user && isVisible) {
       const channel = supabase
         .channel("upgrade_requests_changes")
         .on(
@@ -95,7 +97,7 @@ export function useUpgradeRequests() {
         supabase.removeChannel(channel);
       };
     }
-  }, [fetchRequests, user]);
+  }, [fetchRequests, user, isVisible]);
 
   const createRequest = async (data: {
     planName: string;
