@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { useAdmin } from "@/hooks/use-admin";
 import { useAdminSearch } from "@/hooks/use-admin-search";
 import { useLiveUsers, LiveUser } from "@/hooks/use-live-users";
@@ -181,6 +182,8 @@ export function AdminUsers() {
   const { onlineCount } = useLiveUsers();
   const { plans } = usePricing();
   const { toast } = useToast();
+  const isVisible = usePageVisibility();
+  const hasInitialized = useRef(false);
   const [localSearch, setLocalSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("");
   const [editingUser, setEditingUser] = useState<typeof users[0] | null>(null);
@@ -240,10 +243,22 @@ export function AdminUsers() {
   // Combined search from header and local input
   const effectiveSearch = globalSearch || localSearch;
 
+  // Only fetch on initial mount, not on visibility changes
   useEffect(() => {
-    fetchUsers(1, effectiveSearch, planFilter);
-    setLastRefresh(new Date());
-  }, [fetchUsers, effectiveSearch, planFilter]);
+    if (!hasInitialized.current && isVisible) {
+      fetchUsers(1, effectiveSearch, planFilter);
+      setLastRefresh(new Date());
+      hasInitialized.current = true;
+    }
+  }, [isVisible]);
+
+  // Re-fetch when search/filter changes (but only if already initialized and page is visible)
+  useEffect(() => {
+    if (hasInitialized.current && isVisible) {
+      fetchUsers(1, effectiveSearch, planFilter);
+      setLastRefresh(new Date());
+    }
+  }, [effectiveSearch, planFilter, isVisible, fetchUsers]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

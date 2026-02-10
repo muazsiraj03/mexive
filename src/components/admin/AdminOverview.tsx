@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/hooks/use-auth";
 import { useLiveUsers } from "@/hooks/use-live-users";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CreditCard, DollarSign, TrendingUp, Loader2, Activity, Images, MessageSquareText, FileSearch, UserPlus, RefreshCw, Circle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +32,8 @@ export function AdminOverview() {
   const { stats, fetchStats, loading } = useAdmin();
   const { session } = useAuth();
   const { onlineCount } = useLiveUsers();
+  const isVisible = usePageVisibility();
+  const hasInitialized = useRef(false);
   const [toolStats, setToolStats] = useState<ToolStats | null>(null);
   const [growthData, setGrowthData] = useState<GrowthData[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -68,11 +71,15 @@ export function AdminOverview() {
   }, [callAdminApi]);
 
   useEffect(() => {
-    fetchStats();
-    fetchToolStats();
-    fetchGrowthData();
-    setLastRefresh(new Date());
-  }, [fetchStats, fetchToolStats, fetchGrowthData]);
+    // Only fetch on initial mount, not on every visibility change
+    if (!hasInitialized.current && isVisible) {
+      fetchStats();
+      fetchToolStats();
+      fetchGrowthData();
+      setLastRefresh(new Date());
+      hasInitialized.current = true;
+    }
+  }, [isVisible, fetchStats, fetchToolStats, fetchGrowthData]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { useAdmin } from "@/hooks/use-admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -75,6 +76,8 @@ export function AdminSubscriptions() {
     loading,
   } = useAdmin();
 
+  const isVisible = usePageVisibility();
+  const hasInitialized = useRef(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -88,8 +91,17 @@ export function AdminSubscriptions() {
   } | null>(null);
 
   useEffect(() => {
-    fetchSubscriptions(page, statusFilter);
-  }, [fetchSubscriptions, page, statusFilter]);
+    if (!hasInitialized.current && isVisible) {
+      fetchSubscriptions(page, statusFilter);
+      hasInitialized.current = true;
+    }
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (hasInitialized.current && isVisible) {
+      fetchSubscriptions(page, statusFilter);
+    }
+  }, [fetchSubscriptions, page, statusFilter, isVisible]);
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value === "all" ? "" : value);
