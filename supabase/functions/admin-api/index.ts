@@ -397,11 +397,19 @@ Deno.serve(async (req) => {
           subUpdates.started_at = new Date().toISOString();
           
           // Fetch plan configuration to get default credits
-          const { data: planConfig } = await adminClient
+          const { data: planConfig, error: planConfigError } = await adminClient
             .from("pricing_config")
             .select("credits, is_unlimited")
             .eq("plan_name", body.plan)
             .single();
+          
+          if (planConfigError) {
+            console.error("Error fetching plan config:", planConfigError);
+            return new Response(
+              JSON.stringify({ error: `Plan not found: ${body.plan}` }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
           
           if (planConfig) {
             if (planConfig.is_unlimited) {
@@ -411,16 +419,25 @@ Deno.serve(async (req) => {
             } else {
               subUpdates.has_unlimited_credits = false;
               // If credits weren't explicitly provided, use plan's default
-              if (body.credits === undefined) {
+              if (body.credits === undefined || body.credits === 0) {
                 subUpdates.credits_remaining = planConfig.credits;
                 subUpdates.credits_total = planConfig.credits;
+              } else {
+                // Use custom credits if provided
+                subUpdates.credits_remaining = body.credits;
+                subUpdates.credits_total = body.credits;
               }
             }
           }
-        }
-        
-        // When credits are updated explicitly, also update credits_total
-        if (body.credits !== undefined && body.plan === undefined) {
+        } else if (body.has_unlimited_credits !== undefined) {
+          // Handle unlimited credits toggle without plan change
+          subUpdates.has_unlimited_credits = body.has_unlimited_credits;
+          if (body.has_unlimited_credits) {
+            subUpdates.credits_remaining = 0;
+            subUpdates.credits_total = 0;
+          }
+        } else if (body.credits !== undefined) {
+          // Handle explicit credits update without plan change
           subUpdates.credits_remaining = body.credits;
           subUpdates.credits_total = body.credits;
         }
@@ -447,17 +464,60 @@ Deno.serve(async (req) => {
         // Update subscription if needed
         if (Object.keys(subUpdates).length > 0) {
           console.log("Updating subscription for user:", targetUserId, "with:", subUpdates);
-          const { error: subError } = await adminClient
+          
+          // First check if subscription exists
+          const { data: existingSubscription, error: fetchError } = await adminClient
             .from("subscriptions")
-            .update(subUpdates)
-            .eq("user_id", targetUserId);
+            .select("id")
+            .eq("user_id", targetUserId)
+            .eq("status", "active")
+            .single();
+          
+          if (fetchError && fetchError.code !== "PGRST116") {
+            // PGRST116 = no rows returned, which is fine
+            console.error("Error checking subscription:", fetchError);
+          }
+          
+          if (existingSubscription) {
+            // Update existing subscription
+            const { error: subError } = await adminClient
+              .from("subscriptions")
+              .update(subUpdates)
+              .eq("user_id", targetUserId)
+              .eq("status", "active");
 
-          if (subError) {
-            console.error("Subscription update error:", subError);
-            return new Response(
-              JSON.stringify({ error: "Failed to update subscription" }),
-              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+            if (subError) {
+              console.error("Subscription update error:", subError);
+              return new Response(
+                JSON.stringify({ error: "Failed to update subscription" }),
+                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+          } else {
+            // Create new subscription if none exists
+            if (body.plan === undefined) {
+              return new Response(
+                JSON.stringify({ error: "Cannot create subscription without a plan" }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            
+            const newSubscriptionData = {
+              user_id: targetUserId,
+              ...subUpdates,
+            };
+            
+            const { error: createError } = await adminClient
+              .from("subscriptions")
+              .insert(newSubscriptionData);
+            
+            if (createError) {
+              console.error("Subscription creation error:", createError);
+              return new Response(
+                JSON.stringify({ error: "Failed to create subscription" }),
+                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
           }
         }
 
