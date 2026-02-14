@@ -228,6 +228,15 @@ async function callAIWithRetry(
   return { success: false, error: `Failed after retries: ${lastError}`, status: 500 };
 }
 
+function getApiKeys(): string[] {
+  const keys: string[] = [];
+  const primary = Deno.env.get("LOVABLE_API_KEY");
+  const fallback = Deno.env.get("LOVABLE_API_KEY_FALLBACK");
+  if (primary) keys.push(primary);
+  if (fallback) keys.push(fallback);
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -392,8 +401,24 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
       tool_choice: { type: "function", function: { name: "generate_metadata" } },
     };
 
-    const result = await callAIWithRetry(LOVABLE_API_KEY, requestBody);
+    const apiKeys = getApiKeys();
+    if (apiKeys.length === 0) {
+      console.error("No LOVABLE_API_KEY configured");
+      return new Response(
+        JSON.stringify({ error: "AI service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
+    // Try keys in order: primary then fallback(s)
+    let result = { success: false, error: "No API keys tried", status: 500 } as any;
+    for (let i = 0; i < apiKeys.length; i++) {
+      const key = apiKeys[i];
+      if (i > 0) console.log("Attempting fallback API key...");
+      result = await callAIWithRetry(key, requestBody);
+      if (result.success) break;
+      if (result.status !== 402) break; // only try fallback when provider reports payment required
+    }
     if (!result.success) {
       return new Response(
         JSON.stringify({ error: result.error }),

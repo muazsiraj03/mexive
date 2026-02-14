@@ -403,6 +403,15 @@ async function callAIWithRetry(
   throw lastError || new Error("AI analysis failed after retries");
 }
 
+function getApiKeys(): string[] {
+  const keys: string[] = [];
+  const primary = Deno.env.get("LOVABLE_API_KEY");
+  const fallback = Deno.env.get("LOVABLE_API_KEY_FALLBACK");
+  if (primary) keys.push(primary);
+  if (fallback) keys.push(fallback);
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -454,8 +463,30 @@ serve(async (req) => {
     // Build the analysis prompt with config
     const systemPrompt = buildSystemPrompt(fileType, marketplaces, config);
 
-    // Call AI for analysis
-    const analysis = await callAIWithRetry(imageUrl, systemPrompt, apiKey);
+    // Call AI for analysis, try fallback key(s) if primary returns payment error
+    const apiKeys = getApiKeys();
+    if (apiKeys.length === 0) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    let analysis: any = null;
+    for (let i = 0; i < apiKeys.length; i++) {
+      const keyToTry = apiKeys[i];
+      if (i > 0) console.log("Using fallback API key for AI provider");
+      try {
+        analysis = await callAIWithRetry(imageUrl, systemPrompt, keyToTry);
+        break;
+      } catch (err) {
+        console.error("AI attempt failed:", err);
+        if ((err as Error).message.includes("credits exhausted")) {
+          // try next key
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!analysis) throw new Error("AI analysis failed");
 
     console.log(`Analysis complete: ${analysis.verdict} (score: ${analysis.overallScore})`);
 

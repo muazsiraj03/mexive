@@ -347,6 +347,15 @@ async function callAIWithRetry(
   throw lastError || new Error("Failed after retries");
 }
 
+function getApiKeys(): string[] {
+  const keys: string[] = [];
+  const primary = Deno.env.get("LOVABLE_API_KEY");
+  const fallback = Deno.env.get("LOVABLE_API_KEY_FALLBACK");
+  if (primary) keys.push(primary);
+  if (fallback) keys.push(fallback);
+  return keys;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -466,7 +475,39 @@ serve(async (req) => {
       tool_choice: { type: "function", function: { name: "generate_prompt" } },
     };
 
-    const response = await callAIWithRetry(payload, LOVABLE_API_KEY);
+    // Try primary and fallback API keys if available
+    const apiKeys = getApiKeys();
+    if (apiKeys.length === 0) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "AI service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let response: Response | null = null;
+    for (let i = 0; i < apiKeys.length; i++) {
+      const key = apiKeys[i];
+      if (i > 0) console.log("Attempting fallback API key...");
+      try {
+        response = await callAIWithRetry(payload, key);
+        break;
+      } catch (err) {
+        console.error("AI call failed:", err);
+        if ((err as Error).message === "PAYMENT_REQUIRED") {
+          continue; // try next key
+        }
+        throw err;
+      }
+    }
+
+    if (!response) {
+      return new Response(
+        JSON.stringify({ error: "AI service failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const data = await response.json();
 
     console.log("AI response received");
