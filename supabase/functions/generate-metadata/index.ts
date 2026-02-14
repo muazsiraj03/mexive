@@ -377,7 +377,7 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
     console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     const requestBody = {
-      model: "arcee-ai/trinity-large-preview:free",
+      model: "arcee-ai/trinity-mini:free",
       messages: [
         { role: "system", content: systemPrompt },
         { 

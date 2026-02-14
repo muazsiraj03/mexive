@@ -409,7 +409,7 @@ serve(async (req) => {
     const systemPrompt = getSystemPrompt(style, detailLevel, trainingContext);
 
     const payload = {
-      model: "arcee-ai/trinity-large-preview:free",
+      model: "arcee-ai/trinity-mini:free",
       messages: [
         { role: "system", content: systemPrompt },
         {
