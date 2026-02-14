@@ -316,14 +316,14 @@ async function callAIWithRetry(
     try {
       console.log(`AI analysis attempt ${attempt + 1}/${maxRetries + 1}`);
 
-      const response = await fetch("https://api.modelrouter.app/v1/chat/completions", {
+      const response = await fetch("https://api.openrouter.ai/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "arcee-ai/trinity-mini:free",
+          model: "stepfun/step-3.5-flash:free",
           messages: [
             { role: "system", content: systemPrompt },
             {

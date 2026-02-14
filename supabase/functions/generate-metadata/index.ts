@@ -151,7 +151,7 @@ async function callAIWithRetry(
     }
     
     try {
-      const response = await fetch("https://api.modelrouter.app/v1/chat/completions", {
+      const response = await fetch("https://api.openrouter.ai/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -377,7 +377,7 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
     console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     const requestBody = {
-      model: "arcee-ai/trinity-mini:free",
+      model: "stepfun/step-3.5-flash:free",
       messages: [
         { role: "system", content: systemPrompt },
         { 

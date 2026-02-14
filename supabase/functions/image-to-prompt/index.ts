@@ -276,7 +276,7 @@ async function callAIWithRetry(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(
-        "https://api.modelrouter.app/v1/chat/completions",
+        "https://api.openrouter.ai/v1/chat/completions",
         {
           method: "POST",
           headers: {
@@ -409,7 +409,7 @@ serve(async (req) => {
     const systemPrompt = getSystemPrompt(style, detailLevel, trainingContext);
 
     const payload = {
-      model: "arcee-ai/trinity-mini:free",
+      model: "stepfun/step-3.5-flash:free",
       messages: [
         { role: "system", content: systemPrompt },
         {
