@@ -478,15 +478,32 @@ serve(async (req) => {
         break;
       } catch (err) {
         console.error("AI attempt failed:", err);
-        if ((err as Error).message.includes("credits exhausted")) {
+        const msg = (err as Error).message || "";
+        if (msg.includes("credits exhausted") || msg.includes("PAYMENT_REQUIRED")) {
           // try next key
           continue;
         }
+        // include provider message if available
         throw err;
       }
     }
 
-    if (!analysis) throw new Error("AI analysis failed");
+    if (!analysis) {
+      console.error("AI analysis failed with all keys");
+      return new Response(
+        JSON.stringify({ error: "AI analysis failed with all available API keys" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate analysis shape
+    if (typeof analysis !== "object" || analysis === null) {
+      console.error("Unexpected AI analysis format:", String(analysis).slice(0, 1000));
+      return new Response(
+        JSON.stringify({ error: "Unexpected AI analysis format from provider", provider: analysis }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log(`Analysis complete: ${analysis.verdict} (score: ${analysis.overallScore})`);
 

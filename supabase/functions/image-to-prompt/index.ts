@@ -504,11 +504,21 @@ serve(async (req) => {
     if (!response) {
       return new Response(
         JSON.stringify({ error: "AI service failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const data = await response.json();
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (err) {
+      const text = await response.text().catch(() => "<could not read body>");
+      console.error("Failed to parse provider JSON:", err, "body:", text.slice?.(0, 1000));
+      return new Response(
+        JSON.stringify({ error: "Failed to parse AI provider response", details: String(err), providerRaw: text }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log("AI response received");
 

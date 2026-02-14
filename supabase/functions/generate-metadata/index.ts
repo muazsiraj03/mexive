@@ -436,12 +436,30 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
       }
     }
 
-    const data = result.data as { choices: Array<{ message: { tool_calls: Array<{ function: { arguments: string } }> } }> };
-    const toolCall = data.choices[0].message.tool_calls[0];
+    const data = result.data as any;
+
+    // Defensive checks for expected tool call structure
+    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
+      console.error("Unexpected AI response structure:", JSON.stringify(data).slice(0, 1000));
+      return new Response(
+        JSON.stringify({ error: "Unexpected AI response format from provider", provider: data }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log("AI response received successfully");
 
-    const metadata = JSON.parse(toolCall.function.arguments);
+    let metadata: any;
+    try {
+      metadata = JSON.parse(toolCall.function.arguments);
+    } catch (err) {
+      console.error("Failed to parse AI tool call arguments:", err, "raw:", toolCall.function.arguments?.slice?.(0, 1000));
+      return new Response(
+        JSON.stringify({ error: "Failed to parse AI response", details: String(err), providerRaw: toolCall.function.arguments }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     // Post-process to enforce exact character counts
     // Filler words for natural padding
