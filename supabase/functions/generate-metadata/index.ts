@@ -377,7 +377,7 @@ Follow the platform-specific guidelines for each marketplace. CHARACTER COUNTS M
     console.log("User:", userCredits.userId, "Credits:", userCredits.currentCredits);
 
     const requestBody = {
-      model: "google/gemini-2.5-flash",
+      model: "arcee-ai/trinity-large-preview:free",
       messages: [
         { role: "system", content: systemPrompt },
         { 
